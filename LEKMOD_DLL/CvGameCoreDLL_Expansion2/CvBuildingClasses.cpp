@@ -74,12 +74,18 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_iFreeExperience(0),
 	m_iGlobalFreeExperience(0),
 	m_iFoodKept(0),
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	m_iExcessGrowth(0),
+#endif
 	m_bAirlift(false),
 	m_iAirModifier(0),
 	m_iNukeModifier(0),
 	m_iNukeExplosionRand(0),
 	m_iWorkerSpeedModifier(0),
 	m_iMilitaryProductionModifier(0),
+#if defined(LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD)
+	m_iMilitaryProductionMod(0),
+#endif
 	m_iSpaceProductionModifier(0),
 	m_iGlobalSpaceProductionModifier(0),
 	m_iMinAreaSize(0),
@@ -435,6 +441,9 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iFreeExperience = kResults.GetInt("Experience");
 	m_iGlobalFreeExperience = kResults.GetInt("GlobalExperience");
 	m_iFoodKept = kResults.GetInt("FoodKept");
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	m_iExcessGrowth = kResults.GetInt("ExcessGrowth");
+#endif
 	m_bAirlift = kResults.GetBool("Airlift");
 	m_iAirModifier = kResults.GetInt("AirModifier");
 	m_iNukeModifier = kResults.GetInt("NukeModifier");
@@ -449,6 +458,9 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_bNoOccupiedUnhappiness = kResults.GetBool("NoOccupiedUnhappiness");
 	m_iWorkerSpeedModifier = kResults.GetInt("WorkerSpeedModifier");
 	m_iMilitaryProductionModifier = kResults.GetInt("MilitaryProductionModifier");
+#if defined(LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD)
+	m_iMilitaryProductionMod = kResults.GetInt("MilitaryProductionMod");
+#endif
 	m_iSpaceProductionModifier = kResults.GetInt("SpaceProductionModifier");
 	m_iGlobalSpaceProductionModifier = kResults.GetInt("GlobalSpaceProductionModifier");
 	m_iBuildingProductionModifier = kResults.GetInt("BuildingProductionModifier");
@@ -1475,6 +1487,14 @@ int CvBuildingEntry::GetFoodKept() const
 	return m_iFoodKept;
 }
 
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+/// Percentage modifier to excess food growth in this city
+int CvBuildingEntry::GetExcessGrowth() const
+{
+	return m_iExcessGrowth;
+}
+#endif
+
 /// Does this building allow airlifts?
 bool CvBuildingEntry::IsAirlift() const
 {
@@ -1510,6 +1530,14 @@ int CvBuildingEntry::GetMilitaryProductionModifier() const
 {
 	return m_iMilitaryProductionModifier;
 }
+
+#if defined(LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD)
+/// Additional improvement in military unit production from custom building column
+int CvBuildingEntry::GetMilitaryProductionMod() const
+{
+	return m_iMilitaryProductionMod;
+}
+#endif
 
 /// Improvement in space race component production
 int CvBuildingEntry::GetSpaceProductionModifier() const

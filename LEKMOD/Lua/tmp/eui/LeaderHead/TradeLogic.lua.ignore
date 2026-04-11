@@ -254,6 +254,12 @@ local function SetEnabledAndText( control, isEnabled, text )
 	control:SetText( text )
 	SetEnabled( control, isEnabled )
 end
+local function GetDisabledLuxuryTradeTooltip( fromPlayerID, toPlayerID, resourceType, resourceInfo )
+	if resourceInfo and resourceInfo.ResourceUsage == 2 and g_Deal.IsLuxuryTradeTargetAlreadyHasResource and g_Deal:IsLuxuryTradeTargetAlreadyHasResource(fromPlayerID, toPlayerID, resourceType) then
+		return Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_PLAYER_ALREADY_OWNS_ONE_LINE")
+	end
+	return Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_EMBARGOED_ONE_LINE")
+end
 
 function ResizeStacks()
 	for k, stack in pairs( g_stacks ) do
@@ -1021,7 +1027,7 @@ function ResetDisplay( diploMessage )
 	    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_BOTH_HAVE_NOT_REASEARCHED_ONE_LINE", GameInfo.Technologies[resource.TechReveal].Description));
         		else
 	    			instance.Button:GetTextControl():SetColorByName("Gray_Black");
-	    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_EMBARGOED_ONE_LINE"));
+	    			instance.Button:SetToolTipString(GetDisabledLuxuryTradeTooltip(g_iUs, g_iThem, resourceID, resource));
 	    		end
             else
 	    		instance.Button:GetTextControl():SetColorByName("Beige_Black");
@@ -1050,7 +1056,7 @@ function ResetDisplay( diploMessage )
 	    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_BOTH_HAVE_NOT_REASEARCHED_ONE_LINE", GameInfo.Technologies[resource.TechReveal].Description));
         		else
 	    			instance.Button:GetTextControl():SetColorByName("Gray_Black");
-	    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_EMBARGOED_ONE_LINE"));
+	    			instance.Button:SetToolTipString(GetDisabledLuxuryTradeTooltip(g_iThem, g_iUs, resourceID, resource));
 	    		end
             else
 	    		instance.Button:GetTextControl():SetColorByName("Beige_Black");

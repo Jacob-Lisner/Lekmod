@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -49,6 +49,9 @@ void CvLuaDeal::PushMethods(lua_State* L, int t)
 
 	Method(IsPossibleToTradeItem);
 	Method(GetNumResource);
+#ifdef LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+	Method(IsLuxuryTradeTargetAlreadyHasResource);
+#endif
 
 	Method(AddGoldTrade);
 	Method(AddGoldPerTurnTrade);
@@ -146,6 +149,20 @@ int CvLuaDeal::lGetNumResource(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+
+#ifdef LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+//------------------------------------------------------------------------------
+int CvLuaDeal::lIsLuxuryTradeTargetAlreadyHasResource(lua_State* L)
+{
+	CvDeal* pkDeal = GetInstance(L);
+	const PlayerTypes eFromPlayer = (PlayerTypes)lua_tointeger(L, 2);
+	const PlayerTypes eToPlayer = (PlayerTypes)lua_tointeger(L, 3);
+	const ResourceTypes eResource = (ResourceTypes)lua_tointeger(L, 4);
+	const bool bResult = pkDeal->IsLuxuryTradeTargetAlreadyHasResource(eFromPlayer, eToPlayer, eResource);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 
 //------------------------------------------------------------------------------
 int CvLuaDeal::lResetIterator(lua_State* L)

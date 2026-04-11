@@ -38,6 +38,7 @@ function OnPopupMessage(popupInfo)
 	
 	local pOtherPlayer;
 	local iPlayerLoop;
+	local tAddedPlayers = {};
 	
 	
 	local bIsTeamGame = false;
@@ -62,7 +63,9 @@ function OnPopupMessage(popupInfo)
 				-- Not minor
 				if (not pOtherPlayer:IsMinorCiv()) then
 					-- Not ourselves
-					if (pOtherTeam:GetID() ~= pTeam:GetID()) then
+					if (pOtherTeam:GetID() ~= pTeam:GetID() and not tAddedPlayers[iPlayerLoop]) then
+						-- Defensive de-duplication for edge cases where the same player can be surfaced twice.
+						tAddedPlayers[iPlayerLoop] = true;
 					
 						local controlTable = g_InstanceManager:GetInstance();
 						CivIconHookup( iPlayerLoop, 45, controlTable.CivIcon, controlTable.CivIconBG, controlTable.CivIconShadow, false, true );

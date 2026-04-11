@@ -454,6 +454,9 @@ CvPlayer::CvPlayer() :
 	, m_strScriptData("CvPlayer::m_strScriptData", m_syncArchive)
 	, m_paiNumResourceUsed("CvPlayer::m_paiNumResourceUsed", m_syncArchive)
 	, m_paiNumResourceTotal("CvPlayer::m_paiNumResourceTotal", m_syncArchive)
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+	, m_paiMinorStrategicResourceFromBuildings("CvPlayer::m_paiMinorStrategicResourceFromBuildings", m_syncArchive)
+#endif
 	, m_paiResourceGiftedToMinors("CvPlayer::m_paiResourceGiftedToMinors", m_syncArchive)
 	, m_paiResourceExport("CvPlayer::m_paiResourceExport", m_syncArchive)
 	, m_paiResourceImport("CvPlayer::m_paiResourceImport", m_syncArchive)
@@ -795,6 +798,9 @@ void CvPlayer::uninit()
 {
 	m_paiNumResourceUsed.clear();
 	m_paiNumResourceTotal.clear();
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+	m_paiMinorStrategicResourceFromBuildings.clear();
+#endif
 	m_paiResourceGiftedToMinors.clear();
 	m_paiResourceExport.clear();
 	m_paiResourceImport.clear();
@@ -1344,6 +1350,11 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 
 		m_paiNumResourceTotal.clear();
 		m_paiNumResourceTotal.resize(GC.getNumResourceInfos(), 0);
+
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+		m_paiMinorStrategicResourceFromBuildings.clear();
+		m_paiMinorStrategicResourceFromBuildings.resize(GC.getNumResourceInfos(), 0);
+#endif
 
 		m_paiResourceGiftedToMinors.clear();
 		m_paiResourceGiftedToMinors.resize(GC.getNumResourceInfos(), 0);
@@ -22897,6 +22908,101 @@ int CvPlayer::getNumResourceTotal(ResourceTypes eIndex, bool bIncludeImport) con
 }
 
 //	--------------------------------------------------------------------------------
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+void CvPlayer::changeNumResourceTotal(ResourceTypes eIndex, int iChange, bool bIgnoreResourceWarning, bool bMinorStrategicFromBuilding)
+{
+	CvAssert(eIndex >= 0);
+	CvAssert(eIndex < GC.getNumResourceInfos());
+
+	if(iChange != 0)
+	{
+		m_paiNumResourceTotal.setAt(eIndex, m_paiNumResourceTotal[eIndex] + iChange);
+
+		if(bMinorStrategicFromBuilding && isMinorCiv())
+		{
+			const CvResourceInfo* pkResourceInfo = GC.getResourceInfo(eIndex);
+			if(pkResourceInfo != NULL && pkResourceInfo->getResourceUsage() == RESOURCEUSAGE_STRATEGIC)
+			{
+				m_paiMinorStrategicResourceFromBuildings.setAt(eIndex, m_paiMinorStrategicResourceFromBuildings[eIndex] + iChange);
+				CvAssert(m_paiMinorStrategicResourceFromBuildings[eIndex] >= 0);
+			}
+		}
+
+		// Minors with an Ally give their Resources to their friend (awww)
+		if(isMinorCiv())
+		{
+			PlayerTypes eBestRelationsPlayer = GetMinorCivAI()->GetAlly();
+
+			if(eBestRelationsPlayer != NO_PLAYER)
+			{
+				ResourceUsageTypes eUsage = GC.getResourceInfo(eIndex)->getResourceUsage();
+
+				const bool bSkipAllyShare = (bMinorStrategicFromBuilding && eUsage == RESOURCEUSAGE_STRATEGIC);
+
+				if(!bSkipAllyShare && (eUsage == RESOURCEUSAGE_STRATEGIC || eUsage == RESOURCEUSAGE_LUXURY))
+				{
+					// Someone new is getting the bonus
+					if(eBestRelationsPlayer != NO_PLAYER)
+					{
+						GET_PLAYER(eBestRelationsPlayer).changeResourceFromMinors(eIndex, iChange);
+						changeResourceExport(eIndex, iChange);
+
+						CvNotifications* pNotifications = GET_PLAYER(eBestRelationsPlayer).GetNotifications();
+						if(pNotifications && !GetMinorCivAI()->IsDisableNotifications())
+						{
+							Localization::String strMessage;
+							Localization::String strSummary;
+
+							// Adding Resources
+							if(iChange > 0)
+							{
+								strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_MINOR_BFF_NEW_RESOURCE");
+								strMessage << getNameKey() << GC.getResourceInfo(eIndex)->GetDescriptionKey();
+								strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_MINOR_BFF_NEW_RESOURCE");
+								strSummary << getNameKey() << GC.getResourceInfo(eIndex)->GetDescriptionKey();
+							}
+							// Lost Resources
+							else
+							{
+								strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_MINOR_BFF_LOST_RESOURCE");
+								strMessage << getNameKey() << GC.getResourceInfo(eIndex)->GetDescriptionKey();
+								strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_MINOR_BFF_LOST_RESOURCE");
+								strSummary << getNameKey() << GC.getResourceInfo(eIndex)->GetDescriptionKey();
+							}
+
+							int iX = -1;
+							int iY = -1;
+
+							CvCity* capCity = getCapitalCity();
+
+							if(capCity != NULL)
+							{
+								iX = capCity->getX();
+								iY = capCity->getY();
+							}
+
+							pNotifications->Add(NOTIFICATION_MINOR, strMessage.toUTF8(), strSummary.toUTF8(), iX, iY, -1);
+						}
+					}
+				}
+			}
+		}
+
+		// Any players siphoning resources from us need to be updated as well
+		for (int iPlayerLoop = 0; iPlayerLoop < MAX_PLAYERS; iPlayerLoop++)
+		{
+			GET_PLAYER((PlayerTypes)iPlayerLoop).UpdateResourcesSiphoned();
+		}
+	}
+
+	if(iChange < 0 && !bIgnoreResourceWarning)
+		DoTestOverResourceNotification(eIndex);
+
+	GC.GetEngineUserInterface()->setDirty(GameData_DIRTY_BIT, true);
+
+	CvAssert(m_paiNumResourceTotal[eIndex] >= 0);
+}
+#else
 void CvPlayer::changeNumResourceTotal(ResourceTypes eIndex, int iChange, bool bIgnoreResourceWarning)
 {
 	CvAssert(eIndex >= 0);
@@ -22978,6 +23084,7 @@ void CvPlayer::changeNumResourceTotal(ResourceTypes eIndex, int iChange, bool bI
 
 	CvAssert(m_paiNumResourceTotal[eIndex] >= 0);
 }
+#endif
 
 //	--------------------------------------------------------------------------------
 /// Do we get copies of each type of luxury connected by eFromPlayer?
@@ -23105,6 +23212,16 @@ int CvPlayer::getNumResourceAvailable(ResourceTypes eIndex, bool bIncludeImport)
 	CvAssertMsg(eIndex < GC.getNumResourceInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
 	return getNumResourceTotal(eIndex, bIncludeImport) - getNumResourceUsed(eIndex);
 }
+
+//	--------------------------------------------------------------------------------
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+int CvPlayer::getNumMinorStrategicResourceFromBuildings(ResourceTypes eIndex) const
+{
+	CvAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eIndex < GC.getNumResourceInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_paiMinorStrategicResourceFromBuildings[eIndex];
+}
+#endif
 
 
 //	--------------------------------------------------------------------------------
@@ -28188,6 +28305,15 @@ void CvPlayer::Read(FDataStream& kStream)
 	CvAssertMsg((0 < GC.getNumResourceInfos()), "GC.getNumResourceInfos() is not greater than zero but it is expected to be in CvPlayer::read");
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourceUsed.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourceTotal.dirtyGet());
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+	
+	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiMinorStrategicResourceFromBuildings.dirtyGet());
+#else
+	
+	std::vector<int> vDiscardMinorStrategicFromBuildings;
+	CvInfosSerializationHelper::ReadHashedDataArray(kStream, vDiscardMinorStrategicFromBuildings);
+	
+#endif
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceGiftedToMinors.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceExport.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceImport.dirtyGet());
@@ -28770,6 +28896,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	CvAssertMsg((0 < GC.getNumResourceInfos()), "GC.getNumResourceInfos() is not greater than zero but an array is being allocated in CvPlayer::write");
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiNumResourceUsed);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiNumResourceTotal);
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiMinorStrategicResourceFromBuildings);
+#endif
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceGiftedToMinors);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceExport);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceImport);

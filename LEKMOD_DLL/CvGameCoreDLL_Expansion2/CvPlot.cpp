@@ -7462,6 +7462,10 @@ void CvPlot::updateWorkingCity()
 			// Remove Citizen from this plot if another City's using it
 			if(pOldWorkingCity != NULL)
 			{
+#ifdef LEKMOD_CITIZENS_FIX_CLEAR_STALE_FORCED_WHEN_UNWORKING
+				// Remove manual lock; tile may still be in this city's ring but no longer workable here
+				pOldWorkingCity->GetCityCitizens()->SetForcedWorkingPlot(this, false);
+#endif
 				// Remove citizen
 				pOldWorkingCity->GetCityCitizens()->SetWorkingPlot(this, false);
 			}

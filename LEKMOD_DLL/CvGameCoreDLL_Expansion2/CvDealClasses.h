@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -87,7 +87,7 @@ typedef FFastList< CvTradedItem, c_eMPoolTypeGame, 0 > TradedItemList;
 //!  - Also stores the players involved and the turn the deal ends (if any)
 //!  - Populated through calls to a group of methods that each create and add a CvTradedItem
 //!  - These methods to create CvTradedItems have customized parameters so the external caller
-//!    doesnít need to know how the data is stored internally
+//!    doesnùt need to know how the data is stored internally
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class CvDeal
 {
@@ -172,6 +172,9 @@ public:
 
 	bool IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, TradeableItems eItem, int iData1 = -1, int iData2 = -1, int iData3 = -1, bool bFlag1 = false, bool bCheckOtherPlayerValidity = true, bool bFinalizing = false);
 	int GetNumResource(PlayerTypes ePlayer, ResourceTypes eResource);
+#ifdef LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+	bool IsLuxuryTradeTargetAlreadyHasResource(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, ResourceTypes eResource);
+#endif
 
 	// Methods to add a CvTradedItem to a deal
 	void AddGoldTrade(PlayerTypes eFrom, int iAmount);
@@ -276,6 +279,9 @@ public:
 	PlayerTypes HasMadeProposal(PlayerTypes eFromPlayer);
 	bool ProposedDealExists(PlayerTypes eFromPlayer, PlayerTypes eToPlayer);
 	CvDeal* GetProposedDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer);
+#ifdef LEKMOD_PENDING_DEAL_TURN_PROMPT
+	void GetIncomingDealSenders(PlayerTypes eToPlayer, std::vector<PlayerTypes>& vSenders, bool bHumanOnly) const;
+#endif
 
 	CvDeal* GetCurrentDeal(PlayerTypes ePlayer, uint index);
 	CvDeal* GetHistoricDeal(PlayerTypes ePlayer, uint indx);

@@ -142,12 +142,18 @@ public:
 	int GetFreeExperience() const;
 	int GetGlobalFreeExperience() const;
 	int GetFoodKept() const;
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	int GetExcessGrowth() const;
+#endif
 	bool IsAirlift() const;
 	int GetAirModifier() const;
 	int GetNukeModifier() const;
 	int GetNukeExplosionRand() const;
 	int GetWorkerSpeedModifier() const;
 	int GetMilitaryProductionModifier() const;
+#if defined(LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD)
+	int GetMilitaryProductionMod() const;
+#endif
 	int GetSpaceProductionModifier() const;
 	int GetGlobalSpaceProductionModifier() const;
 	int GetBuildingProductionModifier() const;
@@ -420,12 +426,18 @@ private:
 	int m_iFreeExperience;
 	int m_iGlobalFreeExperience;
 	int m_iFoodKept;
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	int m_iExcessGrowth;
+#endif
 	bool m_bAirlift;
 	int m_iAirModifier;
 	int m_iNukeModifier;
 	int m_iNukeExplosionRand;
 	int m_iWorkerSpeedModifier;
 	int m_iMilitaryProductionModifier;
+#if defined(LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD)
+	int m_iMilitaryProductionMod;
+#endif
 	int m_iSpaceProductionModifier;
 	int m_iGlobalSpaceProductionModifier;
 	int m_iBuildingProductionModifier;

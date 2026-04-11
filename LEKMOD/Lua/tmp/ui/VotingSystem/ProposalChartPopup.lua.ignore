@@ -341,6 +341,22 @@ function UpdateAndSort(Id, iResult)
 	else
 		Controls.ProposalStartedBy:LocalizeAndSetText(" ");
 	end
+	local tPendingVoters = {};
+	for iPlayerLoop = 0, GameDefines.MAX_MAJOR_CIVS - 1, 1 do
+		local pVoter = Players[iPlayerLoop];
+		if pVoter ~= nil and pVoter:IsAlive() and pVoter:IsHuman() then
+			local bEligible = Game.GetProposalVoterEligibility(Id, iPlayerLoop);
+			local bHasVoted = Game.GetProposalVoterHasVoted(Id, iPlayerLoop);
+			if bEligible and (not bHasVoted) then
+				table.insert(tPendingVoters, pVoter:GetNickName() ~= "" and pVoter:GetNickName() or pVoter:GetName());
+			end
+		end
+	end
+	if #tPendingVoters > 0 then
+		Controls.PendingVotersLabel:LocalizeAndSetText("TXT_KEY_LEKMOD_MP_PENDING_VOTES", table.concat(tPendingVoters, ", "));
+	else
+		Controls.PendingVotersLabel:LocalizeAndSetText("TXT_KEY_LEKMOD_MP_PENDING_VOTES_NONE");
+	end
 	Controls.Expiration:SetText(Game.GetElapsedGameTurns() + Game.GetProposalExpirationCounter(Id) + 1)
 	local MaxVotes = Game.GetMaxVotes(Id)
 	local YesVotes = Game.GetYesVotes(Id)

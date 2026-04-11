@@ -630,6 +630,12 @@ void CvPlayerAI::AI_considerAnnex()
 		{
 			bCourthouseImprovement = true;
 		}
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+		else if (GetPlayerTraits()->GetBuildingClassProductionModifier(eCourthouseType) > 0)
+		{
+			bCourthouseImprovement = true;
+		}
+#endif
 	}
 
 	if (bCourthouseImprovement)

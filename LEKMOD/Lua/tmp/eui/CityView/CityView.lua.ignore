@@ -845,7 +845,7 @@ local function SetupBuildingList( city, buildings, buildingIM )
 				local foodPerPop = GameDefines.FOOD_CONSUMPTION_PER_POPULATION
 				local foodConsumed = city:FoodConsumption()
 				buildingYieldRate = buildingYieldRate + (foodConsumed < foodPerPop * population and foodPerPop * numSpecialistsInBuilding / 2 or 0)
-				buildingYieldModifier = buildingYieldModifier + (tonumber(building.FoodKept) or 0)
+				buildingYieldModifier = buildingYieldModifier + (tonumber(building.FoodKept) or 0) + (tonumber(building.ExcessGrowth) or 0)
 				cityYieldRate = city:FoodDifferenceTimes100() / 100 -- cityYieldRate - foodConsumed 
 				cityYieldRateModifier = cityYieldRateModifier + city:GetMaxFoodKeptPercent()
 				isProducing = true

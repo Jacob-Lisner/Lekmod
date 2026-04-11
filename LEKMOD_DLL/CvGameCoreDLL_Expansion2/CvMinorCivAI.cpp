@@ -5867,6 +5867,17 @@ void CvMinorCivAI::DoUpdateAlliesResourceBonus(PlayerTypes eNewAlly, PlayerTypes
 			if(eNewAlly != NO_PLAYER)
 			{
 				iResourceQuantity = GetPlayer()->getNumResourceTotal(eResource);
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+				if(eUsage == RESOURCEUSAGE_STRATEGIC)
+				{
+					const int iFromBuildings = GetPlayer()->getNumMinorStrategicResourceFromBuildings(eResource);
+					iResourceQuantity -= iFromBuildings;
+					if(iResourceQuantity < 0)
+					{
+						iResourceQuantity = 0;
+					}
+				}
+#endif
 
 				if(iResourceQuantity > 0)
 				{
@@ -10202,8 +10213,19 @@ int CvMinorCivAI::GetNumResourcesMajorLacks(PlayerTypes eMajor)
 		if(pkResourceInfo == NULL || pkResourceInfo->getResourceUsage() == RESOURCEUSAGE_BONUS)
 			continue;
 
-		// We must have it
-		if(GetPlayer()->getNumResourceTotal(eResource, /*bIncludeImport*/ false) == 0)
+		// We must have it (city-state building-granted strategics do not count as "something we can offer")
+		int iMinorHas = GetPlayer()->getNumResourceTotal(eResource, /*bIncludeImport*/ false);
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+		if(pkResourceInfo->getResourceUsage() == RESOURCEUSAGE_STRATEGIC)
+		{
+			iMinorHas -= GetPlayer()->getNumMinorStrategicResourceFromBuildings(eResource);
+			if(iMinorHas < 0)
+			{
+				iMinorHas = 0;
+			}
+		}
+#endif
+		if(iMinorHas == 0)
 			continue;
 
 		// They must not have it
@@ -10526,6 +10548,20 @@ pair<CvString, CvString> CvMinorCivAI::GetStatusChangeNotificationStrings(Player
 			{
 				eResource = (ResourceTypes) iResourceLoop;
 				iResourceQuantity = GetPlayer()->getNumResourceTotal(eResource);
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+				{
+					const CvResourceInfo* pkResInfoQty = GC.getResourceInfo(eResource);
+					if(pkResInfoQty != NULL && pkResInfoQty->getResourceUsage() == RESOURCEUSAGE_STRATEGIC)
+					{
+						const int iFromBuildings = GetPlayer()->getNumMinorStrategicResourceFromBuildings(eResource);
+						iResourceQuantity -= iFromBuildings;
+						if(iResourceQuantity < 0)
+						{
+							iResourceQuantity = 0;
+						}
+					}
+				}
+#endif
 
 				if(iResourceQuantity > 0)
 				{

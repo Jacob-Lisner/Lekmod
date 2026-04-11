@@ -890,6 +890,9 @@
 
 //--------------------------------------------------------------------------------
 
+// City-state strategic resources granted by buildings (e.g. Caravansary, Recycling Center) are not
+// shared with allied majors and cannot be offered in trade by the city-state.
+#define LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
 
 // Fixed an issue with unique faith units not working correctly
 #define LEK_UNIQUE_FAITH_UNIT_FIX
@@ -976,7 +979,8 @@
 #define LEKMOD_PROMO_YIELD_FROM_CONVERSION
 // Per-player, per-city, per-promotion, per-yield cap for majority conversion yields (UnitPromotions_YieldsFromFollowerConversion.OnlyOnce)
 #define LEKMOD_PROMO_CONVERSION_MAJORITY_ONLY_ONCE
-
+/// Clear forced-work when a tile becomes unworkable or changes working city; verify before manual plot clicks (stuck manual reassignment)
+#define LEKMOD_CITIZENS_FIX_CLEAR_STALE_FORCED_WHEN_UNWORKING
 
 /// ###############################
 /// Lekmod: New Lua Events and Methods
@@ -1091,6 +1095,14 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 */
 // Changes made for the new version of Lekmod, unrelated to the above
 #define LEKMOD_v34 
+// Building table integer for modifying excess food growth rate.
+#define LEKMOD_BUILDING_EXCESS_GROWTH
+// Building table integer for additional military unit production modifier.
+#define LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD
+// Adds a dedicated DLL/Lua check for disabled luxury trades when target already has the luxury.
+#define LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+// Exposes pending incoming deal sender list (oldest first) for End Turn UI prompting.
+#define LEKMOD_PENDING_DEAL_TURN_PROMPT
 // Allows the Collection of Golden Age Points during a Golden Age via game option.
 #define GAMEOPTION_GOLDENAGE_ALT
 // DLL code the Huey lake Req
@@ -1167,6 +1179,8 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define LEKMOD_BELIEF_CITY_STATE_FOLLOWING_RELIGION_INFLUENCE
 /// Trait column FirstProphetCostMod (%): discount on faith cost for the very first Great Prophet (XML -50 = half cost); any prior spawn/purchase that increments prophet count ends it.
 #define LEKMOD_TRAIT_FIRST_PROPHET_COST_MOD
+/// Trait_BuildingClassProductionModifiers table (mirrors Policy_BuildingClassProductionModifiers; % production speed per building class)
+#define LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS
 /// Unit table xml tag MoveAfterPurchase now works for faith-bought units (same as gold purchases) instead of always zeroing moves
 #define LEKMOD_FAITH_MOVE_AFTER_PURCHASE
 // Change the religious pressure when losing population

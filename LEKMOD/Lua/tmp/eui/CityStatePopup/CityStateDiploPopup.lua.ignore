@@ -80,6 +80,7 @@ local kiDeclaredWar = 6
 local kiRevokedProtection = 7
 local m_lastAction = kiNoAction
 local m_pendingAction = kiNoAction	-- For bullying dialog popups
+local PEACE_LOCK_TURNS = 8
 local kiGreet = 9
 local questKillCamp = MinorCivQuestTypes.MINOR_CIV_QUEST_KILL_CAMP
 local g_PersonalityInfo = {
@@ -104,6 +105,15 @@ local g_PersonalityInfo = {
 		greeting = L("TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_IRRATIONAL"),
 	},
 }
+
+local function OnTurnChangedForCityStatePopup()
+	if ContextPtr:IsHidden() then
+		return
+	end
+	OnDisplay()
+end
+Events.NewGameTurn.Add( OnTurnChangedForCityStatePopup )
+Events.ActivePlayerTurnStart.Add( OnTurnChangedForCityStatePopup )
 
 if not gk_mode then
 	Controls.FindOnMapButton:SetHide( true )
@@ -422,11 +432,38 @@ function OnDisplay()
 
 	-- War
 	if isAtWar then
+		local lockedWarTurns = activeTeam:GetNumTurnsLockedIntoWar(minorTeamID)
+		local turnsAtWar = 0
+		if activeTeam.GetNumTurnsAtWar then
+			turnsAtWar = activeTeam:GetNumTurnsAtWar(minorTeamID)
+		end
+		local isInfluencePeaceBlocked = minorPlayer:IsInfluenceTooLowForPeace(activePlayerID)
+		local peaceBaseText = Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_MAKE_PEACE")
+		local peaceTurnsRemaining = lockedWarTurns
+		if turnsAtWar > 0 then
+			local elapsedBasedRemaining = math.max(0, PEACE_LOCK_TURNS - turnsAtWar)
+			peaceTurnsRemaining = elapsedBasedRemaining
+		end
+		if peaceTurnsRemaining <= 0 and isInfluencePeaceBlocked then
+			local friendship = minorPlayer:GetMinorCivFriendshipWithMajor(activePlayerID)
+			local changePerTurnTimes100 = minorPlayer:GetFriendshipChangePerTurnTimes100(activePlayerID)
+			if friendship < -50 and changePerTurnTimes100 > 0 then
+				peaceTurnsRemaining = math.ceil(((-50 - friendship) * 100) / changePerTurnTimes100)
+			end
+		end
 
-		-- Warmongering player
+		-- Locked war timer: keep peace button visible but disabled with turns remaining.
+		if peaceTurnsRemaining > 0 then
+			strText = L("TXT_KEY_CITY_STATE_DIPLO_HELLO_WARMONGER")
+			Controls.PeaceButton:SetHide(false)
+			Controls.PeaceButton:SetDisabled(true)
+			Controls.PeaceAnim:SetHide(true)
+			Controls.PeaceLabel:SetText(Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_PEACE_TURNS_REMAINING", peaceTurnsRemaining))
+			Controls.PeaceButton:SetToolTipString(Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_PEACE_TURNS_REMAINING_TT", peaceTurnsRemaining))
+		-- Warmongering / influence blocked player
 		-- NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW begin
 		-- if minorPlayer:IsPeaceBlocked(activeTeamID) then
-		if (minorPlayer:IsPeaceBlocked(activeTeamID) or minorPlayer:IsInfluenceTooLowForPeace(activeTeamID)) then
+		elseif (minorPlayer:IsPeaceBlocked(activeTeamID) or isInfluencePeaceBlocked) then
 		-- NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW end
 			strText = L("TXT_KEY_CITY_STATE_DIPLO_HELLO_WARMONGER")
 			Controls.PeaceButton:SetHide(true)
@@ -435,6 +472,10 @@ function OnDisplay()
 		else
 			strText = L("TXT_KEY_CITY_STATE_DIPLO_HELLO_WAR")
 			Controls.PeaceButton:SetHide(false)
+			Controls.PeaceButton:SetDisabled(false)
+			Controls.PeaceAnim:SetHide(false)
+			Controls.PeaceLabel:SetText(peaceBaseText)
+			Controls.PeaceButton:SetToolTipString(nil)
 		end
 
 		Controls.GiveButton:SetHide(true)
@@ -670,13 +711,13 @@ function OnDisplay()
 	SetButtonSize(Controls.NoUnitSpawningLabel, Controls.NoUnitSpawningButton, Controls.NoUnitSpawningAnim, Controls.NoUnitSpawningButtonHL)
 	SetButtonSize(Controls.BuyoutLabel, Controls.BuyoutButton, Controls.BuyoutAnim, Controls.BuyoutButtonHL)
 
-	-- NEW: stay at the current menu level, update visible buttons 
-	if bWar == false and bActiveGiveScreen == true then
+	-- NEW: stay at the current menu level, update visible buttons
+	if isAtWar == false and bActiveGiveScreen == true then
 		PopulateGiftChoices()
 		Controls.GiveStack:SetHide(false)
 		Controls.TakeStack:SetHide(true)
 		Controls.ButtonStack:SetHide(true)
-	elseif bWar == false and bActiveTakeScreen == true then
+	elseif isAtWar == false and bActiveTakeScreen == true then
 		PopulateTakeChoices()
 		Controls.GiveStack:SetHide(true)
 		Controls.TakeStack:SetHide(false)

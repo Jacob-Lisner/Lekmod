@@ -222,6 +222,7 @@ function BuildStaticTeamForPlayer(pPlayer)
 end
 
 function BuildStaticTeamsList()
+	g_TeamData = {};
 	-- Add teams for all major civs
     for iPlayer = 0, GameDefines.MAX_MAJOR_CIVS - 1 do
 		local pPlayer = Players[ iPlayer ];
@@ -231,6 +232,15 @@ function BuildStaticTeamsList()
     -- Add a team for the barbarians
     local pBarbPlayer = Players[ GameDefines.BARBARIAN_PLAYER ];
     BuildStaticTeamForPlayer(pBarbPlayer);
+end
+
+local function RebuildTurnQueue()
+	g_TurnQueueEntries = {};
+	g_SortTable = {};
+	Controls.TurnQueueStack:DestroyAllChildren();
+	BuildStaticTeamsList();
+	BuildTurnQueue();
+	UpdateTurnQueue();
 end
 
 -------------------------------------------------------------------------
@@ -398,6 +408,8 @@ function UpdateTurnQueue()
     Controls.TurnQueueStack:SortChildren( TurnQueueSort );
 end
 Events.NewGameTurn.Add( UpdateTurnQueue );
+Events.MultiplayerGamePlayerDisconnected.Add( RebuildTurnQueue );
+Events.MultiplayerGamePlayerUpdated.Add( RebuildTurnQueue );
 
 ----------------------------------------------
 function ShowHide( isHide )

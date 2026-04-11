@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Context ColorSet="Beige_Black_Alpha" FontStyle="SoftShadow">
+	<Button ID="VoteProposalButton" Hidden="1" ConsumeMouse="1" ToolTip="TXT_KEY_LEKMOD_VOTE_PROPOSAL_TT" Anchor="R,B" Offset="0,0" Size="236,54">
+		<Box Anchor="C,C" Size="236,54" Color="0,0,0,200" />
+		<Label ID="VoteProposalLabel" Anchor="C,C" Font="TwCenMT20" FontStyle="Shadow" Color0="255,220,120,255" Color1="0,0,0,180" String="TXT_KEY_LEKMOD_VOTE_ON_PROPOSAL" />
+	</Button>
+	<Button ID="RespondDealsButton" Hidden="1" ConsumeMouse="1" ToolTip="TXT_KEY_DIPLO_REQUEST" Anchor="R,B" Offset="0,0" Size="236,54">
+		<Box Anchor="C,C" Size="236,54" Color="0,0,0,200" />
+		<Label ID="RespondDealsLabel" Anchor="C,C" Font="TwCenMT20" FontStyle="Shadow" Color0="255,255,200,255" Color1="0,0,0,180" String="TXT_KEY_LEKMOD_RESPOND_TO_DEALS" />
+	</Button>
+</Context>

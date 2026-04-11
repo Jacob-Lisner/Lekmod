@@ -243,6 +243,11 @@ function GetHelpTextForBuilding(iBuildingID, bExcludeName, bExcludeHeader, bNoMa
     	end
 	end -- END Yields
 
+	local iExcessGrowth = pBuildingInfo.ExcessGrowth or 0;
+	if iExcessGrowth ~= 0 then
+		table.insert(lines, "[ICON_FOOD] Growth: " .. string.format("%+i%%", iExcessGrowth));
+	end
+
 	-- Great People
 	local specialistType = pBuildingInfo.SpecialistType;
 	if specialistType ~= nil then
@@ -604,6 +609,9 @@ function GetYieldTooltipHelper(pCity, iYieldType, strIcon)
 	
 	-- Yield modifiers string
 	strModifiers = strModifiers .. pCity:GetYieldModifierTooltip(iYieldType);
+	if (iYieldType == YieldTypes.YIELD_FOOD) then
+		strModifiers = string.gsub(strModifiers, "Empire Modifier", "City Modifier");
+	end
 	
 	-- Build tooltip
 	local strYieldToolTip = GetYieldTooltip(pCity, iYieldType, iBaseYield, iTotalYield, strIcon, strModifiers);

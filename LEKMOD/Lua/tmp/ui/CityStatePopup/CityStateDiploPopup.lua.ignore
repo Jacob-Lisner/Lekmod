@@ -35,6 +35,16 @@ local kiDeclaredWar = 6;
 local kiRevokedProtection = 7;
 local m_iLastAction = kiNoAction;
 local m_iPendingAction = kiNoAction; -- For bullying dialog popups
+local PEACE_LOCK_TURNS = 8;
+
+function OnTurnChangedForCityStatePopup()
+	if (ContextPtr:IsHidden()) then
+		return;
+	end
+	OnDisplay();
+end
+Events.NewGameTurn.Add(OnTurnChangedForCityStatePopup);
+Events.ActivePlayerTurnStart.Add(OnTurnChangedForCityStatePopup);
 
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -493,11 +503,38 @@ function OnDisplay()
 		
 	-- War
 	else
+		local iLockedWarTurns = pActiveTeam:GetNumTurnsLockedIntoWar(iTeam);
+		local iTurnsAtWar = 0;
+		if (pActiveTeam.GetNumTurnsAtWar) then
+			iTurnsAtWar = pActiveTeam:GetNumTurnsAtWar(iTeam);
+		end
+		local bInfluencePeaceBlocked = pPlayer:IsInfluenceTooLowForPeace(iActivePlayer);
+		local strPeaceBaseText = Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_MAKE_PEACE");
+		local iPeaceTurnsRemaining = iLockedWarTurns;
+		if (iTurnsAtWar > 0) then
+			local iElapsedBasedRemaining = math.max(0, PEACE_LOCK_TURNS - iTurnsAtWar);
+			iPeaceTurnsRemaining = iElapsedBasedRemaining;
+		end
+		if (iPeaceTurnsRemaining <= 0 and bInfluencePeaceBlocked) then
+			local iFriendship = pPlayer:GetMinorCivFriendshipWithMajor(iActivePlayer);
+			local iChangePerTurnTimes100 = pPlayer:GetFriendshipChangePerTurnTimes100(iActivePlayer);
+			if (iFriendship < -50 and iChangePerTurnTimes100 > 0) then
+				iPeaceTurnsRemaining = math.ceil(((-50 - iFriendship) * 100) / iChangePerTurnTimes100);
+			end
+		end
 		
-		-- Warmongering player
+		-- Locked war timer: keep peace button visible but disabled with turns remaining.
+		if (iPeaceTurnsRemaining > 0) then
+			strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_WARMONGER");
+			Controls.PeaceButton:SetHide(false);
+			Controls.PeaceButton:SetDisabled(true);
+			Controls.PeaceAnim:SetHide(true);
+			Controls.PeaceLabel:SetText(Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_PEACE_TURNS_REMAINING", iPeaceTurnsRemaining));
+			Controls.PeaceButton:SetToolTipString(Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_PEACE_TURNS_REMAINING_TT", iPeaceTurnsRemaining));
+		-- Warmongering / influence blocked player
 		-- NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW begin
 		--if (pPlayer:IsPeaceBlocked(iActiveTeam)) then
-		if (pPlayer:IsPeaceBlocked(iActiveTeam) or pPlayer:IsInfluenceTooLowForPeace(iActivePlayer)) then
+		elseif (pPlayer:IsPeaceBlocked(iActiveTeam) or bInfluencePeaceBlocked) then
 		-- NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW end
 			strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_WARMONGER");
 			Controls.PeaceButton:SetHide(true);
@@ -506,6 +543,10 @@ function OnDisplay()
 		else
 			strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_WAR");
 			Controls.PeaceButton:SetHide(false);
+			Controls.PeaceButton:SetDisabled(false);
+			Controls.PeaceAnim:SetHide(false);
+			Controls.PeaceLabel:SetText(strPeaceBaseText);
+			Controls.PeaceButton:SetToolTipString(nil);
 		end
 		
 		Controls.GiveButton:SetHide(true);

@@ -1397,7 +1397,13 @@ public:
 	int getNumResourceUsed(ResourceTypes eIndex) const;
 	void changeNumResourceUsed(ResourceTypes eIndex, int iChange);
 	int getNumResourceTotal(ResourceTypes eIndex, bool bIncludeImport = true) const;
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+	void changeNumResourceTotal(ResourceTypes eIndex, int iChange, bool bIgnoreResourceWarning = false, bool bMinorStrategicFromBuilding = false);
+	/// Strategic copies granted by buildings (Caravansary, Recycling Center, etc.) on a city-state; not shared with ally majors.
+	int getNumMinorStrategicResourceFromBuildings(ResourceTypes eIndex) const;
+#else
 	void changeNumResourceTotal(ResourceTypes eIndex, int iChange, bool bIgnoreResourceWarning = false);
+#endif
 
 	int getSiphonLuxuryCount(PlayerTypes eFromPlayer) const;
 	void changeSiphonLuxuryCount(PlayerTypes eFromPlayer, int iChange);
@@ -2324,6 +2330,9 @@ protected:
 
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiNumResourceUsed;
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiNumResourceTotal;
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+	FAutoVariable<std::vector<int>, CvPlayer> m_paiMinorStrategicResourceFromBuildings;
+#endif
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiResourceGiftedToMinors;
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiResourceExport;
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiResourceImport;

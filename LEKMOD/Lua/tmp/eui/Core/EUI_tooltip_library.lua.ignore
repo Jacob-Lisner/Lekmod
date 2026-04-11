@@ -763,6 +763,10 @@ end
 		tips:insert( L"TXT_KEY_PEDIA_CULTURE_LABEL" .. tip )
 		tip = ""
 	end
+	local excessGrowth = tonumber(building.ExcessGrowth) or 0
+	if excessGrowth ~= 0 then
+		tips:insert( "Growth: [ICON_FOOD]" .. S("%+i%%", excessGrowth) )
+	end
 	if civ5_mode then
 		-- Happiness:
 		if happinessChange ~=0 then
@@ -813,6 +817,10 @@ end
 	if tips and tip~="" then
 		tips:insert( L"TXT_KEY_PEDIA_DEFENSE_LABEL" .. tip )
 		tip = ""
+	end
+	local militaryProductionMod = tonumber(building.MilitaryProductionMod) or 0
+	if militaryProductionMod ~= 0 then
+		tips:insert( S("%s: %+i%%[ICON_PRODUCTION]", L("TXT_KEY_PEDIA_CATEGORY_MILITARY"), militaryProductionMod ) )
 	end
 
 	-- Maintenance:
@@ -913,6 +921,14 @@ end
 	for feature in GameInfo.Features() do
 		tip = GetYieldString( GameInfo.Building_FeatureYieldChanges{ BuildingType = buildingType, FeatureType = feature.Type } )
 		tips:insertIf( #tip > 0 and L(feature.Description) .. ":" .. tip )
+	end
+	-- Improvement Yields enhanced by Building (city-local)
+	for improvement in GameInfo.Improvements() do
+		tip = GetYieldString( GameInfo.Building_ImprovementYieldChanges{ BuildingType = buildingType, ImprovementType = improvement.Type } )
+		if #tip > 0 then
+			local improvementIcon = "[ICON_BUILD_" .. tostring(improvement.Type):gsub("^IMPROVEMENT_", "") .. "]"
+			tips:insert( improvementIcon .. " " .. L(improvement.Description) .. ":" .. tip )
+		end
 	end
 	if gk_mode then
 		-- Terrain Yields enhanced by Building
@@ -1738,8 +1754,11 @@ end
 
 -- Yield Tooltip Helper
 local function GetYieldTooltipHelper( city, yieldID, yieldIconString )
-
-	return GetYieldTooltip( city, yieldID, city:GetBaseYieldRate( yieldID ) + city:GetYieldPerPopTimes100( yieldID ) * city:GetPopulation() / 100, yieldID == YieldTypes.YIELD_FOOD and city:FoodDifferenceTimes100()/100 or city:GetYieldRateTimes100( yieldID )/100, yieldIconString, city:GetYieldModifierTooltip( yieldID ) )
+	local modifierTooltip = city:GetYieldModifierTooltip( yieldID )
+	if yieldID == YieldTypes.YIELD_FOOD then
+		modifierTooltip = string.gsub(modifierTooltip, "Empire Modifier", "City Modifier")
+	end
+	return GetYieldTooltip( city, yieldID, city:GetBaseYieldRate( yieldID ) + city:GetYieldPerPopTimes100( yieldID ) * city:GetPopulation() / 100, yieldID == YieldTypes.YIELD_FOOD and city:FoodDifferenceTimes100()/100 or city:GetYieldRateTimes100( yieldID )/100, yieldIconString, modifierTooltip )
 end
 
 -- FOOD

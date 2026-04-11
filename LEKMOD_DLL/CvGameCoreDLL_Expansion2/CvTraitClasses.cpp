@@ -215,6 +215,9 @@ CvTraitEntry::CvTraitEntry() :
 #ifdef AUI_WARNING_FIXES
 	m_piMovesChangeUnitCombats(NULL),
 	m_piMaintenanceModifierUnitCombats(NULL),
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+	m_paiBuildingClassProductionModifiers(NULL),
+#endif
 	m_iWorkerSpeedModifier(0),
 	m_iAfraidMinorPerTurnInfluence(0),
 	m_iLandTradeRouteRangeBonus(0),
@@ -302,6 +305,9 @@ CvTraitEntry::~CvTraitEntry()
 	SAFE_DELETE_ARRAY(m_piResourceQuantityModifiers);
 	SAFE_DELETE_ARRAY(m_piMovesChangeUnitCombats);
 	SAFE_DELETE_ARRAY(m_piMaintenanceModifierUnitCombats);
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+	SAFE_DELETE_ARRAY(m_paiBuildingClassProductionModifiers);
+#endif
 #endif
 }
 
@@ -1163,6 +1169,15 @@ int CvTraitEntry::GetYieldModifier(int i) const
 {
 	return m_paiYieldModifier ? m_paiYieldModifier[i] : -1;
 }
+
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+int CvTraitEntry::GetBuildingClassProductionModifier(int i) const
+{
+	CvAssertMsg(i < GC.getNumBuildingClassInfos(), "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_paiBuildingClassProductionModifiers ? m_paiBuildingClassProductionModifiers[i] : 0;
+}
+#endif
 
 /// Accessor:: Additional quantity of strategic resources
 int CvTraitEntry::GetStrategicResourceQuantityModifier(int i) const
@@ -2219,6 +2234,9 @@ inner join BuildingClasses on BuildingClasses.Type = BuildingClassType inner joi
 		std::multimap<int,int>(m_FreePromotionUnitCombats).swap(m_FreePromotionUnitCombats);
 
 		kUtility.PopulateArrayByValue(m_piResourceQuantityModifiers, "Resources", "Trait_ResourceQuantityModifiers", "ResourceType", "TraitType", szTraitType, "ResourceQuantityModifier");
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+		kUtility.PopulateArrayByValue(m_paiBuildingClassProductionModifiers, "BuildingClasses", "Trait_BuildingClassProductionModifiers", "BuildingClassType", "TraitType", szTraitType, "ProductionModifier");
+#endif
 	}
 
 	//Populate m_MovesChangeUnitCombats
@@ -4059,6 +4077,28 @@ int CvPlayerTraits::GetBuildingClassGlobalHappiness(BuildingClassTypes eBuilding
 
 	return m_aiBuildingClassGlobalHappiness[(int)eBuildingClass];
 }
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+int CvPlayerTraits::GetBuildingClassProductionModifier(BuildingClassTypes eBuildingClass) const
+{
+	if (eBuildingClass == NO_BUILDINGCLASS)
+		return 0;
+	CvAssertMsg(eBuildingClass < GC.getNumBuildingClassInfos(), "Invalid eBuildingClass parameter in call to CvPlayerTraits::GetBuildingClassProductionModifier()");
+
+	int rtnValue = 0;
+#ifdef AUI_WARNING_FIXES
+	for (uint i = 0; i < (uint)GC.getNumTraitInfos(); i++)
+#else
+	for (int i = 0; i < GC.getNumTraitInfos(); i++)
+#endif
+	{
+		if (HasTrait((TraitTypes)i))
+		{
+			rtnValue += GC.getTraitInfo((TraitTypes)i)->GetBuildingClassProductionModifier((int)eBuildingClass);
+		}
+	}
+	return rtnValue;
+}
+#endif
 ///Get Yield Change from Trait for a specific building class
 int CvPlayerTraits::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType)
 {

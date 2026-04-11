@@ -310,6 +310,9 @@ protected:
 
 	static int lGetDealDuration(lua_State* L);
 	static int lGetPeaceDuration(lua_State* L);
+#ifdef LEKMOD_PENDING_DEAL_TURN_PROMPT
+	static int lGetPendingIncomingDealSenders(lua_State* L);
+#endif
 
 	static int lGetUnitUpgradesTo(lua_State* L);
 

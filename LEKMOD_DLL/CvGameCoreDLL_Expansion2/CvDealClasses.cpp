@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -1123,6 +1123,83 @@ int CvDeal::GetNumResource(PlayerTypes ePlayer, ResourceTypes eResource)
 
 	return iNumAvailable + iNumInRenewDeal - iNumInExistingDeal;
 }
+
+#ifdef LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+/// Checks if a luxury resource trade is blocked because the receiving player already has that luxury.
+bool CvDeal::IsLuxuryTradeTargetAlreadyHasResource(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, ResourceTypes eResource)
+{
+	if (eFromPlayer == NO_PLAYER || eToPlayer == NO_PLAYER || eResource == NO_RESOURCE)
+	{
+		return false;
+	}
+
+	const CvResourceInfo* pResourceInfo = GC.getResourceInfo(eResource);
+	if (pResourceInfo == NULL || pResourceInfo->getResourceUsage() != RESOURCEUSAGE_LUXURY)
+	{
+		return false;
+	}
+
+	int iNumInRenewDeal = 0;
+	int iNumInExistingDeal = 0;
+
+#ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+	CvGameDeals* pGameDeals = GC.getGame().GetGameDeals();
+	uint uiCurrentlyEndingDeals = pGameDeals->GetNumCurrentlyEndingDeals(eFromPlayer, eToPlayer);
+#endif
+
+	CvDeal* pRenewDeal = GET_PLAYER(eFromPlayer).GetDiplomacyAI()->GetDealToRenew();
+	if (!pRenewDeal)
+	{
+		pRenewDeal = GET_PLAYER(eToPlayer).GetDiplomacyAI()->GetDealToRenew();
+	}
+
+#ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+	if (pRenewDeal || uiCurrentlyEndingDeals > 0)
+#else
+	if (pRenewDeal)
+#endif
+	{
+		TradedItemList::iterator it;
+#ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+		if (pRenewDeal)
+		{
+#endif
+			for (it = pRenewDeal->m_TradedItems.begin(); it != pRenewDeal->m_TradedItems.end(); ++it)
+			{
+				if (it->m_eItemType == TRADE_ITEM_RESOURCES && it->m_eFromPlayer == eFromPlayer && (ResourceTypes)it->m_iData1 == eResource)
+				{
+					iNumInRenewDeal += it->m_iData2;
+				}
+			}
+#ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+		}
+
+		CvDeal* pLoopDeal = NULL;
+		for (uint uiI = 0; uiI < uiCurrentlyEndingDeals; ++uiI)
+		{
+			pLoopDeal = pGameDeals->GetCurrentlyEndingDeal(eFromPlayer, eToPlayer, uiI);
+			for (it = pLoopDeal->m_TradedItems.begin(); it != pLoopDeal->m_TradedItems.end(); ++it)
+			{
+				if (it->m_eItemType == TRADE_ITEM_RESOURCES && it->m_eFromPlayer == eFromPlayer && (ResourceTypes)it->m_iData1 == eResource)
+				{
+					iNumInRenewDeal += it->m_iData2;
+				}
+			}
+		}
+#endif
+
+		for (it = m_TradedItems.begin(); it != m_TradedItems.end(); ++it)
+		{
+			if (it->m_eItemType == TRADE_ITEM_RESOURCES && it->m_eFromPlayer == eFromPlayer && (ResourceTypes)it->m_iData1 == eResource)
+			{
+				iNumInExistingDeal += it->m_iData2;
+			}
+		}
+	}
+
+	return GET_PLAYER(eToPlayer).getNumResourceAvailable(eResource) > MAX(iNumInRenewDeal - iNumInExistingDeal, 0);
+}
+#endif
 
 
 /// What kind of Peace Treaty (if any) is this Deal?
@@ -3042,6 +3119,51 @@ CvDeal* CvGameDeals::GetProposedDeal(PlayerTypes eFromPlayer, PlayerTypes eToPla
 
 	return NULL;
 }
+
+#ifdef LEKMOD_PENDING_DEAL_TURN_PROMPT
+void CvGameDeals::GetIncomingDealSenders(PlayerTypes eToPlayer, std::vector<PlayerTypes>& vSenders, bool bHumanOnly) const
+{
+	vSenders.clear();
+	if(eToPlayer == NO_PLAYER)
+	{
+		return;
+	}
+
+	bool abAdded[MAX_PLAYERS];
+	for(int iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
+	{
+		abAdded[iPlayer] = false;
+	}
+
+	for(DealList::const_iterator it = m_ProposedDeals.begin(); it != m_ProposedDeals.end(); ++it)
+	{
+		if(it->m_eToPlayer != eToPlayer || it->m_eFromPlayer == NO_PLAYER)
+		{
+			continue;
+		}
+
+		const int iFromPlayer = static_cast<int>(it->m_eFromPlayer);
+		if(iFromPlayer < 0 || iFromPlayer >= MAX_PLAYERS || abAdded[iFromPlayer])
+		{
+			continue;
+		}
+
+		CvPlayerAI& kFromPlayer = GET_PLAYER(it->m_eFromPlayer);
+		if(!kFromPlayer.isAlive())
+		{
+			continue;
+		}
+
+		if(bHumanOnly && !kFromPlayer.isHuman())
+		{
+			continue;
+		}
+
+		abAdded[iFromPlayer] = true;
+		vSenders.push_back(it->m_eFromPlayer);
+	}
+}
+#endif
 
 
 /// If a deal has actually ended, move it from the current list to the historic list

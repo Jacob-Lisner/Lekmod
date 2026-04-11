@@ -509,6 +509,10 @@ public:
 
 	int getMaxFoodKeptPercent() const;
 	void changeMaxFoodKeptPercent(int iChange);
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	int getExcessGrowthModifier() const;
+	void changeExcessGrowthModifier(int iChange);
+#endif
 	
 	int getOverflowProduction() const;
 	void setOverflowProduction(int iNewValue);
@@ -1019,6 +1023,9 @@ protected:
 	FAutoVariable<int, CvCity> m_iFood;
 	FAutoVariable<int, CvCity> m_iFoodKept;
 	FAutoVariable<int, CvCity> m_iMaxFoodKeptPercent;
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	FAutoVariable<int, CvCity> m_iExcessGrowthModifier;
+#endif
 	FAutoVariable<int, CvCity> m_iOverflowProduction;
 	FAutoVariable<int, CvCity> m_iFeatureProduction;
 	FAutoVariable<int, CvCity> m_iMilitaryProductionModifier;

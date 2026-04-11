@@ -320,6 +320,9 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(GetDealDuration);
 	Method(GetPeaceDuration);
+#ifdef LEKMOD_PENDING_DEAL_TURN_PROMPT
+	Method(GetPendingIncomingDealSenders);
+#endif
 
 	Method(GetUnitUpgradesTo);
 
@@ -2165,6 +2168,32 @@ int CvLuaGame::lGetPeaceDuration(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvGame::GetPeaceDuration);
 }
+#ifdef LEKMOD_PENDING_DEAL_TURN_PROMPT
+//------------------------------------------------------------------------------
+int CvLuaGame::lGetPendingIncomingDealSenders(lua_State* L)
+{
+	const PlayerTypes eToPlayer = static_cast<PlayerTypes>(luaL_optint(L, 1, static_cast<int>(GC.getGame().getActivePlayer())));
+	const bool bHumanOnly = (lua_gettop(L) < 2) ? true : (lua_toboolean(L, 2) != 0);
+
+	lua_newtable(L);
+	if(eToPlayer == NO_PLAYER)
+	{
+		return 1;
+	}
+
+	std::vector<PlayerTypes> vSenders;
+	GC.getGame().GetGameDeals()->GetIncomingDealSenders(eToPlayer, vSenders, bHumanOnly);
+
+	int iLuaIndex = 1;
+	for(std::vector<PlayerTypes>::const_iterator it = vSenders.begin(); it != vSenders.end(); ++it)
+	{
+		lua_pushinteger(L, static_cast<int>(*it));
+		lua_rawseti(L, -2, iLuaIndex++);
+	}
+
+	return 1;
+}
+#endif
 
 //------------------------------------------------------------------------------
 int CvLuaGame::lGetUnitUpgradesTo(lua_State* L)

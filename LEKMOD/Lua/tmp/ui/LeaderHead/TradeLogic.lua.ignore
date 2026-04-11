@@ -77,6 +77,13 @@ local innerFrameWidth = 524;
 local outerFrameWidth = 520;
 local offsetsBetweenFrames = 4;
 
+local function GetDisabledLuxuryTradeTooltip( fromPlayerID, toPlayerID, resourceType, resourceInfo )
+	if resourceInfo and resourceInfo.ResourceUsage == 2 and g_Deal.IsLuxuryTradeTargetAlreadyHasResource and g_Deal:IsLuxuryTradeTargetAlreadyHasResource(fromPlayerID, toPlayerID, resourceType) then
+		return Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_PLAYER_ALREADY_OWNS_ONE_LINE");
+	end
+	return Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_EMBARGOED_ONE_LINE");
+end
+
 local oldCursor = 0;
 
 
@@ -1646,7 +1653,7 @@ function ResetDisplay()
 		    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_BOTH_HAVE_NOT_REASEARCHED_ONE_LINE", GameInfo.Technologies[pResource.TechReveal].Description));
             		else
 		    			instance.Button:GetTextControl():SetColorByName("Gray_Black");
-		    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_EMBARGOED_ONE_LINE"));
+		    			instance.Button:SetToolTipString(GetDisabledLuxuryTradeTooltip(g_iUs, g_iThem, resType, pResource));
 		    		end
             	else
 	    			instance.Button:GetTextControl():SetColorByName("Beige_Black");
@@ -1729,7 +1736,7 @@ function ResetDisplay()
 		    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_BOTH_HAVE_NOT_REASEARCHED_ONE_LINE", GameInfo.Technologies[pResource.TechReveal].Description));
             		else
 		    			instance.Button:GetTextControl():SetColorByName("Gray_Black");
-		    			instance.Button:SetToolTipString(Locale.ConvertTextKey("TXT_KEY_DIPLO_ITEM_EMBARGOED_ONE_LINE"));
+		    			instance.Button:SetToolTipString(GetDisabledLuxuryTradeTooltip(g_iThem, g_iUs, resType, pResource));
 		    		end
             	else
 	    			instance.Button:GetTextControl():SetColorByName("Beige_Black");

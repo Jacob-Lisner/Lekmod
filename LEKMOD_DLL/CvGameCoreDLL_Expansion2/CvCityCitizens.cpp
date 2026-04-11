@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -2473,6 +2473,11 @@ void CvCityCitizens::DoAlterWorkingPlot(int iIndex)
 	CvAssertMsg(iIndex >= 0, "iIndex expected to be >= 0");
 	CvAssertMsg(iIndex < NUM_CITY_PLOTS, "iIndex expected to be < NUM_CITY_PLOTS");
 
+#ifdef LEKMOD_CITIZENS_FIX_CLEAR_STALE_FORCED_WHEN_UNWORKING
+	// Sync worked/forced state (e.g. tile blocked since last turn, working city changed) before handling clicks
+	DoVerifyWorkingPlots();
+#endif
+
 	// Clicking ON the city "resets" it to default setup
 	if(iIndex == CITY_HOME_PLOT)
 	{
@@ -2908,6 +2913,11 @@ void CvCityCitizens::DoVerifyWorkingPlot(CvPlot* pPlot)
 			{
 #ifdef AUI_CITIZENS_MID_TURN_ASSIGN_RUNS_SELF_CONSISTENCY
 				bRet = true;
+#endif
+#ifdef LEKMOD_CITIZENS_FIX_CLEAR_STALE_FORCED_WHEN_UNWORKING
+				// Clear stale manual lock; otherwise forced plots stay "protected" while unwalkable
+				// (enemy on tile, naval blockade, etc.) and block DoRemoveWorstCitizen from freeing a pop.
+				SetForcedWorkingPlot(pPlot, false);
 #endif
 				SetWorkingPlot(pPlot, false);
 				DoAddBestCitizenFromUnassigned();

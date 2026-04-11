@@ -203,6 +203,9 @@ CvCity::CvCity() :
 	, m_iFood("CvCity::m_iFood", m_syncArchive)
 	, m_iFoodKept("CvCity::m_iFoodKept", m_syncArchive)
 	, m_iMaxFoodKeptPercent("CvCity::m_iMaxFoodKeptPercent", m_syncArchive)
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	, m_iExcessGrowthModifier("CvCity::m_iExcessGrowthModifier", m_syncArchive)
+#endif
 	, m_iOverflowProduction("CvCity::m_iOverflowProduction", m_syncArchive)
 	, m_iFeatureProduction("CvCity::m_iFeatureProduction", m_syncArchive)
 	, m_iMilitaryProductionModifier("CvCity::m_iMilitaryProductionModifier", m_syncArchive)
@@ -963,6 +966,9 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_iFood = 0;
 	m_iFoodKept = 0;
 	m_iMaxFoodKeptPercent = 0;
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	m_iExcessGrowthModifier = 0;
+#endif
 	m_iOverflowProduction = 0;
 	m_iFeatureProduction = 0;
 	m_iMilitaryProductionModifier = 0;
@@ -6190,8 +6196,8 @@ int CvCity::getProductionModifier(UnitTypes eUnit, CvString* toolTipSink) const
 		}
 	}
 
-	// Military production bonus
-	if(pkUnitInfo->IsMilitaryProduction())
+	// Military production bonus (only for units with actual combat or ranged combat strength)
+	if(pkUnitInfo->IsMilitaryProduction() && (pkUnitInfo->GetCombat() > 0 || pkUnitInfo->GetRangedCombat() > 0))
 	{
 		iTempMod = getMilitaryProductionModifier();
 		iMultiplier += iTempMod;
@@ -6357,6 +6363,19 @@ int CvCity::getProductionModifier(BuildingTypes eBuilding, CvString* toolTipSink
 			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_BUILDING_POLICY", iTempMod);
 		}
 	}
+
+#if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
+	// From traits (Trait_BuildingClassProductionModifiers)
+	iTempMod = GET_PLAYER(getOwner()).GetPlayerTraits()->GetBuildingClassProductionModifier((BuildingClassTypes)kBuildingClassInfo.GetID());
+	if(iTempMod != 0)
+	{
+		iMultiplier += iTempMod;
+		if(toolTipSink && iTempMod)
+		{
+			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_BUILDING_TRAIT", iTempMod);
+		}
+	}
+#endif
 
 	// From traits
 	iTempMod = GET_PLAYER(getOwner()).GetPlayerTraits()->GetCapitalBuildingDiscount(eBuilding);
@@ -7687,7 +7706,13 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 		}
 #endif
 		changeMaxFoodKeptPercent(pBuildingInfo->GetFoodKept() * iChange);
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+		changeExcessGrowthModifier(pBuildingInfo->GetExcessGrowth() * iChange);
+#endif
 		changeMilitaryProductionModifier(pBuildingInfo->GetMilitaryProductionModifier() * iChange);
+#if defined(LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD)
+		changeMilitaryProductionModifier(pBuildingInfo->GetMilitaryProductionMod() * iChange);
+#endif
 		changeSpaceProductionModifier(pBuildingInfo->GetSpaceProductionModifier() * iChange);
 		m_pCityBuildings->ChangeBuildingProductionModifier(pBuildingInfo->GetBuildingProductionModifier() * iChange);
 		m_pCityBuildings->ChangeMissionaryExtraSpreads(pBuildingInfo->GetExtraMissionarySpreads() * iChange);
@@ -7727,7 +7752,16 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			int iNumResource = pBuildingInfo->GetResourceQuantity(iResourceLoop) * iChange;
 			if(iNumResource != 0)
 			{
-				owningPlayer.changeNumResourceTotal(eResource, iNumResource);
+#ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
+				const CvResourceInfo* pkLoopResourceInfo = GC.getResourceInfo(eResource);
+				const bool bMinorStrategicFromBuilding =
+					owningPlayer.isMinorCiv() &&
+					(pkLoopResourceInfo != NULL) &&
+					(pkLoopResourceInfo->getResourceUsage() == RESOURCEUSAGE_STRATEGIC);
+				owningPlayer.changeNumResourceTotal(eResource, iNumResource, false, bMinorStrategicFromBuilding);
+#else
+				owningPlayer.changeNumResourceTotal(eResource, iNumResource, false);
+#endif
 			}
 
 			// Do we have this resource local?
@@ -8625,6 +8659,14 @@ int CvCity::foodDifferenceTimes100(bool bBottom, CvString* toolTipSink) const
 			iTotalMod += iCityGrowthMod;
 			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_FOODMOD_PLAYER", iCityGrowthMod);
 		}
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+		int iBuildingExcessGrowthMod = getExcessGrowthModifier();
+		if(iBuildingExcessGrowthMod != 0)
+		{
+			iTotalMod += iBuildingExcessGrowthMod;
+			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_FOODMOD_PLAYER", iBuildingExcessGrowthMod);
+		}
+#endif
 
 		// Religion growth mod
 		int iReligionGrowthMod = 0;
@@ -10408,6 +10450,22 @@ void CvCity::changeMaxFoodKeptPercent(int iChange)
 	m_iMaxFoodKeptPercent = (m_iMaxFoodKeptPercent + iChange);
 	CvAssert(getMaxFoodKeptPercent() >= 0);
 }
+
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+//	--------------------------------------------------------------------------------
+int CvCity::getExcessGrowthModifier() const
+{
+	VALIDATE_OBJECT
+	return m_iExcessGrowthModifier;
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::changeExcessGrowthModifier(int iChange)
+{
+	VALIDATE_OBJECT
+	m_iExcessGrowthModifier = (m_iExcessGrowthModifier + iChange);
+}
+#endif
 
 
 //	--------------------------------------------------------------------------------
@@ -17539,6 +17597,9 @@ void CvCity::read(FDataStream& kStream)
 	kStream >> m_iFood;
 	kStream >> m_iFoodKept;
 	kStream >> m_iMaxFoodKeptPercent;
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	kStream >> m_iExcessGrowthModifier;
+#endif
 	kStream >> m_iOverflowProduction;
 	kStream >> m_iFeatureProduction;
 	kStream >> m_iMilitaryProductionModifier;
@@ -17915,6 +17976,9 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_iFood;
 	kStream << m_iFoodKept;
 	kStream << m_iMaxFoodKeptPercent;
+#if defined(LEKMOD_BUILDING_EXCESS_GROWTH)
+	kStream << m_iExcessGrowthModifier;
+#endif
 	kStream << m_iOverflowProduction;
 	kStream << m_iFeatureProduction;
 	kStream << m_iMilitaryProductionModifier;

@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -47,6 +47,7 @@ protected:
 	static int lDeclareWar(lua_State* L);
 	static int lMakePeace(lua_State* L);
 	static int lGetNumTurnsLockedIntoWar(lua_State* L);
+	static int lGetNumTurnsAtWar(lua_State* L);
 	static int lMeet(lua_State* L);
 
 	static int lGetScore(lua_State* L);
