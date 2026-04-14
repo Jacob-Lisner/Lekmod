@@ -1175,6 +1175,8 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define RELIGION_PRESSURE_LUA
 // Extend the functionality of Religious Tolerance
 #define LEKMOD_RELIGIOUS_TOLERANCE_EXTENDED
+// National Visitor Center / landmark tourism: count the same culture sources as CvCity uses for wonders and natural-wonder tiles (per-wonder policy culture, beliefs, traits, tech/era boosts, etc.)
+#define LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX
 // Belief columns CityStateFollowingReligionDecayMod / RecoveryMod: Greece-style CS influence decay & recovery when CS follows your religion (founder only)
 #define LEKMOD_BELIEF_CITY_STATE_FOLLOWING_RELIGION_INFLUENCE
 /// Trait column FirstProphetCostMod (%): discount on faith cost for the very first Great Prophet (XML -50 = half cost); any prior spawn/purchase that increments prophet count ends it.

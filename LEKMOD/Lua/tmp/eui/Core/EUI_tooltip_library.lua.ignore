@@ -765,7 +765,7 @@ end
 	end
 	local excessGrowth = tonumber(building.ExcessGrowth) or 0
 	if excessGrowth ~= 0 then
-		tips:insert( "Growth: [ICON_FOOD]" .. S("%+i%%", excessGrowth) )
+		tips:insert( "Growth: " .. S("%+i%%[ICON_FOOD]", excessGrowth) )
 	end
 	if civ5_mode then
 		-- Happiness:

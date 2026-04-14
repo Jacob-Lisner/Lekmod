@@ -196,8 +196,8 @@ REM ----------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\Highlights.xml.ignore" "%patchfolder%\Lua\UI\Highlights.xml" > nul
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\InGame.lua.ignore" "%patchfolder%\Lua\UI\InGame.lua" > nul
-copy /y "%patchfolder%\Lua\tmp\ui\DealResponseTurnPrompt.lua.ignore" "%patchfolder%\Lua\UI\DealResponseTurnPrompt.lua" > nul
-copy /y "%patchfolder%\Lua\tmp\ui\DealResponseTurnPrompt.xml.ignore" "%patchfolder%\Lua\UI\DealResponseTurnPrompt.xml" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.lua.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.xml.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.xml" > nul
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\mountain.lua.ignore" "%patchfolder%\Lua\UI\mountain.lua" > nul
 REM --------------------------------------------------------------------------------------------------

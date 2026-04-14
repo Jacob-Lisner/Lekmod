@@ -97,6 +97,8 @@
 	    </Stack>
 	    <Stack ID="ProposalDetailsStack" Anchor="L,T" Offset="225,32" Padding="12" StackGrowth="Bottom">
 		  <Box Offset="0,0" Size="1,27" Color="255,255,255,0"/>
+		  <!-- Keep right-side numeric rows aligned after adding PendingVotersLabel on the left stack -->
+		  <Box Offset="0,0" Size="1,27" Color="255,255,255,0"/>
 		  <Box Offset="0,0" Size="44,13" Color="0.0.0.0">
 		    <Label ID="Expiration" Offset="0,0" Anchor="R,T"/>
 		  </Box>

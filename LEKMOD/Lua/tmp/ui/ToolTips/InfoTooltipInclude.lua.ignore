@@ -245,7 +245,7 @@ function GetHelpTextForBuilding(iBuildingID, bExcludeName, bExcludeHeader, bNoMa
 
 	local iExcessGrowth = pBuildingInfo.ExcessGrowth or 0;
 	if iExcessGrowth ~= 0 then
-		table.insert(lines, "[ICON_FOOD] Growth: " .. string.format("%+i%%", iExcessGrowth));
+		table.insert(lines, "Growth: " .. string.format("%+i%% [ICON_FOOD]", iExcessGrowth));
 	end
 
 	-- Great People

@@ -353,9 +353,11 @@ function UpdateAndSort(Id, iResult)
 		end
 	end
 	if #tPendingVoters > 0 then
-		Controls.PendingVotersLabel:LocalizeAndSetText("TXT_KEY_LEKMOD_MP_PENDING_VOTES", table.concat(tPendingVoters, ", "));
+		Controls.PendingVotersLabel:LocalizeAndSetText("TXT_KEY_LEKMOD_MP_PENDING_VOTES", tostring(#tPendingVoters));
+		Controls.PendingVotersLabel:SetToolTipString(table.concat(tPendingVoters, ", "));
 	else
 		Controls.PendingVotersLabel:LocalizeAndSetText("TXT_KEY_LEKMOD_MP_PENDING_VOTES_NONE");
+		Controls.PendingVotersLabel:SetToolTipString(nil);
 	end
 	Controls.Expiration:SetText(Game.GetElapsedGameTurns() + Game.GetProposalExpirationCounter(Id) + 1)
 	local MaxVotes = Game.GetMaxVotes(Id)

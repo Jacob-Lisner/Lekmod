@@ -12036,7 +12036,8 @@ CvMPVotingSystem::Proposal* CvMPVotingSystem::GetProposalByID(int iProposalID)
 
 int CvMPVotingSystem::GetProposalExpirationCounter(int iProposalID)
 {
-	return m_vProposals.at(iProposalID).iExpirationCounter;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->iExpirationCounter : -1;
 }
 
 int CvMPVotingSystem::GetProposalTypeCooldownResetTurn(MPVotingSystemProposalTypes eType, PlayerTypes ePlayerID)
@@ -12061,42 +12062,50 @@ int CvMPVotingSystem::GetProposalTypeCooldownResetTurn(MPVotingSystemProposalTyp
 
 MPVotingSystemProposalTypes CvMPVotingSystem::GetProposalType(int iProposalID)
 {
-	return m_vProposals.at(iProposalID).eType;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->eType : NO_PROPOSAL;
 }
 
 MPVotingSystemProposalStatus CvMPVotingSystem::GetProposalStatus(int iProposalID)
 {
-	return m_vProposals.at(iProposalID).eStatus;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->eStatus : STATUS_INVALID;
 }
 
 PlayerTypes CvMPVotingSystem::GetProposalOwner(int iProposalID)
 {
-	return m_vProposals.at(iProposalID).eProposalOwner;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->eProposalOwner : NO_PLAYER;
 }
 
 PlayerTypes CvMPVotingSystem::GetProposalSubject(int iProposalID)
 {
-	return m_vProposals.at(iProposalID).eProposalSubject;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->eProposalSubject : NO_PLAYER;
 }
 
 bool CvMPVotingSystem::GetProposalCompletion(int iProposalID)
 {
-	return m_vProposals.at(iProposalID).bComplete;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->bComplete : true;
 }
 
 bool CvMPVotingSystem::GetVoterEligibility(int iProposalID, PlayerTypes ePlayerID)
 {
-	return m_vProposals.at(iProposalID).vIsEligible.at((int)ePlayerID);
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->vIsEligible.at((int)ePlayerID) : false;
 }
 
 bool CvMPVotingSystem::GetVoterHasVoted(int iProposalID, PlayerTypes ePlayerID)
 {
-	return m_vProposals.at(iProposalID).vHasVoted.at((int)ePlayerID);
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->vHasVoted.at((int)ePlayerID) : false;
 }
 
 bool CvMPVotingSystem::GetVoterVote(int iProposalID, PlayerTypes ePlayerID)
 {
-	return m_vProposals.at(iProposalID).vVotes.at((int)ePlayerID);
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	return pProposal ? pProposal->vVotes.at((int)ePlayerID) : false;
 }
 
 
@@ -12399,7 +12408,13 @@ void CvMPVotingSystem::AddProposal(MPVotingSystemProposalTypes eProposalType, Pl
 
 void CvMPVotingSystem::DoVote(int iProposalID, PlayerTypes ePlayerID, bool bVote)
 {
-	if (!GetProposalByID(iProposalID)->bComplete && GetProposalByID(iProposalID)->vIsEligible.at((int)ePlayerID))
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal == NULL)
+	{
+		return;
+	}
+
+	if (!pProposal->bComplete && pProposal->vIsEligible.at((int)ePlayerID))
 	{
 		SetVoterHasVoted(iProposalID, ePlayerID, true);
 		SetVoterVote(iProposalID, ePlayerID, bVote);
@@ -12420,52 +12435,93 @@ void CvMPVotingSystem::DoVote(int iProposalID, PlayerTypes ePlayerID, bool bVote
 
 void CvMPVotingSystem::SetProposalExpirationCounter(int iProposalID, int iValue)
 {
-	m_vProposals.at(iProposalID).iExpirationCounter = iValue;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->iExpirationCounter = iValue;
+	}
 }
 
 void CvMPVotingSystem::SetProposalType(int iProposalID, MPVotingSystemProposalTypes eType)
 {
-	m_vProposals.at(iProposalID).eType = eType;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->eType = eType;
+	}
 }
 
 void CvMPVotingSystem::SetProposalStatus(int iProposalID, MPVotingSystemProposalStatus eStatus)
 {
-	m_vProposals.at(iProposalID).eStatus = eStatus;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->eStatus = eStatus;
+	}
 }
 
 void CvMPVotingSystem::SetProposalOwner(int iProposalID, PlayerTypes eOwner)
 {
-	m_vProposals.at(iProposalID).eProposalOwner = eOwner;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->eProposalOwner = eOwner;
+	}
 }
 
 void CvMPVotingSystem::SetProposalSubject(int iProposalID, PlayerTypes eSubject)
 {
-	m_vProposals.at(iProposalID).eProposalSubject = eSubject;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->eProposalSubject = eSubject;
+	}
 }
 
 void CvMPVotingSystem::SetProposalCompletion(int iProposalID, bool bValue)
 {
-	m_vProposals.at(iProposalID).bComplete = bValue;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->bComplete = bValue;
+	}
 }
 
 void CvMPVotingSystem::SetVoterEligibility(int iProposalID, PlayerTypes ePlayerID, bool bValue)
 {
-	m_vProposals.at(iProposalID).vIsEligible.at((int)ePlayerID) = bValue;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->vIsEligible.at((int)ePlayerID) = bValue;
+	}
 }
 
 void CvMPVotingSystem::SetVoterHasVoted(int iProposalID, PlayerTypes ePlayerID, bool bValue)
 {
-	m_vProposals.at(iProposalID).vHasVoted.at((int)ePlayerID) = bValue;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->vHasVoted.at((int)ePlayerID) = bValue;
+	}
 }
 
 void CvMPVotingSystem::SetVoterVote(int iProposalID, PlayerTypes ePlayerID, bool bValue)
 {
-	m_vProposals.at(iProposalID).vVotes.at((int)ePlayerID) = bValue;
+	Proposal* pProposal = GetProposalByID(iProposalID);
+	if (pProposal != NULL)
+	{
+		pProposal->vVotes.at((int)ePlayerID) = bValue;
+	}
 }
 
 void CvMPVotingSystem::DoCheckVoters(int iProposalID)
 {
-	Proposal pProposal = *GetProposalByID(iProposalID);
+	Proposal* pProposalPtr = GetProposalByID(iProposalID);
+	if (pProposalPtr == NULL)
+	{
+		return;
+	}
+	Proposal pProposal = *pProposalPtr;
 	if (!pProposal.bComplete)
 	{
 		for (int i = 0; i < MAX_MAJOR_CIVS; i++)
