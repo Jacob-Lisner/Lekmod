@@ -920,6 +920,14 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 				if(pOtherPlayer->GetMinorCivAI()->GetAlly() != eToPlayer)
 					return false;
 			}
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+			// Cannot broker peace with a CS via deal while the manual DOW peace lock is active (vanilla would allow ally to offer third-party peace when GetAlly is the counterparty)
+			if (GET_TEAM(eFromTeam).IsCityStatePeaceLockFromOurDeclaration(eThirdTeam))
+			{
+				if (GET_TEAM(eFromTeam).GetNumTurnsAtWar(eThirdTeam) < LEKMOD_CITY_STATE_MANUAL_DOW_PEACE_LOCK_TURNS)
+					return false;
+			}
+#endif
 		}
 		// Major civ
 		else

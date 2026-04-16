@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -382,6 +382,9 @@ void CvTeam::reset(TeamTypes eID, bool bConstructorCall)
 			m_aiTurnTeamMet[i] = -1;
 			m_aiNumTurnsAtWar[i] = 0;
 			m_aiNumTurnsLockedIntoWar[i] = 0;
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+			m_abCityStatePeaceLockFromOurDeclaration[i] = false;
+#endif
 		}
 
 #ifdef AUI_WARNING_FIXES
@@ -1527,6 +1530,27 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 			}
 		}
 	}
+
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	// City-state peace button timer (Lua): only when this major team declared war on the minor directly, not when the minor joined via ally pact or declared on us
+	if (GC.getGame().isFinalInitialized())
+	{
+		if (!isBarbarian() && isAtWar(eTeam))
+		{
+			if (!isMinorCiv() && GET_TEAM(eTeam).isMinorCiv() && !bMinorAllyPact)
+			{
+				SetCityStatePeaceLockFromOurDeclaration(eTeam, true);
+				// Fresh peace-lock countdown in Lua (PEACE_LOCK_TURNS - turnsAtWar); stale counters after odd peace/transfer caused wrong remainders
+				SetNumTurnsAtWar(eTeam, 0);
+				GET_TEAM(eTeam).SetNumTurnsAtWar(GetID(), 0);
+			}
+			else if (isMinorCiv() && !GET_TEAM(eTeam).isMinorCiv())
+			{
+				GET_TEAM(eTeam).SetCityStatePeaceLockFromOurDeclaration(GetID(), false);
+			}
+		}
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -1702,6 +1726,11 @@ void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotific
 	{
 		setAtWar(eTeam, false);
 		GET_TEAM(eTeam).setAtWar(GetID(), false);
+
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+		SetCityStatePeaceLockFromOurDeclaration(eTeam, false);
+		GET_TEAM(eTeam).SetCityStatePeaceLockFromOurDeclaration(GetID(), false);
+#endif
 
 		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 		if (pkScriptSystem)
@@ -3982,6 +4011,26 @@ void CvTeam::ChangeNumTurnsLockedIntoWar(TeamTypes eTeam, int iChange)
 {
 	SetNumTurnsLockedIntoWar(eTeam, GetNumTurnsLockedIntoWar(eTeam) + iChange);
 }
+
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+//	--------------------------------------------------------------------------------
+bool CvTeam::IsCityStatePeaceLockFromOurDeclaration(TeamTypes eTeam) const
+{
+	CvAssertMsg(eTeam >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eTeam < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_abCityStatePeaceLockFromOurDeclaration[eTeam];
+}
+
+//	--------------------------------------------------------------------------------
+void CvTeam::SetCityStatePeaceLockFromOurDeclaration(TeamTypes eTeam, bool bValue)
+{
+	CvAssertMsg(eTeam >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eTeam < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+	CvAssertMsg(eTeam != GetID(), "Team is setting city-state peace lock with itself!");
+	if(eTeam != GetID())
+		m_abCityStatePeaceLockFromOurDeclaration[eTeam] = bValue;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 int CvTeam::GetTurnMadePeaceTreatyWithTeam(TeamTypes eIndex) const
@@ -7887,6 +7936,11 @@ void CvTeam::Read(FDataStream& kStream)
 
 	CvInfosSerializationHelper::ReadHashedTypeArray(kStream, m_aeRevealedResources);
 
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	ArrayWrapper<bool> kCityStatePeaceLockWrapper(MAX_TEAMS, &m_abCityStatePeaceLockFromOurDeclaration[0]);
+	kStream >> kCityStatePeaceLockWrapper;
+#endif
+
 	// Fix bad 'at war' flags where we are at war with ourselves.  Not a good thing.
 	if(m_eID >= 0 && m_eID < MAX_TEAMS)
 	{
@@ -8019,6 +8073,10 @@ void CvTeam::Write(FDataStream& kStream) const
 	ImprovementArrayHelpers::WriteYieldArray(kStream, m_ppaaiImprovementFreshWaterYieldChange, iNumImprovements);
 
 	CvInfosSerializationHelper::WriteHashedTypeArray(kStream, m_aeRevealedResources);
+
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	kStream << ArrayWrapperConst<bool>(MAX_TEAMS, &m_abCityStatePeaceLockFromOurDeclaration[0]);
+#endif
 }
 
 // CACHE: cache frequently used values

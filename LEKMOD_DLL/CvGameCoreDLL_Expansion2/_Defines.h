@@ -894,6 +894,11 @@
 // shared with allied majors and cannot be offered in trade by the city-state.
 #define LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
 
+// Track whether a major/minor war was started by the major declaring on the CS (for Lua city-state peace timer).
+#define LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+// Must match PEACE_LOCK_TURNS in CityStateDiploPopup.lua.ignore; also used to block TRADE_ITEM_THIRD_PARTY_PEACE during that window.
+#define LEKMOD_CITY_STATE_MANUAL_DOW_PEACE_LOCK_TURNS 8
+
 // Fixed an issue with unique faith units not working correctly
 #define LEK_UNIQUE_FAITH_UNIT_FIX
 ///EAP: Attempt to fix embarked visibility promotion errors

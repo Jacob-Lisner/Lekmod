@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -269,6 +269,12 @@ public:
 	void SetNumTurnsLockedIntoWar(TeamTypes eTeam, int iValue);
 	void ChangeNumTurnsLockedIntoWar(TeamTypes eTeam, int iChange);
 
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	/// True if this team began the current war with eTeam by declaring on a city-state (not by being declared on / ally chain). Used for Lua city-state peace timer.
+	bool IsCityStatePeaceLockFromOurDeclaration(TeamTypes eTeam) const;
+	void SetCityStatePeaceLockFromOurDeclaration(TeamTypes eTeam, bool bValue);
+#endif
+
 	bool isPermanentWarPeace(TeamTypes eIndex) const;
 	void setPermanentWarPeace(TeamTypes eIndex, bool bNewValue);
 
@@ -502,6 +508,9 @@ protected:
 	Firaxis::Array< int, REALLY_MAX_TEAMS > m_aiTechShareCount;
 	Firaxis::Array< int, REALLY_MAX_TEAMS > m_aiNumTurnsAtWar;
 	Firaxis::Array< int, REALLY_MAX_TEAMS > m_aiNumTurnsLockedIntoWar;
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	Firaxis::Array< bool, REALLY_MAX_TEAMS > m_abCityStatePeaceLockFromOurDeclaration;
+#endif
 	Firaxis::Array< int, NUM_DOMAIN_TYPES > m_aiExtraMoves;
 	Firaxis::Array< int, REALLY_MAX_TEAMS > m_paiTurnMadePeaceTreatyWithTeam;
 	Firaxis::Array< int, REALLY_MAX_TEAMS > m_aiIgnoreWarningCount;

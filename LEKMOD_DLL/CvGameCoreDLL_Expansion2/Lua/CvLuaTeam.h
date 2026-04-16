@@ -48,6 +48,9 @@ protected:
 	static int lMakePeace(lua_State* L);
 	static int lGetNumTurnsLockedIntoWar(lua_State* L);
 	static int lGetNumTurnsAtWar(lua_State* L);
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	static int lIsCityStatePeaceLockFromOurDeclaration(lua_State* L);
+#endif
 	static int lMeet(lua_State* L);
 
 	static int lGetScore(lua_State* L);

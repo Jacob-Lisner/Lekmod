@@ -503,17 +503,18 @@ function OnDisplay()
 		
 	-- War
 	else
-		local iLockedWarTurns = pActiveTeam:GetNumTurnsLockedIntoWar(iTeam);
 		local iTurnsAtWar = 0;
 		if (pActiveTeam.GetNumTurnsAtWar) then
 			iTurnsAtWar = pActiveTeam:GetNumTurnsAtWar(iTeam);
 		end
 		local bInfluencePeaceBlocked = pPlayer:IsInfluenceTooLowForPeace(iActivePlayer);
 		local strPeaceBaseText = Locale.Lookup("TXT_KEY_LEKMOD_CITY_STATE_MAKE_PEACE");
-		local iPeaceTurnsRemaining = iLockedWarTurns;
-		if (iTurnsAtWar > 0) then
-			local iElapsedBasedRemaining = math.max(0, PEACE_LOCK_TURNS - iTurnsAtWar);
-			iPeaceTurnsRemaining = iElapsedBasedRemaining;
+		-- Peace cooldown UI only applies when we declared war on this city-state; not ally-chain / CS-initiated wars
+		local bPeaceLockFromOurDow = (pActiveTeam.IsCityStatePeaceLockFromOurDeclaration and pActiveTeam:IsCityStatePeaceLockFromOurDeclaration(iTeam)) or false;
+		local iPeaceTurnsRemaining = 0;
+		if (bPeaceLockFromOurDow) then
+			-- Use only PEACE_LOCK_TURNS - turnsAtWar (DLL resets turns at manual CS DOW). Do not mix GetNumTurnsLockedIntoWar or turnsAtWar==0 jumps to 8.
+			iPeaceTurnsRemaining = math.max(0, PEACE_LOCK_TURNS - iTurnsAtWar);
 		end
 		if (iPeaceTurnsRemaining <= 0 and bInfluencePeaceBlocked) then
 			local iFriendship = pPlayer:GetMinorCivFriendshipWithMajor(iActivePlayer);
@@ -523,8 +524,8 @@ function OnDisplay()
 			end
 		end
 		
-		-- Locked war timer: keep peace button visible but disabled with turns remaining.
-		if (iPeaceTurnsRemaining > 0) then
+		-- Locked war timer: only while peace is not ally-blocked (timer hides if CS joins an enemy ally; returns when that clears if turns remain)
+		if (iPeaceTurnsRemaining > 0 and not pPlayer:IsPeaceBlocked(iActiveTeam)) then
 			strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_WARMONGER");
 			Controls.PeaceButton:SetHide(false);
 			Controls.PeaceButton:SetDisabled(true);

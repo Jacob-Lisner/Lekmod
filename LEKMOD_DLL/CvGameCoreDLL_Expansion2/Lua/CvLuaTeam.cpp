@@ -45,6 +45,9 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 	Method(MakePeace);
 	Method(GetNumTurnsLockedIntoWar);
 	Method(GetNumTurnsAtWar);
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+	Method(IsCityStatePeaceLockFromOurDeclaration);
+#endif
 	Method(Meet);
 
 	Method(GetScore);
@@ -306,6 +309,15 @@ int CvLuaTeam::lGetNumTurnsAtWar(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvTeam::GetNumTurnsAtWar);
 }
+
+#ifdef LEKMOD_CITY_STATE_PEACE_LOCK_FROM_DECLARATION
+//------------------------------------------------------------------------------
+//bool IsCityStatePeaceLockFromOurDeclaration(TeamTypes eTeam) const;
+int CvLuaTeam::lIsCityStatePeaceLockFromOurDeclaration(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvTeam::IsCityStatePeaceLockFromOurDeclaration);
+}
+#endif
 
 //------------------------------------------------------------------------------
 //void meet(TeamTypes eTeam, bool bSuppressMessages);
