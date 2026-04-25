@@ -171,7 +171,9 @@ CvTraitEntry::CvTraitEntry() :
 	m_bNoAnnexing(false),
 	m_bTechFromCityConquer(false),
 	m_bUniqueLuxuryRequiresNewArea(false),
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	m_piWorldWonderYieldChanges(NULL),
+#endif
 #if defined(TRAITIFY) // Constructor, Arrays
 	m_ppiBuildingCostOverride(NULL),
 	m_ppiBuildingClassYieldChanges(NULL),
@@ -252,6 +254,9 @@ CvTraitEntry::~CvTraitEntry()
 #else
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiImprovementYieldChanges);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiSpecialistYieldChanges);
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	SAFE_DELETE_ARRAY(m_piWorldWonderYieldChanges);
+#endif
 #if defined(TRAITIFY) // Destructor, Arrays
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiBuildingClassYieldChanges);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiBuildingCostOverride);
@@ -1412,7 +1417,14 @@ int CvTraitEntry::GetBuildTimeOverride(BuildTypes eBuild, ResourceClassTypes eRe
 	return -1;  // No suitable override found
 }
 #endif
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvTraitEntry::GetWorldWonderYieldChanges(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piWorldWonderYieldChanges ? m_piWorldWonderYieldChanges[i] : -1;
+}
+#endif
 #if defined(TRAITIFY) // Array accessors
 // Remove Terrain Requirement
 bool CvTraitEntry::IsBuildingClassRemoveRequiredTerrain(BuildingClassTypes eBuildingClass) const
@@ -1905,6 +1917,9 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 		}
 		pResults->Reset();
 	}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kUtility.SetYields(m_piWorldWonderYieldChanges, "WorldWonderYieldChanges", "TraitType", szTraitType);
 #endif
 #if defined(TRAITIFY) // CvTraitEntry::CacheResults, ARRAY
 	kUtility.SetYields(m_piPuppetYieldModifiers, "Trait_PuppetYieldModifiers", "TraitType", szTraitType);
@@ -2967,6 +2982,9 @@ void CvPlayerTraits::InitPlayerTraits()
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::InitPlayerTraits, Arrays
 				m_iYieldFromKills[iYield] = trait->GetYieldFromKills(iYield);
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+				m_iWorldWonderYieldChange[iYield] = trait->GetWorldWonderYieldChanges(iYield);
+#endif
 #if defined(TRAITIFY)
 				m_iPuppetYieldModifiers[iYield] = trait->GetPuppetYieldModifiers(iYield);
 #endif
@@ -3531,6 +3549,9 @@ void CvPlayerTraits::Reset()
 		m_iYieldRateModifier[iYield] = 0;
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::Reset, Arrays
 		m_iYieldFromKills[iYield] = 0;
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+		m_iWorldWonderYieldChange[iYield] = 0;
 #endif
 #if defined(TRAITIFY)
 		m_iPuppetYieldModifiers[iYield] = 0;
@@ -5237,6 +5258,10 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	ArrayWrapper<int> kYieldFromKillsWrapper(NUM_YIELD_TYPES, m_iYieldFromKills);
 	kStream >> kYieldFromKillsWrapper;
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	ArrayWrapper<int> kWorldWonderYieldChangesWrapper(NUM_YIELD_TYPES, m_iWorldWonderYieldChange);
+	kStream >> kWorldWonderYieldChangesWrapper;
+#endif
 #if defined(TRAITIFY) // CvPlayerTraits::Read (for CvPlayerTraits Arrays)
 	ArrayWrapper<int> kPuppetYieldModifiersWrapper(NUM_YIELD_TYPES, m_iPuppetYieldModifiers);
 	kStream >> kPuppetYieldModifiersWrapper;
@@ -5585,6 +5610,9 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldChangeNaturalWonder);
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::Write (for CvPlayerTraits Arrays)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldFromKills);
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iWorldWonderYieldChange);
 #endif
 #if defined(TRAITIFY)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iPuppetYieldModifiers);

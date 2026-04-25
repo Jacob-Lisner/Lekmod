@@ -586,7 +586,6 @@ void CvArea::changeYieldRateModifier(PlayerTypes eIndex1, YieldTypes eIndex2, in
 	}
 }
 
-
 //	--------------------------------------------------------------------------------
 //	Get the number of resources of the specified type in the area.
 int CvArea::getNumResources(ResourceTypes eResource) const
@@ -741,17 +740,13 @@ void CvArea::read(FDataStream& kStream)
 	kStream >> m_aiFreeSpecialist;
 	kStream >> m_aiNumRevealedTiles;
 
-	for(iI=0; iI<MAX_PLAYERS; iI++)
+	for(iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		kStream >> (int&)m_aTargetCities[iI].eOwner;
 		kStream >> m_aTargetCities[iI].iID;
-	}
-
-	for(iI = 0; iI < MAX_PLAYERS; iI++)
-	{
 		kStream >> m_aaiYieldRateModifier[iI];
 	}
-
+	
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResources, GC.getNumResourceInfos());
 
 	ImprovementArrayHelpers::Read(kStream, m_paiNumImprovements);
@@ -792,14 +787,10 @@ void CvArea::write(FDataStream& kStream) const
 	kStream << m_aiFreeSpecialist;
 	kStream << m_aiNumRevealedTiles;
 
-	for(iI=0; iI<MAX_PLAYERS; iI++)
+	for(iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		kStream << m_aTargetCities[iI].eOwner;
 		kStream << m_aTargetCities[iI].iID;
-	}
-
-	for(iI = 0; iI < MAX_PLAYERS; iI++)
-	{
 		kStream << m_aaiYieldRateModifier[iI];
 	}
 

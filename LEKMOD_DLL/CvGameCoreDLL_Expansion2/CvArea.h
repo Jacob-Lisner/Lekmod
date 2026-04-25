@@ -154,6 +154,7 @@ protected:
 
 	int m_aaiYieldRateModifier[REALLY_MAX_PLAYERS][NUM_YIELD_TYPES];
 
+
 	int* m_paiNumResources;
 	int* m_paiNumImprovements;
 

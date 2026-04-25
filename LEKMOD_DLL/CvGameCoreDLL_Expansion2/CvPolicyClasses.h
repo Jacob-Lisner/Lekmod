@@ -339,6 +339,9 @@ public:
 #if defined(LEKMOD_POLICY_GREATPERSON_IMPROVEMENT_ADJACENCY_YIELD)
 	int GetGreatPersonImprovementAdjacencyYieldBonus(int i, int j) const;
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChange(int i) const;
+#endif
 	int GetFlavorValue(int i) const;
 
 	bool IsOneShot() const;
@@ -638,6 +641,9 @@ private:
 #if defined(LEKMOD_FIX_SCHOLASTICISM)
 	int** m_paiMinorFriendYieldBonus;
 	int** m_paiMinorAllyYieldBonus;
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int* m_piWorldWonderYieldChanges;
 #endif
 //	bool* m_pabHurry;
 	bool* m_pabSpecialistValid;
@@ -975,6 +981,9 @@ public:
 #if defined(LEKMOD_FIX_SCHOLASTICISM)
 	int GetMinorFriendYieldBonus(EraTypes eEra, YieldTypes eYield) const;
 	int GetMinorAllyYieldBonus(EraTypes eEra, YieldTypes eYield) const;
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChange(YieldTypes eYield) const;
 #endif
 
 	// Functions to give current player status with respect to policies

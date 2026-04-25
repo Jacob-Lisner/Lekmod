@@ -1193,8 +1193,12 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define LEKMOD_PREVENT_MINOR_CIV_KILL_VOTE_EXPLOIT
 // Prevent Helicopters from getting the Embark promotion upon upgrading
 #define LEKMOD_HELICOPTER_EMBARK_FIX
+// Change the Yield from Cities depending on thier CvArea. 
+// JK Hacking this a bit, by replicating the GameWide PlotYieldChange on the player. since areas can be very very fragile.
+#define LEKMOD_AREA_BASED_CITY_YIELD
 
-
+// Experimental Changes
+#define LEKMOD_EXPERIMENTAL_CHANGES
 
 // Generic define for temp changes
 #define CLEAN_UP

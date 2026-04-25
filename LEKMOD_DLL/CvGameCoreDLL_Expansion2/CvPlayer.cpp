@@ -435,6 +435,9 @@ CvPlayer::CvPlayer() :
 #endif
 	, m_eID("CvPlayer::m_eID", m_syncArchive)
 	, m_ePersonalityType("CvPlayer::m_ePersonalityType", m_syncArchive)
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	, m_aiWorldWonderYieldChanges("CvPlayer::m_aiWorldWonderYieldChanges", m_syncArchive)
+#endif
 	, m_aiCityYieldChange("CvPlayer::m_aiCityYieldChange", m_syncArchive)
 	, m_aiCoastalCityYieldChange("CvPlayer::m_aiCoastalCityYieldChange", m_syncArchive)
 	, m_aiCapitalYieldChange("CvPlayer::m_aiCapitalYieldChange", m_syncArchive)
@@ -467,10 +470,6 @@ CvPlayer::CvPlayer() :
 	, m_paiFreePromotionCount("CvPlayer::m_paiFreePromotionCount", m_syncArchive)
 #ifdef LEKMOD_UNITCOMBAT_FREE_PROMOTION
 	, m_paiUnitCombatFreePromotionCount("CvPlayer::m_paiFreeUnitCombatPromotionCount", m_syncArchive)
-#endif
-#ifdef LEKMOD_v34
-	, m_aiSameLandMassYieldChange("CvPlayer::m_aiSameLandMassYieldChange", m_syncArchive)
-    , m_aiDifferentLandMassYieldChange("CvPlayer::m_aiDifferentLandMassYieldChange", m_syncArchive)
 #endif
 	, m_paiUnitCombatProductionModifiers("CvPlayer::m_paiUnitCombatProductionModifiers", m_syncArchive)
 	, m_paiUnitCombatFreeExperiences("CvPlayer::m_paiUnitCombatFreeExperiences", m_syncArchive)
@@ -743,10 +742,14 @@ void CvPlayer::init(PlayerTypes eID)
 #endif
 		for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 		{
+			YieldTypes eYield = static_cast<YieldTypes>(iJ);
 #if !defined(LEKMOD_CITY_YIELDS_TRAITS)
-			ChangeCityYieldChange((YieldTypes)iJ, 100 * GetPlayerTraits()->GetFreeCityYield((YieldTypes)iJ));
+			ChangeCityYieldChange(eYield, 100 * GetPlayerTraits()->GetFreeCityYield(eYield));
 #endif
-			changeYieldRateModifier((YieldTypes)iJ, GetPlayerTraits()->GetYieldRateModifier((YieldTypes)iJ));
+			changeYieldRateModifier(eYield, GetPlayerTraits()->GetYieldRateModifier(eYield));
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+			ChangeWorldWonderYieldChanges(eYield, GetPlayerTraits()->GetWorldWonderYieldChange(eYield));
+#endif
 		}
 
 		recomputeGreatPeopleModifiers();
@@ -895,7 +898,9 @@ void CvPlayer::uninit()
 	m_cities.Uninit();
 
 	m_units.Uninit();
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	m_aPlotExtraYields.clear();
+#endif
 	// loop through all entries freeing them up
 	std::map<int , CvAIOperation*>::iterator iter;
 	for(iter = m_AIOperations.begin(); iter != m_AIOperations.end(); ++iter)
@@ -1279,7 +1284,10 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 
 	// tutorial info
 	m_bEverPoppedGoody = false;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	m_aiWorldWonderYieldChanges.clear();
+	m_aiWorldWonderYieldChanges.resize(NUM_YIELD_TYPES, 0);
+#endif
 	m_aiCityYieldChange.clear();
 	m_aiCityYieldChange.resize(NUM_YIELD_TYPES, 0);
 
@@ -6851,6 +6859,12 @@ void CvPlayer::disband(CvCity* pCity)
 				}
 			}
 		}
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			GET_PLAYER((PlayerTypes)i).removePlotExtraYield(pPlot->getX(), pPlot->getY());
+		}
+#endif
 	}
 }
 
@@ -10466,7 +10480,10 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 	CvBuildingEntry* pBuildingInfo = GC.getBuildingInfo(eBuilding);
 	if(pBuildingInfo == NULL)
 		return;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)// Make the code for Belem less heavy in the plot calc
+	CvArea* pLoopArea;
+	CvMap& map = GC.getMap();
+#endif
 	// One-shot items
 	if(bFirst && iChange > 0)
 	{
@@ -10668,13 +10685,13 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 
 	for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
-		pArea->changeYieldRateModifier(GetID(), ((YieldTypes)iI), (pBuildingInfo->GetAreaYieldModifier(iI) * iChange));
-		changeYieldRateModifier(((YieldTypes)iI), (pBuildingInfo->GetGlobalYieldModifier(iI) * iChange));
+		YieldTypes eYield = static_cast<YieldTypes>(iI);
+		pArea->changeYieldRateModifier(GetID(), eYield, (pBuildingInfo->GetAreaYieldModifier(iI) * iChange));
+		changeYieldRateModifier(eYield, (pBuildingInfo->GetGlobalYieldModifier(iI) * iChange));
 		for (iJ = 0; iJ < GC.getNumResourceInfos(); iJ++)
 		{
-			changeResourceYieldChange(((ResourceTypes)iJ), ((YieldTypes)iI), (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, (YieldTypes)iI) * iChange));
+			changeResourceYieldChange(((ResourceTypes)iJ), eYield, (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, eYield) * iChange));
 		}
-		
 	}
 
 	for(iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -10863,8 +10880,110 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 			}
 		}
 #endif
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		CvCityBuildings* pCityBuildings = pLoopCity->GetCityBuildings();
+		YieldTypes eYield;
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			eYield = static_cast<YieldTypes>(iYield);
+			if (pCityBuildings->GetSameLandMassYieldChange(eYield) > 0)
+			{
+				setPlotExtraYield(pLoopCity->getX(), pLoopCity->getY(), eYield, pCityBuildings->GetSameLandMassYieldChange(eYield) * iChange);
+			}
+			else if (pCityBuildings->GetDifferentLandMassYieldChange(eYield) > 0)
+			{
+				setPlotExtraYield(pLoopCity->getX(), pLoopCity->getY(), eYield, pCityBuildings->GetDifferentLandMassYieldChange(eYield) * iChange);
+			}
+		}
+#endif
 	}
 }
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+//	--------------------------------------------------------------------------------
+int CvPlayer::getPlotExtraYield(int iX, int iY, YieldTypes eYield, bool bCity) const
+{
+	for (std::vector<PlotExtraYield>::const_iterator it = m_aPlotExtraYields.begin(); it != m_aPlotExtraYields.end(); ++it)
+	{
+		CvPlot* pPlot = GC.getMap().plot(iX, iY);
+		if (pPlot == NULL)
+			return 0;
+		if (pPlot->getOwner() != GetID())
+			return 0;
+		if ((*it).m_iX == iX && (*it).m_iY == iY)
+		{
+			// Sometimes we just want to apply the yield if there is a city
+			if (bCity)
+			{
+				return pPlot->isCity() ? (*it).m_aeExtraYield[eYield] : 0;
+			}
+			else
+			{
+				return (*it).m_aeExtraYield[eYield];
+			}
+		}
+	}
+
+	return 0;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlayer::setPlotExtraYield(int iX, int iY, YieldTypes eYield, int iExtraYield)
+{
+	bool bFound = false;
+
+	for (std::vector<PlotExtraYield>::iterator it = m_aPlotExtraYields.begin(); it != m_aPlotExtraYields.end(); ++it)
+	{
+		if ((*it).m_iX == iX && (*it).m_iY == iY)
+		{
+			(*it).m_aeExtraYield[eYield] += iExtraYield;
+			bFound = true;
+			break;
+		}
+	}
+	if (!bFound)
+	{
+		PlotExtraYield kExtraYield;
+		kExtraYield.m_iX = iX;
+		kExtraYield.m_iY = iY;
+		for (int i = 0; i < NUM_YIELD_TYPES; ++i)
+		{
+			if (eYield == i)
+			{
+				kExtraYield.m_aeExtraYield.push_back(iExtraYield);
+			}
+			else
+			{
+				kExtraYield.m_aeExtraYield.push_back(0);
+			}
+		}
+		m_aPlotExtraYields.push_back(kExtraYield);
+	}
+
+	CvPlot* pPlot = GC.getMap().plot(iX, iY);
+	if (NULL != pPlot)
+	{
+		pPlot->updateYield();
+	}
+}
+//	--------------------------------------------------------------------------------
+void CvPlayer::removePlotExtraYield(int iX, int iY)
+{
+	for (std::vector<PlotExtraYield>::iterator it = m_aPlotExtraYields.begin(); it != m_aPlotExtraYields.end(); ++it)
+	{
+		if ((*it).m_iX == iX && (*it).m_iY == iY)
+		{
+			m_aPlotExtraYields.erase(it);
+			break;
+		}
+	}
+
+	CvPlot* pPlot = GC.getMap().plot(iX, iY);
+	if (NULL != pPlot)
+	{
+		pPlot->updateYield();
+	}
+}
+#endif
 //	--------------------------------------------------------------------------------
 /// Get yield change from buildings for a specific building class
 int CvPlayer::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType)
@@ -11902,6 +12021,23 @@ int CvPlayer::specialistYield(SpecialistTypes eSpecialist, YieldTypes eYield, bo
 		iRtnValue += getSpecialistExtraYield(eYield);
 	}
 	return (iRtnValue);
+}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvPlayer::GetWorldWonderYieldChanges(YieldTypes eYield) const
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_aiWorldWonderYieldChanges[eYield];
+}
+void CvPlayer::ChangeWorldWonderYieldChanges(YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	if(iChange != 0)
+	{
+		m_aiWorldWonderYieldChanges.setAt(eYield, m_aiWorldWonderYieldChanges[eYield] + iChange);
+	}
 }
 #endif
 //	--------------------------------------------------------------------------------
@@ -24226,7 +24362,6 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 		updateYield();
 	}
 }
-
 //	--------------------------------------------------------------------------------
 bool CvPlayer::removeFromArmy(int iArmyID, int iID)
 {
@@ -26737,6 +26872,11 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 		iMod = pPolicy->GetSpecialistExtraYield(iI) * iChange;
 		if(iMod != 0)
 			changeSpecialistExtraYield(eYield, iMod);
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+		iMod = pPolicy->GetWorldWonderYieldChange(iI) * iChange;
+		if (iMod != 0)
+			ChangeWorldWonderYieldChanges(eYield, iMod);
+#endif
 	}
 #if defined(LEKMOD_v34) // Grant free resources from this policy
 	for (int i = 0; i < GC.getNumResourceInfos(); ++i)
@@ -27157,7 +27297,7 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 				{
 					eYield = (YieldTypes)iJ;
 					iYieldMod = pPolicy->GetBuildingClassYieldModifiers(eBuildingClass, eYield);
-					if (iYieldMod > 0)
+					if (iYieldMod != 0)
 					{
 						pLoopCity->changeYieldRateModifier(eYield, iYieldMod * iBuildingCount * iChange);
 					}
@@ -27166,6 +27306,13 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					{
 						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
 					}
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)// World Wonder Yield Change
+					iYieldChange = pPolicy->GetWorldWonderYieldChange(eYield);
+					if (iYieldChange != 0 && ::isWorldWonderClass(*pkBuildingClassInfo))
+					{
+						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
+					}
+#endif
 				}
 #endif
 			}
@@ -28251,6 +28398,9 @@ void CvPlayer::Read(FDataStream& kStream)
 #endif
 	kStream >> m_eID;
 	kStream >> m_ePersonalityType;
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream >> m_aiWorldWonderYieldChanges;
+#endif
 	kStream >> m_aiCityYieldChange;
 	kStream >> m_aiCoastalCityYieldChange;
 	kStream >> m_aiCapitalYieldChange;
@@ -28424,7 +28574,9 @@ void CvPlayer::Read(FDataStream& kStream)
 	kStream >> m_cities;
 	kStream >> m_units;
 	kStream >> m_armyAIs;
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	kStream >> m_aPlotExtraYields;
+#endif
 	{
 		m_AIOperations.clear();
 		uint iSize;
@@ -28870,7 +29022,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 
 	kStream << m_eID;
 	kStream << m_ePersonalityType;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream << m_aiWorldWonderYieldChanges;
+#endif
 	kStream << m_aiCityYieldChange;
 	kStream << m_aiCoastalCityYieldChange;
 	kStream << m_aiCapitalYieldChange;
@@ -28994,6 +29148,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_cities;
 	kStream << m_units;
 	kStream << m_armyAIs;
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	kStream << m_aPlotExtraYields;
+#endif
 
 	{
 		uint iSize = m_AIOperations.size();
