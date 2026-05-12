@@ -7832,6 +7832,7 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 			if (::isWorldWonderClass(pBuildingInfo->GetBuildingClassInfo()))
 			{
+				//ChangeBaseYieldRateFromBuildings(eYield, pBuildingInfo->GetWorldWonderYieldChanges(eYield) * iChange);
 				ChangeBaseYieldRateFromBuildings(eYield, owningPlayer.GetWorldWonderYieldChanges(eYield) * iChange);
 			}
 #endif

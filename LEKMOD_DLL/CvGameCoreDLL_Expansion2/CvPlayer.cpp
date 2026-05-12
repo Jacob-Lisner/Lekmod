@@ -898,9 +898,7 @@ void CvPlayer::uninit()
 	m_cities.Uninit();
 
 	m_units.Uninit();
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	m_aPlotExtraYields.clear();
-#endif
+
 	// loop through all entries freeing them up
 	std::map<int , CvAIOperation*>::iterator iter;
 	for(iter = m_AIOperations.begin(); iter != m_AIOperations.end(); ++iter)
@@ -6859,12 +6857,7 @@ void CvPlayer::disband(CvCity* pCity)
 				}
 			}
 		}
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-		for (int i = 0; i < MAX_PLAYERS; i++)
-		{
-			GET_PLAYER((PlayerTypes)i).removePlotExtraYield(pPlot->getX(), pPlot->getY());
-		}
-#endif
+
 	}
 }
 
@@ -10480,7 +10473,7 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 	CvBuildingEntry* pBuildingInfo = GC.getBuildingInfo(eBuilding);
 	if(pBuildingInfo == NULL)
 		return;
-#if defined(LEKMOD_EXPERIMENTAL_CHANGES)// Make the code for Belem less heavy in the plot calc
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)// Make the code for Belem less heavy in the plot calc
 	CvArea* pLoopArea;
 	CvMap& map = GC.getMap();
 #endif
@@ -10692,6 +10685,20 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 		{
 			changeResourceYieldChange(((ResourceTypes)iJ), eYield, (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, eYield) * iChange));
 		}
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		int iLoop;
+		for (pLoopArea = map.firstArea(&iLoop); pLoopArea != NULL; pLoopArea = map.nextArea(&iLoop))
+		{
+			if (pLoopArea == pArea)
+			{
+				pLoopArea->changeCityYieldChange(GetID(), eYield, (pBuildingInfo->GetSameLandMassYieldChange(iI) * iChange));
+			}
+			else
+			{
+				pLoopArea->changeCityYieldChange(GetID(), eYield, (pBuildingInfo->GetDifferentLandMassYieldChange(iI) * iChange));
+			}
+		}
+#endif
 	}
 
 	for(iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -10880,110 +10887,9 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 			}
 		}
 #endif
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-		CvCityBuildings* pCityBuildings = pLoopCity->GetCityBuildings();
-		YieldTypes eYield;
-		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
-		{
-			eYield = static_cast<YieldTypes>(iYield);
-			if (pCityBuildings->GetSameLandMassYieldChange(eYield) > 0)
-			{
-				setPlotExtraYield(pLoopCity->getX(), pLoopCity->getY(), eYield, pCityBuildings->GetSameLandMassYieldChange(eYield) * iChange);
-			}
-			else if (pCityBuildings->GetDifferentLandMassYieldChange(eYield) > 0)
-			{
-				setPlotExtraYield(pLoopCity->getX(), pLoopCity->getY(), eYield, pCityBuildings->GetDifferentLandMassYieldChange(eYield) * iChange);
-			}
-		}
-#endif
 	}
 }
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-//	--------------------------------------------------------------------------------
-int CvPlayer::getPlotExtraYield(int iX, int iY, YieldTypes eYield, bool bCity) const
-{
-	for (std::vector<PlotExtraYield>::const_iterator it = m_aPlotExtraYields.begin(); it != m_aPlotExtraYields.end(); ++it)
-	{
-		CvPlot* pPlot = GC.getMap().plot(iX, iY);
-		if (pPlot == NULL)
-			return 0;
-		if (pPlot->getOwner() != GetID())
-			return 0;
-		if ((*it).m_iX == iX && (*it).m_iY == iY)
-		{
-			// Sometimes we just want to apply the yield if there is a city
-			if (bCity)
-			{
-				return pPlot->isCity() ? (*it).m_aeExtraYield[eYield] : 0;
-			}
-			else
-			{
-				return (*it).m_aeExtraYield[eYield];
-			}
-		}
-	}
 
-	return 0;
-}
-
-//	--------------------------------------------------------------------------------
-void CvPlayer::setPlotExtraYield(int iX, int iY, YieldTypes eYield, int iExtraYield)
-{
-	bool bFound = false;
-
-	for (std::vector<PlotExtraYield>::iterator it = m_aPlotExtraYields.begin(); it != m_aPlotExtraYields.end(); ++it)
-	{
-		if ((*it).m_iX == iX && (*it).m_iY == iY)
-		{
-			(*it).m_aeExtraYield[eYield] += iExtraYield;
-			bFound = true;
-			break;
-		}
-	}
-	if (!bFound)
-	{
-		PlotExtraYield kExtraYield;
-		kExtraYield.m_iX = iX;
-		kExtraYield.m_iY = iY;
-		for (int i = 0; i < NUM_YIELD_TYPES; ++i)
-		{
-			if (eYield == i)
-			{
-				kExtraYield.m_aeExtraYield.push_back(iExtraYield);
-			}
-			else
-			{
-				kExtraYield.m_aeExtraYield.push_back(0);
-			}
-		}
-		m_aPlotExtraYields.push_back(kExtraYield);
-	}
-
-	CvPlot* pPlot = GC.getMap().plot(iX, iY);
-	if (NULL != pPlot)
-	{
-		pPlot->updateYield();
-	}
-}
-//	--------------------------------------------------------------------------------
-void CvPlayer::removePlotExtraYield(int iX, int iY)
-{
-	for (std::vector<PlotExtraYield>::iterator it = m_aPlotExtraYields.begin(); it != m_aPlotExtraYields.end(); ++it)
-	{
-		if ((*it).m_iX == iX && (*it).m_iY == iY)
-		{
-			m_aPlotExtraYields.erase(it);
-			break;
-		}
-	}
-
-	CvPlot* pPlot = GC.getMap().plot(iX, iY);
-	if (NULL != pPlot)
-	{
-		pPlot->updateYield();
-	}
-}
-#endif
 //	--------------------------------------------------------------------------------
 /// Get yield change from buildings for a specific building class
 int CvPlayer::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType)
@@ -28574,9 +28480,7 @@ void CvPlayer::Read(FDataStream& kStream)
 	kStream >> m_cities;
 	kStream >> m_units;
 	kStream >> m_armyAIs;
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	kStream >> m_aPlotExtraYields;
-#endif
+
 	{
 		m_AIOperations.clear();
 		uint iSize;
@@ -29148,9 +29052,6 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_cities;
 	kStream << m_units;
 	kStream << m_armyAIs;
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	kStream << m_aPlotExtraYields;
-#endif
 
 	{
 		uint iSize = m_AIOperations.size();
@@ -29396,7 +29297,102 @@ void CvPlayer::invalidateYieldRankCache(YieldTypes)
 //	--------------------------------------------------------------------------------
 void CvPlayer::doUpdateCacheOnTurn()
 {
+	// Build the AreaYield every turn, better than looping though Cities*Cities times to get the same information.
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	struct AreaYieldEntry
+	{
+		int iArea;
+		int aiSame[NUM_YIELD_TYPES];
+		int aiDifferent[NUM_YIELD_TYPES];
 
+		AreaYieldEntry()
+		{
+			iArea = -1;
+			for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+			{
+				aiSame[iYield] = 0;
+				aiDifferent[iYield] = 0;
+			}
+		}
+	};
+
+	std::vector<AreaYieldEntry> areaYields;
+	int aiDifferentTotal[NUM_YIELD_TYPES] = {};
+	
+	int iLoop;
+	YieldTypes eYield;
+	CvCity* pLoopCity;
+	CvCityBuildings* pCityBuildings;
+	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		pCityBuildings = pLoopCity->GetCityBuildings();
+		if (!pCityBuildings)
+			continue;
+		const int iArea = pLoopCity->getArea();
+		AreaYieldEntry* pEntry = NULL;
+		// Do we already have an entry for this area?
+		for (size_t i = 0; i < areaYields.size(); i++)
+		{
+			if (areaYields[i].iArea == iArea)
+			{
+				pEntry = &areaYields[i];
+				break;
+			}
+		}
+		// If not, add one
+		if (pEntry == NULL)
+		{
+			AreaYieldEntry kNewEntry;
+			kNewEntry.iArea = iArea;
+			areaYields.push_back(kNewEntry);
+			pEntry = &areaYields.back();
+		}
+		// Add the yields from this city to the area entry
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			YieldTypes eYield = static_cast<YieldTypes>(iYield);
+
+			const int iSame = pCityBuildings->GetSameLandMassYieldChange(eYield);
+			const int iDifferent = pCityBuildings->GetDifferentLandMassYieldChange(eYield);
+
+			pEntry->aiSame[iYield] += iSame;
+			pEntry->aiDifferent[iYield] += iDifferent;
+
+			aiDifferentTotal[iYield] += iDifferent;
+		}
+	}
+	// now go over the areas
+	CvArea* pLoopArea;
+	CvMap& kMap = GC.getMap();
+	for (pLoopArea = kMap.firstArea(&iLoop); pLoopArea != NULL; pLoopArea = kMap.nextArea(&iLoop))
+	{
+		const int iArea = pLoopArea->GetID();
+		AreaYieldEntry* pEntry = NULL;
+		// Find the entry for this area
+		for (size_t i = 0; i < areaYields.size(); i++)
+		{
+			if (areaYields[i].iArea == iArea)
+			{
+				pEntry = &areaYields[i];
+				break;
+			}
+		}
+		// apply the yields to the area
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			eYield = static_cast<YieldTypes>(iYield);
+
+			const int iSame = pEntry ? pEntry->aiSame[iYield] : 0;
+			const int iDifferentFromThisArea = pEntry ? pEntry->aiDifferent[iYield] : 0;
+			const int iDifferentFromOtherAreas = aiDifferentTotal[iYield] - iDifferentFromThisArea;
+
+			const int iFinalYield = iSame + iDifferentFromOtherAreas;
+
+			pLoopArea->setCityYieldChange(GetID(), eYield, iFinalYield);
+		}
+	}
+	updateYield();
+#endif
 }
 
 //	--------------------------------------------------------------------------------

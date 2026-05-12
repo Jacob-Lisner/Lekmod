@@ -115,6 +115,9 @@ void CvArea::reset(int iID, bool bWater, bool bConstructorCall)
 		for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 		{
 			m_aaiYieldRateModifier[iI][iJ] = 0;
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+			m_aaiCityYieldChange[iI][iJ] = 0;
+#endif
 		}
 	}
 
@@ -555,7 +558,7 @@ int CvArea::getYieldRateModifier(PlayerTypes eIndex1, YieldTypes eIndex2) const
 
 	CvAssertMsg(eIndex2 >= 0, "eIndex2 is expected to be >= 0");
 	CvAssertMsg(eIndex2 < NUM_YIELD_TYPES, "eIndex2 is expected to be < NUM_YIELD_TYPES");
-	if(eIndex2 < 0 || eIndex2 >= MAX_PLAYERS) return 0;
+	if(eIndex2 < 0 || eIndex2 >= NUM_YIELD_TYPES) return 0;
 
 	return m_aaiYieldRateModifier[eIndex1][eIndex2];
 }
@@ -570,7 +573,7 @@ void CvArea::changeYieldRateModifier(PlayerTypes eIndex1, YieldTypes eIndex2, in
 
 	CvAssertMsg(eIndex2 >= 0, "eIndex2 is expected to be >= 0");
 	CvAssertMsg(eIndex2 < NUM_YIELD_TYPES, "eIndex2 is expected to be < NUM_YIELD_TYPES");
-	if(eIndex2 < 0 || eIndex2 >= MAX_PLAYERS) return;
+	if(eIndex2 < 0 || eIndex2 >= NUM_YIELD_TYPES) return;
 
 	if(iChange != 0)
 	{
@@ -585,7 +588,38 @@ void CvArea::changeYieldRateModifier(PlayerTypes eIndex1, YieldTypes eIndex2, in
 		}
 	}
 }
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+int CvArea::getCityYieldChange(PlayerTypes ePlayer, YieldTypes eYield) const
+{
+	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be >= 0");
+	CvAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be < MAX_PLAYERS");
+	if(ePlayer < 0 || ePlayer >= MAX_PLAYERS) return 0;
+	CvAssertMsg(eYield >= 0, "eYield is expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield is expected to be < NUM_YIELD_TYPES");
+	if(eYield < 0 || eYield >= NUM_YIELD_TYPES) return 0;
+	return m_aaiCityYieldChange[ePlayer][eYield];
+}
+void CvArea::setCityYieldChange(PlayerTypes ePlayer, YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be >= 0");
+	CvAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be < MAX_PLAYERS");
+	if(ePlayer < 0 || ePlayer >= MAX_PLAYERS) return;
+	CvAssertMsg(eYield >= 0, "eYield is expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield is expected to be < NUM_YIELD_TYPES");
+	if(eYield < 0 || eYield >= NUM_YIELD_TYPES) return;
+	m_aaiCityYieldChange[ePlayer][eYield] = iChange;
+}
+void CvArea::changeCityYieldChange(PlayerTypes ePlayer, YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be >= 0");
+	CvAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be < MAX_PLAYERS");
+	if(ePlayer < 0 || ePlayer >= MAX_PLAYERS) return;
+	CvAssertMsg(eYield >= 0, "eYield is expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield is expected to be < NUM_YIELD_TYPES");
+	if(eYield < 0 || eYield >= NUM_YIELD_TYPES) return;
+	setCityYieldChange(ePlayer, eYield, (getCityYieldChange(ePlayer, eYield) + iChange));
+}
+#endif
 //	--------------------------------------------------------------------------------
 //	Get the number of resources of the specified type in the area.
 int CvArea::getNumResources(ResourceTypes eResource) const
@@ -745,6 +779,9 @@ void CvArea::read(FDataStream& kStream)
 		kStream >> (int&)m_aTargetCities[iI].eOwner;
 		kStream >> m_aTargetCities[iI].iID;
 		kStream >> m_aaiYieldRateModifier[iI];
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		kStream >> m_aaiCityYieldChange[iI];
+#endif
 	}
 	
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResources, GC.getNumResourceInfos());
@@ -792,6 +829,9 @@ void CvArea::write(FDataStream& kStream) const
 		kStream << m_aTargetCities[iI].eOwner;
 		kStream << m_aTargetCities[iI].iID;
 		kStream << m_aaiYieldRateModifier[iI];
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		kStream << m_aaiCityYieldChange[iI];
+#endif
 	}
 
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes>(kStream, m_paiNumResources, GC.getNumResourceInfos());

@@ -8563,9 +8563,6 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 		{
 			iYield += kPlayer.GetCoastalCityYieldChange(eYield);
 		}
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-		iTemp += kPlayer.getPlotExtraYield(getX(), getY(), eYield, true) * 100;
-#endif
 		// Capital Mod
 		if(pCity->isCapital())
 		{
@@ -8578,6 +8575,9 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 			iPerPopYield /= 100;
 			iYield += iPerPopYield;
 		}
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		iTemp += pCity->area()->getCityYieldChange(pCity->getOwner(), eYield) * 100;
+#endif
 		iYield += (iTemp / 100);
 	}
 
@@ -8592,9 +8592,6 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 				iYield += GC.getEXTRA_YIELD();
 			}
 		}
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-		iYield += GET_PLAYER(ePlayer).getPlotExtraYield(getX(), getY(), eYield, false) * 100;
-#endif
 		if(GET_PLAYER(ePlayer).isGoldenAge())
 		{
 			if(iYield >= kYield.getGoldenAgeYieldThreshold())

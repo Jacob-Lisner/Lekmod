@@ -282,11 +282,6 @@ public:
 	int getBuildingClassPrereqBuilding(BuildingTypes eBuilding, BuildingClassTypes ePrereqBuildingClass, int iExtra = 0) const;
 	void removeBuildingClass(BuildingClassTypes eBuildingClass);
 	void processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, CvArea* pArea);
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	int getPlotExtraYield(int iX, int iY, YieldTypes eYield, bool bCity) const;
-	void setPlotExtraYield(int iX, int iY, YieldTypes eYield, int iCost);
-	void removePlotExtraYield(int iX, int iY);
-#endif
 	int GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType);
 
 	bool canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestEra = false, bool bTestVisible = false, bool bTestGold = true, bool bTestPlotOwner = true) const;
@@ -2300,9 +2295,6 @@ protected:
 #endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiWorldWonderYieldChanges;
-#endif
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	std::vector<PlotExtraYield> m_aPlotExtraYields;
 #endif
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCityYieldChange;
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCoastalCityYieldChange;

@@ -2853,6 +2853,12 @@ void CvCityBuildings::Init(CvBuildingXMLEntries* pBuildings, CvCity* pCity)
 
 	CvAssertMsg(m_paiNumFreeBuilding==NULL, "about to leak memory, CvCityBuildings::m_paiNumFreeBuilding");
 	m_paiNumFreeBuilding = FNEW(int[iNumBuildings], c_eCiv5GameplayDLL, 0);
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	CvAssertMsg(m_paiSameLandMassYieldChange==NULL, "about to leak memory, CvCityBuildings::m_paiSameLandMassYieldChange");
+	m_paiSameLandMassYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+	CvAssertMsg(m_paiDifferentLandMassYieldChange == NULL, "about to leak memory, CvCityBuildings::m_paiDifferentLandMassYieldChange");
+	m_paiDifferentLandMassYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+#endif
 
 	m_aBuildingYieldChange.clear();
 	m_aBuildingGreatWork.clear();
@@ -2869,6 +2875,10 @@ void CvCityBuildings::Uninit()
 	SAFE_DELETE_ARRAY(m_paiBuildingOriginalTime);
 	SAFE_DELETE_ARRAY(m_paiNumRealBuilding);
 	SAFE_DELETE_ARRAY(m_paiNumFreeBuilding);
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	SAFE_DELETE_ARRAY(m_paiSameLandMassYieldChange);
+	SAFE_DELETE_ARRAY(m_paiDifferentLandMassYieldChange);
+#endif
 }
 
 /// Reset status arrays to all false
