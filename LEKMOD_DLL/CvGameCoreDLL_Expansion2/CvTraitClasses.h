@@ -219,6 +219,9 @@ public:
 	void setShortDescription(const char* szVal);
 
 	// Arrays
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChanges(int i) const;
+#endif
 #if defined(TRAITIFY) //Arrays
 	bool IsBuildingClassRemoveRequiredTerrain(BuildingClassTypes eBuildingClass) const;
 	bool IsUnitClassForceSpawnCapital(UnitClassTypes eUnitClass) const;
@@ -467,6 +470,9 @@ protected:
 	CvString m_strShortDescription;
 
 	// Arrays
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int* m_piWorldWonderYieldChanges;
+#endif
 #if defined(TRAITIFY) //Array members
 	std::vector<bool> m_abBuildingClassRemoveRequiredTerrain;
 	std::vector<bool> m_abUnitClassForceSpawnCapital;
@@ -1153,6 +1159,12 @@ public:
 		return m_iYieldFromKills[(int)eYield];
 	};
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChange(YieldTypes eYield) const
+	{
+		return m_iWorldWonderYieldChange[(int)eYield];
+	};
+#endif
 #if defined(TRAITIFY)
 	int GetPuppetYieldModifier(YieldTypes eYield) const
 	{
@@ -1515,6 +1527,9 @@ private:
 #endif
 
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiUnimprovedFeatureYieldChange;
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int m_iWorldWonderYieldChange[NUM_YIELD_TYPES];
+#endif
 #if defined(TRAITIFY)
 	int m_iRouteMovementChange[NUM_ROUTE_TYPES];
 	int m_iPuppetYieldModifiers[NUM_YIELD_TYPES];

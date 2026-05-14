@@ -7172,77 +7172,7 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 
 			// Free Units
 			CvUnit* pFreeUnit;
-
 			int iFreeUnitLoop;
-
-			// NQMP GJS - New France UA begin
-			if(pBuildingInfo->IsGrantsFreeCulturalGreatPersonWithTrait() && isCapital() && owningPlayer.GetPlayerTraits()->IsEarnsGreatPersonOnSlotOrGuild())
-			{
-				bool bGetWriter = false;
-				bool bGetArtist = false;
-				bool bGetMusician = false;
-				if (pBuildingInfo->GetGreatWorkCount() > 0) // it has great work slots and is marked as something that gives France the bonus
-				{
-					GreatWorkSlotType slotType = pBuildingInfo->GetGreatWorkSlotType();
-					if (slotType == CvTypes::getGREAT_WORK_SLOT_LITERATURE())
-					{
-						bGetWriter = true;
-					}
-					else if (slotType == CvTypes::getGREAT_WORK_SLOT_ART_ARTIFACT())
-					{
-						bGetArtist = true;
-					}
-					else if (slotType == CvTypes::getGREAT_WORK_SLOT_MUSIC())
-					{
-						bGetMusician = true;
-					}
-				}
-				else // check for guilds, they also give France the bonus
-				{
-					int buildingType = pBuildingInfo->GetBuildingClassType();
-					if (buildingType == GC.getInfoTypeForString("BUILDINGCLASS_WRITERS_GUILD") && !owningPlayer.GetPlayerTraits()->IsHasBuiltWritersGuild())
-					{
-						owningPlayer.GetPlayerTraits()->SetHasBuiltWritersGuild(true);
-						bGetWriter = true;
-					}
-					else if (buildingType == GC.getInfoTypeForString("BUILDINGCLASS_ARTISTS_GUILD") && !owningPlayer.GetPlayerTraits()->IsHasBuiltArtistsGuild())
-					{
-						owningPlayer.GetPlayerTraits()->SetHasBuiltArtistsGuild(true);
-						bGetArtist = true;
-					}
-					else if (buildingType == GC.getInfoTypeForString("BUILDINGCLASS_MUSICIANS_GUILD") && !owningPlayer.GetPlayerTraits()->IsHasBuiltMusiciansGuild())
-					{
-						owningPlayer.GetPlayerTraits()->SetHasBuiltMusiciansGuild(true);
-						bGetMusician = true;
-					}
-				}
-
-				if (bGetWriter || bGetArtist || bGetMusician)
-				{
-#ifdef AUI_WARNING_FIXES
-					for (uint iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++)
-#else
-					for (int iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++)
-#endif
-					{
-						const UnitTypes eUnit = static_cast<UnitTypes>(iUnitLoop);
-						CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUnit);
-						if (pkUnitInfo)
-						{
-							const UnitTypes eFreeUnitType = (UnitTypes)thisCiv.getCivilizationUnits((UnitClassTypes)pkUnitInfo->GetUnitClassType());
-							if ((bGetWriter && pkUnitInfo->GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_WRITER")) ||
-								(bGetArtist && pkUnitInfo->GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_ARTIST")) ||
-								(bGetMusician && pkUnitInfo->GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_MUSICIAN")))
-							{
-								pFreeUnit = owningPlayer.initUnit(eFreeUnitType, getX(), getY());
-								if (!pFreeUnit->jumpToNearestValidPlot())
-									pFreeUnit->kill(false);	// Could not find a valid spot!
-							}
-						}
-					}
-				}
-			}
-			// NQMP GJS - New France UA end
 
 			// regular free units
 #ifdef AUI_WARNING_FIXES
@@ -7899,7 +7829,13 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 			ChangeGarrisonYieldBonus(eYield, pBuildingInfo->GetGarrisonYieldChange(eYield)* iChange);		
 #endif
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+			if (::isWorldWonderClass(pBuildingInfo->GetBuildingClassInfo()))
+			{
+				//ChangeBaseYieldRateFromBuildings(eYield, pBuildingInfo->GetWorldWonderYieldChanges(eYield) * iChange);
+				ChangeBaseYieldRateFromBuildings(eYield, owningPlayer.GetWorldWonderYieldChanges(eYield) * iChange);
+			}
+#endif
 #ifdef AUI_WARNING_FIXES
 			for (uint iJ = 0; iJ < GC.getNumResourceInfos(); iJ++)
 #else
@@ -8021,6 +7957,10 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 				ChangeBaseYieldRateFromBuildings(eYield, iBuildingClassBonus * iChange);
 #endif
 			}
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+			m_pCityBuildings->ChangeSameLandMassYieldChange(eYield, pBuildingInfo->GetSameLandMassYieldChange(eYield));
+			m_pCityBuildings->ChangeDifferentLandMassYieldChange(eYield, pBuildingInfo->GetDifferentLandMassYieldChange(eYield));
+#endif
 		} // NUM_YIELD_TYPES loop end
 
 #ifdef AUI_WARNING_FIXES
@@ -8160,7 +8100,7 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 	m_iFaithPerTurnFromReligion = 0;
 	for(int iYield = 0; iYield <= YIELD_SCIENCE; iYield++)
 #else
-	for(int iYield = 0; iYield <= NUM_YIELD_TYPES; iYield++)
+	for(int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
 #endif
 	{
 		m_aiBaseYieldRateFromReligion[iYield] = 0;

@@ -435,6 +435,9 @@ CvPlayer::CvPlayer() :
 #endif
 	, m_eID("CvPlayer::m_eID", m_syncArchive)
 	, m_ePersonalityType("CvPlayer::m_ePersonalityType", m_syncArchive)
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	, m_aiWorldWonderYieldChanges("CvPlayer::m_aiWorldWonderYieldChanges", m_syncArchive)
+#endif
 	, m_aiCityYieldChange("CvPlayer::m_aiCityYieldChange", m_syncArchive)
 	, m_aiCoastalCityYieldChange("CvPlayer::m_aiCoastalCityYieldChange", m_syncArchive)
 	, m_aiCapitalYieldChange("CvPlayer::m_aiCapitalYieldChange", m_syncArchive)
@@ -467,10 +470,6 @@ CvPlayer::CvPlayer() :
 	, m_paiFreePromotionCount("CvPlayer::m_paiFreePromotionCount", m_syncArchive)
 #ifdef LEKMOD_UNITCOMBAT_FREE_PROMOTION
 	, m_paiUnitCombatFreePromotionCount("CvPlayer::m_paiFreeUnitCombatPromotionCount", m_syncArchive)
-#endif
-#ifdef LEKMOD_v34
-	, m_aiSameLandMassYieldChange("CvPlayer::m_aiSameLandMassYieldChange", m_syncArchive)
-    , m_aiDifferentLandMassYieldChange("CvPlayer::m_aiDifferentLandMassYieldChange", m_syncArchive)
 #endif
 	, m_paiUnitCombatProductionModifiers("CvPlayer::m_paiUnitCombatProductionModifiers", m_syncArchive)
 	, m_paiUnitCombatFreeExperiences("CvPlayer::m_paiUnitCombatFreeExperiences", m_syncArchive)
@@ -743,10 +742,14 @@ void CvPlayer::init(PlayerTypes eID)
 #endif
 		for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 		{
+			YieldTypes eYield = static_cast<YieldTypes>(iJ);
 #if !defined(LEKMOD_CITY_YIELDS_TRAITS)
-			ChangeCityYieldChange((YieldTypes)iJ, 100 * GetPlayerTraits()->GetFreeCityYield((YieldTypes)iJ));
+			ChangeCityYieldChange(eYield, 100 * GetPlayerTraits()->GetFreeCityYield(eYield));
 #endif
-			changeYieldRateModifier((YieldTypes)iJ, GetPlayerTraits()->GetYieldRateModifier((YieldTypes)iJ));
+			changeYieldRateModifier(eYield, GetPlayerTraits()->GetYieldRateModifier(eYield));
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+			ChangeWorldWonderYieldChanges(eYield, GetPlayerTraits()->GetWorldWonderYieldChange(eYield));
+#endif
 		}
 
 		recomputeGreatPeopleModifiers();
@@ -1279,7 +1282,10 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 
 	// tutorial info
 	m_bEverPoppedGoody = false;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	m_aiWorldWonderYieldChanges.clear();
+	m_aiWorldWonderYieldChanges.resize(NUM_YIELD_TYPES, 0);
+#endif
 	m_aiCityYieldChange.clear();
 	m_aiCityYieldChange.resize(NUM_YIELD_TYPES, 0);
 
@@ -6851,6 +6857,7 @@ void CvPlayer::disband(CvCity* pCity)
 				}
 			}
 		}
+
 	}
 }
 
@@ -10466,7 +10473,10 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 	CvBuildingEntry* pBuildingInfo = GC.getBuildingInfo(eBuilding);
 	if(pBuildingInfo == NULL)
 		return;
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)// Make the code for Belem less heavy in the plot calc
+	CvArea* pLoopArea;
+	CvMap& map = GC.getMap();
+#endif
 	// One-shot items
 	if(bFirst && iChange > 0)
 	{
@@ -10668,13 +10678,27 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 
 	for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
-		pArea->changeYieldRateModifier(GetID(), ((YieldTypes)iI), (pBuildingInfo->GetAreaYieldModifier(iI) * iChange));
-		changeYieldRateModifier(((YieldTypes)iI), (pBuildingInfo->GetGlobalYieldModifier(iI) * iChange));
+		YieldTypes eYield = static_cast<YieldTypes>(iI);
+		pArea->changeYieldRateModifier(GetID(), eYield, (pBuildingInfo->GetAreaYieldModifier(iI) * iChange));
+		changeYieldRateModifier(eYield, (pBuildingInfo->GetGlobalYieldModifier(iI) * iChange));
 		for (iJ = 0; iJ < GC.getNumResourceInfos(); iJ++)
 		{
-			changeResourceYieldChange(((ResourceTypes)iJ), ((YieldTypes)iI), (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, (YieldTypes)iI) * iChange));
+			changeResourceYieldChange(((ResourceTypes)iJ), eYield, (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, eYield) * iChange));
 		}
-		
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		int iLoop;
+		for (pLoopArea = map.firstArea(&iLoop); pLoopArea != NULL; pLoopArea = map.nextArea(&iLoop))
+		{
+			if (pLoopArea == pArea)
+			{
+				pLoopArea->changeCityYieldChange(GetID(), eYield, (pBuildingInfo->GetSameLandMassYieldChange(iI) * iChange));
+			}
+			else
+			{
+				pLoopArea->changeCityYieldChange(GetID(), eYield, (pBuildingInfo->GetDifferentLandMassYieldChange(iI) * iChange));
+			}
+		}
+#endif
 	}
 
 	for(iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -10865,6 +10889,7 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 #endif
 	}
 }
+
 //	--------------------------------------------------------------------------------
 /// Get yield change from buildings for a specific building class
 int CvPlayer::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType)
@@ -11902,6 +11927,23 @@ int CvPlayer::specialistYield(SpecialistTypes eSpecialist, YieldTypes eYield, bo
 		iRtnValue += getSpecialistExtraYield(eYield);
 	}
 	return (iRtnValue);
+}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvPlayer::GetWorldWonderYieldChanges(YieldTypes eYield) const
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_aiWorldWonderYieldChanges[eYield];
+}
+void CvPlayer::ChangeWorldWonderYieldChanges(YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	if(iChange != 0)
+	{
+		m_aiWorldWonderYieldChanges.setAt(eYield, m_aiWorldWonderYieldChanges[eYield] + iChange);
+	}
 }
 #endif
 //	--------------------------------------------------------------------------------
@@ -24226,7 +24268,6 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 		updateYield();
 	}
 }
-
 //	--------------------------------------------------------------------------------
 bool CvPlayer::removeFromArmy(int iArmyID, int iID)
 {
@@ -26737,6 +26778,11 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 		iMod = pPolicy->GetSpecialistExtraYield(iI) * iChange;
 		if(iMod != 0)
 			changeSpecialistExtraYield(eYield, iMod);
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+		iMod = pPolicy->GetWorldWonderYieldChange(iI) * iChange;
+		if (iMod != 0)
+			ChangeWorldWonderYieldChanges(eYield, iMod);
+#endif
 	}
 #if defined(LEKMOD_v34) // Grant free resources from this policy
 	for (int i = 0; i < GC.getNumResourceInfos(); ++i)
@@ -27157,7 +27203,7 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 				{
 					eYield = (YieldTypes)iJ;
 					iYieldMod = pPolicy->GetBuildingClassYieldModifiers(eBuildingClass, eYield);
-					if (iYieldMod > 0)
+					if (iYieldMod != 0)
 					{
 						pLoopCity->changeYieldRateModifier(eYield, iYieldMod * iBuildingCount * iChange);
 					}
@@ -27166,6 +27212,13 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					{
 						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
 					}
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)// World Wonder Yield Change
+					iYieldChange = pPolicy->GetWorldWonderYieldChange(eYield);
+					if (iYieldChange != 0 && ::isWorldWonderClass(*pkBuildingClassInfo))
+					{
+						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
+					}
+#endif
 				}
 #endif
 			}
@@ -28251,6 +28304,9 @@ void CvPlayer::Read(FDataStream& kStream)
 #endif
 	kStream >> m_eID;
 	kStream >> m_ePersonalityType;
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream >> m_aiWorldWonderYieldChanges;
+#endif
 	kStream >> m_aiCityYieldChange;
 	kStream >> m_aiCoastalCityYieldChange;
 	kStream >> m_aiCapitalYieldChange;
@@ -28870,7 +28926,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 
 	kStream << m_eID;
 	kStream << m_ePersonalityType;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream << m_aiWorldWonderYieldChanges;
+#endif
 	kStream << m_aiCityYieldChange;
 	kStream << m_aiCoastalCityYieldChange;
 	kStream << m_aiCapitalYieldChange;
@@ -29239,7 +29297,102 @@ void CvPlayer::invalidateYieldRankCache(YieldTypes)
 //	--------------------------------------------------------------------------------
 void CvPlayer::doUpdateCacheOnTurn()
 {
+	// Build the AreaYield every turn, better than looping though Cities*Cities times to get the same information.
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	struct AreaYieldEntry
+	{
+		int iArea;
+		int aiSame[NUM_YIELD_TYPES];
+		int aiDifferent[NUM_YIELD_TYPES];
 
+		AreaYieldEntry()
+		{
+			iArea = -1;
+			for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+			{
+				aiSame[iYield] = 0;
+				aiDifferent[iYield] = 0;
+			}
+		}
+	};
+
+	std::vector<AreaYieldEntry> areaYields;
+	int aiDifferentTotal[NUM_YIELD_TYPES] = {};
+	
+	int iLoop;
+	YieldTypes eYield;
+	CvCity* pLoopCity;
+	CvCityBuildings* pCityBuildings;
+	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		pCityBuildings = pLoopCity->GetCityBuildings();
+		if (!pCityBuildings)
+			continue;
+		const int iArea = pLoopCity->getArea();
+		AreaYieldEntry* pEntry = NULL;
+		// Do we already have an entry for this area?
+		for (size_t i = 0; i < areaYields.size(); i++)
+		{
+			if (areaYields[i].iArea == iArea)
+			{
+				pEntry = &areaYields[i];
+				break;
+			}
+		}
+		// If not, add one
+		if (pEntry == NULL)
+		{
+			AreaYieldEntry kNewEntry;
+			kNewEntry.iArea = iArea;
+			areaYields.push_back(kNewEntry);
+			pEntry = &areaYields.back();
+		}
+		// Add the yields from this city to the area entry
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			YieldTypes eYield = static_cast<YieldTypes>(iYield);
+
+			const int iSame = pCityBuildings->GetSameLandMassYieldChange(eYield);
+			const int iDifferent = pCityBuildings->GetDifferentLandMassYieldChange(eYield);
+
+			pEntry->aiSame[iYield] += iSame;
+			pEntry->aiDifferent[iYield] += iDifferent;
+
+			aiDifferentTotal[iYield] += iDifferent;
+		}
+	}
+	// now go over the areas
+	CvArea* pLoopArea;
+	CvMap& kMap = GC.getMap();
+	for (pLoopArea = kMap.firstArea(&iLoop); pLoopArea != NULL; pLoopArea = kMap.nextArea(&iLoop))
+	{
+		const int iArea = pLoopArea->GetID();
+		AreaYieldEntry* pEntry = NULL;
+		// Find the entry for this area
+		for (size_t i = 0; i < areaYields.size(); i++)
+		{
+			if (areaYields[i].iArea == iArea)
+			{
+				pEntry = &areaYields[i];
+				break;
+			}
+		}
+		// apply the yields to the area
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			eYield = static_cast<YieldTypes>(iYield);
+
+			const int iSame = pEntry ? pEntry->aiSame[iYield] : 0;
+			const int iDifferentFromThisArea = pEntry ? pEntry->aiDifferent[iYield] : 0;
+			const int iDifferentFromOtherAreas = aiDifferentTotal[iYield] - iDifferentFromThisArea;
+
+			const int iFinalYield = iSame + iDifferentFromOtherAreas;
+
+			pLoopArea->setCityYieldChange(GetID(), eYield, iFinalYield);
+		}
+	}
+	updateYield();
+#endif
 }
 
 //	--------------------------------------------------------------------------------

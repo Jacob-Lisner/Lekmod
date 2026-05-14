@@ -335,8 +335,10 @@ public:
 #endif
 #if defined(LEKMOD_v34)
 	int GetGarrisonYieldChange(int j) const;
-	int GetSameLandMassYieldChange(int iBuildingID, int iYieldID) const;
-	int GetDifferentLandMassYieldChange(int iBuildingID, int iYieldID) const;
+#endif
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	int GetSameLandMassYieldChange(int i) const;
+	int GetDifferentLandMassYieldChange(int i) const;
 #endif
 
 	int GetResourceYieldChange(int i, int j) const;
@@ -601,27 +603,16 @@ private:
 	bool* m_pbBuildingClassNeededInCity;
 	int* m_piNumFreeUnits;
 
-#ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
-	std::pair<int**, size_t> m_ppaiResourceYieldChange;
-	std::pair<int**, size_t> m_ppaiFeatureYieldChange;
-	std::pair<int**, size_t> m_ppaiSpecialistYieldChange;
-	std::pair<int**, size_t> m_ppaiResourceYieldModifier;
-	std::pair<int**, size_t> m_ppaiTerrainYieldChange;
-	std::pair<int**, size_t> m_ppiBuildingClassYieldChanges;
-#else
 	int** m_ppaiResourceYieldChange;
 #if defined(MISC_CHANGES) // CvBuildingClasses arrays
 	int** m_ppaiResourceClassYieldChange;
 #endif
 #if defined(LEKMOD_v34)
 	int* m_piGarrisonYieldChange;
-#ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
-	std::pair<int **, size_t> m_ppaiSameLandMassYieldChange;
-	std::pair<int **, size_t> m_ppaiDifferentLandMassYieldChange;
-#else
-	int** m_ppaiSameLandMassYieldChange;
-	int** m_ppaiDifferentLandMassYieldChange;
 #endif
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	int* m_piSameLandMassYieldChange;
+	int* m_piDifferentLandMassYieldChange;
 #endif
 	int** m_ppaiFeatureYieldChange;
 	std::map<int, std::map<int, int>> m_ppiResourceYieldChangeGlobal;
@@ -631,7 +622,6 @@ private:
 	int** m_ppaiResourceYieldModifier;
 	int** m_ppaiTerrainYieldChange;
 	int** m_ppiBuildingClassYieldChanges;
-#endif
 #ifdef LEKMOD_BUILDING_GP_EXPEND_YIELD
 	int* m_piGreatPersonExpendYield;
 #endif
@@ -800,7 +790,12 @@ public:
 
 	int GetBuildingProductionModifier() const;
 	void ChangeBuildingProductionModifier(int iChange);
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	int GetSameLandMassYieldChange(YieldTypes eYield) const;
+	void ChangeSameLandMassYieldChange(YieldTypes eYield, int iChange);
+	int GetDifferentLandMassYieldChange(YieldTypes eYield) const;
+	void ChangeDifferentLandMassYieldChange(YieldTypes eYield, int iChange);
+#endif
 	int GetBuildingDefense() const;
 	void ChangeBuildingDefense(int iChange);
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
@@ -841,6 +836,10 @@ private:
 	int m_iMissionaryExtraSpreads;
 	int m_iLandmarksTourismPercent;
 	int m_iGreatWorksTourismModifier;
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	int* m_paiSameLandMassYieldChange;
+	int* m_paiDifferentLandMassYieldChange;
+#endif
 
 	bool m_bSoldBuildingThisTurn;
 

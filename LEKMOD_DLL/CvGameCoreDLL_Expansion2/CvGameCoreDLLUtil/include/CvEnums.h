@@ -1212,7 +1212,12 @@ enum ImprovementUsageTypes
 
     NUM_IMPROVEMENTUSAGE_TYPES
 };
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+enum AreaTypes
+{
+	NO_AREA = -1,
+};
+#endif
 enum RouteTypes						
 {
 	NO_ROUTE = -1,

@@ -291,6 +291,9 @@ CvPolicyEntry::CvPolicyEntry(void):
 	m_paiMinorFriendYieldBonus(NULL),
 	m_paiMinorAllyYieldBonus(NULL),
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	m_piWorldWonderYieldChanges(NULL),
+#endif
 	m_paiHurryModifier(NULL),
 	m_pabSpecialistValid(NULL),
 #ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
@@ -392,6 +395,9 @@ CvPolicyEntry::~CvPolicyEntry(void)
 	CvDatabaseUtility::SafeDelete2DArray(m_paiMinorFriendYieldBonus);
 	CvDatabaseUtility::SafeDelete2DArray(m_paiMinorAllyYieldBonus);
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	SAFE_DELETE_ARRAY(m_piWorldWonderYieldChanges);
+#endif
 
 //	SAFE_DELETE_ARRAY(m_pabHurry);
 	SAFE_DELETE_ARRAY(m_paiHurryModifier);
@@ -475,7 +481,9 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 #ifdef FRUITY_TRADITION_ARISTOCRACY
 	m_iCapitalCulturePerUniqueLuxury = kResults.GetInt("CapitalCulturePerUniqueLuxury");
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	m_iCulturePerWonder = kResults.GetInt("CulturePerWonder");
+#endif
 	m_iCultureWonderMultiplier = kResults.GetInt("CultureWonderMultiplier");
 	m_iCulturePerTechResearched = kResults.GetInt("CulturePerTechResearched");
 	m_iCultureImprovementChange = kResults.GetInt("CultureImprovementChange");
@@ -668,7 +676,9 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iCityStateBonusModifier = kResults.GetInt("CityStateBonusModifier"); // NQMP GJS - Patronage Finisher
 	m_iExtraTerritoryClaim = kResults.GetInt("ExtraTerritoryClaim"); // NQMP GJS - Colonialism
 	m_iExtraTourismPerGreatWork = kResults.GetInt("ExtraTourismPerGreatWork"); // NQMP GJS - Cultural Exchange
+#if !defined(LEK_YIELD_TOURISM) && defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	m_iTourismPerWonder = kResults.GetInt("TourismPerWonder"); // NQMP GJS - Flourishing of the Arts
+#endif
 #ifdef NQ_TOURISM_PER_CITY
 	m_iTourismPerCity = kResults.GetInt("TourismPerCity");
 #endif
@@ -759,7 +769,6 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 #endif
 #if defined(LEKMOD_v34) // Resource quantity array
 	kUtility.PopulateArrayByValue(m_piPolicyResourceQuantity, "Resources", "Policy_ResourceQuantity", "ResourceType", "PolicyType", szPolicyType, "Quantity");
-
 	{ // Policy_ResourceClassYieldChanges
 		kUtility.Initialize2DArray(m_ppiPolicyResourceClassYieldChanges, "ResourceClasses", "Yields");
 
@@ -844,6 +853,47 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 			m_paiMinorAllyYieldBonus[EraID][iYieldID] = iAllyYieldBonus;
 		}
 		pResults->Reset();
+	}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	//kUtility.SetYields(m_piWorldWonderYieldChanges, "WorldWonderYieldChanges", "PolicyType", szPolicyType);
+	// Have to do a complex loader, to account for the exist ints
+	// WorldWonderYieldChanges
+	int iCultureFromWonders = kResults.GetInt("CulturePerWonder");
+#if defined(LEK_YIELD_TOURISM)
+	int iTourismFromWonders = kResults.GetInt("TourismPerWonder");
+#endif
+	{
+		kUtility.InitializeArray(m_piWorldWonderYieldChanges, "Yields", 0);
+		std::string key("WorldWonderYieldChanges"); // Table is generic
+		Database::Results* result = kUtility.GetResults(key);
+		if(result == NULL)
+		{
+			const char* query = 
+				"SELECT Yields.ID as YieldID, Yield "
+				"FROM WorldWonderYieldChanges "
+				"INNER JOIN Yields ON Yields.Type = WorldWonderYieldChanges.YieldType "
+				"WHERE PolicyType = ?";
+			result = kUtility.PrepareResults(key, query);
+		}
+		result->Bind(1, szPolicyType);
+		while(result->Step())
+		{
+			const int yieldID = result->GetInt(0);
+			const int yieldChange = result->GetInt(1);
+			m_piWorldWonderYieldChanges[yieldID] = yieldChange;
+			if (yieldID == YIELD_CULTURE)
+			{
+				m_piWorldWonderYieldChanges[YIELD_CULTURE] += iCultureFromWonders;
+			}
+#if defined(LEK_YIELD_TOURISM)
+			else if (yieldID == YIELD_TOURISM)
+			{
+				m_piWorldWonderYieldChanges[YIELD_TOURISM] += iTourismFromWonders;
+			}
+#endif
+		}
+
 	}
 #endif
 	//BuildingYieldModifiers
@@ -2717,6 +2767,15 @@ int CvPolicyEntry::GetMinorAllyYieldBonus(int i, int j) const
 	return m_paiMinorAllyYieldBonus ? m_paiMinorAllyYieldBonus[i][j] : 0;
 }
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+// Yield bonus to every World Wonder
+int CvPolicyEntry::GetWorldWonderYieldChange(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piWorldWonderYieldChanges ? m_piWorldWonderYieldChanges[i] : 0;
+}
+#endif
 /// Is this hurry type now enabled?
 //bool CvPolicyEntry::IsHurry(int i) const
 //{
@@ -4468,6 +4527,25 @@ int CvPlayerPolicies::GetMinorAllyYieldBonus(EraTypes eEra, YieldTypes eYield) c
 			if (pPolicy->GetMinorAllyYieldBonus(eEra, eYield) > 0)
 			{
 				iYield += pPolicy->GetMinorAllyYieldBonus(eEra, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvPlayerPolicies::GetWorldWonderYieldChange(YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetWorldWonderYieldChange(eYield) > 0)
+			{
+				iYield += pPolicy->GetWorldWonderYieldChange(eYield);
 			}
 		}
 	}

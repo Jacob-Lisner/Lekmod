@@ -106,6 +106,11 @@ public:
 
 	int getYieldRateModifier(PlayerTypes eIndex1, YieldTypes eIndex2) const;
 	void changeYieldRateModifier(PlayerTypes eIndex1, YieldTypes eIndex2, int iChange);
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	int getCityYieldChange(PlayerTypes eIndex1, YieldTypes eIndex2) const;
+	void setCityYieldChange(PlayerTypes eIndex1, YieldTypes eIndex2, int iChange);
+	void changeCityYieldChange(PlayerTypes eIndex1, YieldTypes eIndex2, int iChange);
+#endif
 
 	int getNumResources(ResourceTypes eResource) const;
 	int getNumTotalResources() const;
@@ -153,6 +158,10 @@ protected:
 	IDInfo m_aTargetCities[REALLY_MAX_TEAMS];
 
 	int m_aaiYieldRateModifier[REALLY_MAX_PLAYERS][NUM_YIELD_TYPES];
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	int m_aaiCityYieldChange[REALLY_MAX_PLAYERS][NUM_YIELD_TYPES];
+#endif
+
 
 	int* m_paiNumResources;
 	int* m_paiNumImprovements;

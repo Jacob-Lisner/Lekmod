@@ -389,6 +389,10 @@ public:
 #else
 	int specialistYield(SpecialistTypes eSpecialist, YieldTypes eYield, bool bExtraOnly = false) const;
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChanges(YieldTypes eYield) const;
+	void ChangeWorldWonderYieldChanges(YieldTypes eYield, int iChange);
+#endif
 	int GetCityYieldChange(YieldTypes eYield) const;
 	void ChangeCityYieldChange(YieldTypes eYield, int iChange);
 
@@ -2289,7 +2293,9 @@ protected:
 #if defined(LEKMOD_PROMO_YIELD_FROM_CONVERSION) && defined(LEKMOD_PROMO_CONVERSION_MAJORITY_ONLY_ONCE)
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiConversionMajorityOnceUsedKeys;
 #endif
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	FAutoVariable<std::vector<int>, CvPlayer> m_aiWorldWonderYieldChanges;
+#endif
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCityYieldChange;
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCoastalCityYieldChange;
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCapitalYieldChange;
@@ -2309,12 +2315,6 @@ protected:
 #if defined(LEKMOD_CITY_YIELDS_TRAITS) && defined(LEKMOD_TRACK_CITY_SETTLER_UNITTYPE) && defined(LEKMOD_YIELD_SETTLE_UNIT_NON_CAP_MAX) && (LEKMOD_YIELD_SETTLE_UNIT_NON_CAP_MAX > 0)
 	std::vector<int> m_aiYieldSettleUnitCityOrder;
 #endif
-
-#ifdef LEKMOD_v34
-	FAutoVariable<std::vector<int>, CvPlayer> m_aiSameLandMassYieldChange;
-	FAutoVariable<std::vector<int>, CvPlayer> m_aiDifferentLandMassYieldChange;
-#endif
-
 #ifdef AUI_WARNING_FIXES
 	typedef std::pair<int, int> PlayerOptionEntry;
 #else
