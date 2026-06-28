@@ -13539,6 +13539,7 @@ function AssignStartingPlots:FixResourceGraphics()
 			local plot = Map.GetPlot(x, y)
 			local res_ID = plot:GetResourceType(-1)
 			local featureType = plot:GetFeatureType()
+			local terrainType = plot:GetTerrainType()
 			
 			-- Mined/Quarried Resources
 			if res_ID == self.marble_ID or 
