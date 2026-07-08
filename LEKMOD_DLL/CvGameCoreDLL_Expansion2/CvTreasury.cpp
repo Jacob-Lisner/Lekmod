@@ -222,6 +222,7 @@ int CvTreasury::GetGoldFromCities() const
 // Gold from Cities times 100
 int CvTreasury::GetGoldFromCitiesTimes100(bool bExcludeTradeRoutes) const
 {
+#if !defined(STANDARDIZE_YIELDS)
 	int iGold = 0;
 
 	CvCity* pLoopCity;
@@ -233,6 +234,9 @@ int CvTreasury::GetGoldFromCitiesTimes100(bool bExcludeTradeRoutes) const
 	}
 
 	return iGold;
+#else
+	return m_pPlayer->getYieldFromCitiesTimes100(YIELD_GOLD, bExcludeTradeRoutes);
+#endif
 }
 
 /// Gold Per Turn from Diplomatic Deals
@@ -459,6 +463,7 @@ int CvTreasury::GetGoldPerTurnFromTraits() const
 /// Gold Per Turn from Religion
 int CvTreasury::GetGoldPerTurnFromReligion() const
 {
+#if !defined(STANDARDIZE_YIELDS)
 	int iGoldFromReligion = 0;
 
 	CvGameReligions* pReligions = GC.getGame().GetGameReligions();
@@ -482,6 +487,9 @@ int CvTreasury::GetGoldPerTurnFromReligion() const
 	}
 
 	return iGoldFromReligion;
+#else
+	return m_pPlayer->getYieldFromReligionTimes100(YIELD_GOLD, m_pPlayer->getYieldTimes100(YIELD_GOLD, true)) / 100;
+#endif
 }
 
 /// Gross income for turn times 100

@@ -87,6 +87,10 @@ public:
 	bool IsFreshWaterMakesValid() const;
 	bool IsRiverSideMakesValid() const;
 	bool IsNoFreshWater() const;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool IsAdjacentCityMakesValid() const;
+	bool IsFreshWaterSource() const;
+#endif
 	bool IsRequiresFlatlands() const;
 	bool IsRequiresFlatlandsOrFreshWater() const;
 	bool IsRequiresFeature() const;
@@ -215,6 +219,10 @@ protected:
 	bool m_bFreshWaterMakesValid;
 	bool m_bRiverSideMakesValid;
 	bool m_bNoFreshWater;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool m_bAdjacentCityMakesValid;
+	bool m_bFreshWaterSource;
+#endif
 	bool m_bRequiresFlatlands;
 	bool m_bRequiresFlatlandsOrFreshWater;
 	bool m_bRequiresFeature;

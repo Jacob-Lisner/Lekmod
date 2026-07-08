@@ -124,6 +124,13 @@ public:
 	int GetCityYieldChange(int i) const;
 	int GetHolyCityYieldChange(int i) const;
 	int GetYieldChangePerForeignCity(int i) const;
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+	int GetYieldChangePerFollowingCity(int i) const;
+	int GetPlayerYieldModifier(int i) const;
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+	int GetYieldChangePerXFollowers(int i) const;
+#endif
 	int GetYieldChangePerXForeignFollowers(int i) const;
 	int GetResourceQuantityModifier(int i) const;
 	int GetImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2) const;
@@ -244,6 +251,13 @@ protected:
 	int* m_paiCityYieldChange;
 	int* m_paiHolyCityYieldChange;
 	int* m_paiYieldChangePerForeignCity;
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+	int* m_paiYieldChangePerFollowingCity;
+	int* m_paiPlayerYieldModifier;
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+	int* m_paiYieldChangePerXFollowers;
+#endif
 	int* m_paiYieldChangePerXForeignFollowers;
 	int* m_piResourceQuantityModifiers;
 #ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
@@ -515,6 +529,13 @@ public:
 	int GetCityYieldChange(int iPopulation, YieldTypes eYield) const;
 	int GetHolyCityYieldChange(YieldTypes eYield) const;
 	int GetYieldChangePerForeignCity(YieldTypes eYield) const;
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+	int GetYieldChangePerFollowingCity(YieldTypes eYield) const;
+	int GetPlayerYieldModifier(YieldTypes eYield, bool bAtPeace) const;
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+	int GetYieldChangePerXFollowers(YieldTypes eYield) const;
+#endif
 	int GetYieldChangePerXForeignFollowers(YieldTypes eYield) const;
 	int GetResourceQuantityModifier(ResourceTypes eResource) const;
 	int GetImprovementYieldChange(ImprovementTypes eImprovement, YieldTypes eYield) const;

@@ -99,6 +99,9 @@ CvPromotionEntry::CvPromotionEntry():
 	m_bSubmergePromotion(false),
 #endif
 	m_iCommandType(NO_COMMAND),
+	m_iPillageChange(0),
+	m_iPillageXPChange(0),
+	m_iPillageHealChange(0),
 	m_iUpgradeDiscount(0),
 	m_iExperiencePercent(0),
 	m_iAdjacentMod(0),
@@ -385,6 +388,9 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 #if defined(LEKMOD_SUBMERGE_MISSION)
 	m_bSubmergePromotion = kResults.GetBool("SubmergePromotion");
 #endif
+	m_iPillageChange = kResults.GetInt("PillageChange");
+	m_iPillageXPChange = kResults.GetInt("PillageXPChange");
+	m_iPillageHealChange = kResults.GetInt("PillageHealChange");
 	m_iUpgradeDiscount = kResults.GetInt("UpgradeDiscount");
 	m_iExperiencePercent = kResults.GetInt("ExperiencePercent");
 	m_iAdjacentMod = kResults.GetInt("AdjacentMod");

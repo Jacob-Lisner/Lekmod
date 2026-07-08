@@ -131,6 +131,9 @@ public:
 	int  GetCommandType() const;
 	void SetCommandType(int iNewType);
 
+	int GetPillageChange() const { return m_iPillageChange; }
+	int GetPillageXPChange() const { return m_iPillageXPChange; }
+	int GetPillageHealChange() const { return m_iPillageHealChange; }
 	int GetUpgradeDiscount() const;
 	int GetExperiencePercent() const;
 	int GetAdjacentMod() const;
@@ -361,6 +364,9 @@ protected:
 	bool m_bSubmergePromotion;
 #endif
 	int m_iCommandType;
+	int m_iPillageChange;
+	int m_iPillageXPChange;
+	int m_iPillageHealChange;
 	int m_iUpgradeDiscount;
 	int m_iExperiencePercent;
 	int m_iAdjacentMod;

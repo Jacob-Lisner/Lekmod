@@ -49,9 +49,6 @@ CvTraitEntry::CvTraitEntry() :
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	m_iNumTurnsBeforeMinorAlliesRefuseBribes(0),
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	m_iGoldenAgeTileBonusFaith(0),
-#endif
 	m_iCultureFromKills(0),
 	m_iFaithFromKills(0),
 	m_iCityCultureBonus(0),
@@ -78,7 +75,6 @@ CvTraitEntry::CvTraitEntry() :
 #if defined(TRAITIFY) // Constructor, int and bools
 	m_bHalfMoreSpecialistUnhappiness(false),
 
-	m_iGoldenAgeCultureModifier(0),
 	m_iNumExtraLeagueVotes(0),
 	m_iNumTradeRouteBonus(0),
 	m_iMinorFriendshipMinimum(0),
@@ -95,6 +91,10 @@ CvTraitEntry::CvTraitEntry() :
 	m_iIdeologyPressureUnhappinessModifier(0),
 	m_iForeignRelgionPressureModifier(0),
 	m_iFriendlyLandsCitizenMoveChange(0),
+#endif
+#if defined(v35_TRAITIFY)
+	m_bEmbarkedUnitsFullStrength(false),
+	m_iCityStateUnitGiftExtraExperience(0),
 #endif
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation(false),
@@ -178,6 +178,7 @@ CvTraitEntry::CvTraitEntry() :
 	m_ppiBuildingCostOverride(NULL),
 	m_ppiBuildingClassYieldChanges(NULL),
 	m_piPuppetYieldModifiers(NULL),
+	m_piGoldenAgeYieldModifiers(NULL),
 	m_paiRouteMovementChange(NULL),
 	m_ppiResourceClassYieldChanges(NULL),
 	m_ppiFeatureYieldChanges(NULL),
@@ -188,6 +189,11 @@ CvTraitEntry::CvTraitEntry() :
 
 	m_paiBuildingClassGlobalHappiness(NULL),
 	m_paiBuildingClassHappiness(NULL),
+#endif
+#if defined(v35_TRAITIFY)
+	m_paiUnitCombatWorkRateChange(NULL),
+	m_paiBuildCompleteTileClaimRange(NULL),
+	m_paiBuildCompleteTileStealRange(NULL),
 #endif
 #if defined(LEKMOD_v34)
 	m_paiYieldPerPopulation(NULL),
@@ -205,6 +211,10 @@ CvTraitEntry::CvTraitEntry() :
 	m_piCityYieldChange(NULL),
 	m_ppiCityEraYieldChange(NULL),
 	m_ppiCityTechYieldChange(NULL),
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_paiGreatWorkYieldChanges(NULL),
+	m_ppiGreatWorkClassYieldChanges(NULL),
 #endif
 	m_paiYieldChangeStrategicResources(NULL),
 	m_paiYieldChangeLuxuryResources(NULL), // NQMP GJS - New Netherlands UA
@@ -267,9 +277,15 @@ CvTraitEntry::~CvTraitEntry()
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiFreshWaterImprovementYieldChanges);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiNonFreshWaterImprovementYieldChanges);
 	SAFE_DELETE_ARRAY(m_piPuppetYieldModifiers);
+	SAFE_DELETE_ARRAY(m_piGoldenAgeYieldModifiers);
 	SAFE_DELETE_ARRAY(m_paiRouteMovementChange);
 	SAFE_DELETE_ARRAY(m_paiBuildingClassGlobalHappiness);
 	SAFE_DELETE_ARRAY(m_paiBuildingClassHappiness);
+#endif
+#if defined(v35_TRAITIFY)
+	SAFE_DELETE_ARRAY(m_paiUnitCombatWorkRateChange);
+	SAFE_DELETE_ARRAY(m_paiBuildCompleteTileClaimRange);
+	SAFE_DELETE_ARRAY(m_paiBuildCompleteTileStealRange);
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	SAFE_DELETE_ARRAY(m_paiYieldFromKills);
@@ -285,6 +301,10 @@ CvTraitEntry::~CvTraitEntry()
 	SAFE_DELETE_ARRAY(m_piCityYieldChange);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiCityEraYieldChange);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiCityTechYieldChange);
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	SAFE_DELETE_ARRAY(m_paiGreatWorkYieldChanges);
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiGreatWorkClassYieldChanges);
 #endif
 #ifdef LEK_TRAIT_SPECIALIST_YIELD_MAX_ONE
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiAnySpecificSpecialistYieldChanges);
@@ -459,15 +479,6 @@ int CvTraitEntry::GetNumTurnsBeforeMinorAlliesRefuseBribes() const
 }
 #endif
 
-#ifdef NQ_GOLDEN_PILGRIMAGE
-/// Accessor:: during golden ages, tiles that get bonus gold also get this much bonus faith
-int CvTraitEntry::GetGoldenAgeTileBonusFaith() const
-{
-	return m_iGoldenAgeTileBonusFaith;
-}
-#endif
-
-
 /// Accessor:: culture for kills
 int CvTraitEntry::GetCultureFromKills() const
 {
@@ -593,11 +604,6 @@ int CvTraitEntry::GetNaturalWonderSubsequentFinderGold() const
 bool CvTraitEntry::IsHalfMoreSpecialistUnhappiness() const
 {
 	return m_bHalfMoreSpecialistUnhappiness;
-}
-/// Accessor:: does this trait give a culture modifier during golden ages?
-int CvTraitEntry::GetGoldenAgeCultureModifier() const
-{
-	return m_iGoldenAgeCultureModifier;
 }
 /// Accessor:: does this trait give extra league votes?
 int CvTraitEntry::GetNumExtraLeagueVotes() const
@@ -1272,12 +1278,6 @@ int CvTraitEntry::GetMaintenanceModifierUnitCombat(const int unitCombatID) const
 	return m_piMaintenanceModifierUnitCombats[unitCombatID];
 }
 
-/// Does this trait provide free resources in the first X cities?
-FreeResourceXCities CvTraitEntry::GetFreeResourceXCities(ResourceTypes eResource) const
-{
-	return m_aFreeResourceXCities[(int)eResource];
-}
-
 /// Tech that makes this trait obsolete
 int CvTraitEntry::GetObsoleteTech() const
 {
@@ -1289,7 +1289,26 @@ int CvTraitEntry::GetPrereqTech() const
 {
 	return m_iPrereqTech;
 }
-
+#if defined(v35_TRAITIFY)
+bool CvTraitEntry::IsBuildableByUnitCombat(const int buildID, const int unitCombatID) const
+{
+	std::multimap<int, int>::const_iterator it = m_BuildableByUnitCombat.find(buildID);
+	if(it != m_BuildableByUnitCombat.end())
+	{
+		// get an iterator to the element that is one past the last element associated with key
+		std::multimap<int, int>::const_iterator lastElement = m_BuildableByUnitCombat.upper_bound(buildID);
+		// for each element in the sequence [itr, lastElement)
+		for(; it != lastElement; ++it)
+		{
+			if(it->second == unitCombatID)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+#endif
 /// Accessor:: Does the civ get free promotions?
 bool CvTraitEntry::IsFreePromotionUnitCombat(const int promotionID, const int unitCombatID) const
 {
@@ -1425,6 +1444,22 @@ int CvTraitEntry::GetWorldWonderYieldChanges(int i) const
 	return m_piWorldWonderYieldChanges ? m_piWorldWonderYieldChanges[i] : -1;
 }
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+int CvTraitEntry::GetGreatWorkYieldChange(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_paiGreatWorkYieldChanges ? m_paiGreatWorkYieldChanges[i] : -1;
+}
+int CvTraitEntry::GetGreatWorkClassYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < GC.getNumGreatWorkClassInfos(), "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiGreatWorkClassYieldChanges ? m_ppiGreatWorkClassYieldChanges[i][j] : -1;
+}
+#endif
 #if defined(TRAITIFY) // Array accessors
 // Remove Terrain Requirement
 bool CvTraitEntry::IsBuildingClassRemoveRequiredTerrain(BuildingClassTypes eBuildingClass) const
@@ -1476,6 +1511,13 @@ int CvTraitEntry::GetBuildingClassYieldChanges(int i, int j) const
 	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
 	CvAssertMsg(j > -1, "Index out of bounds");
 	return m_ppiBuildingClassYieldChanges[i][j];
+}
+// Golden Age Yield Modifiers
+int CvTraitEntry::GetGoldenAgeYieldModifier(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piGoldenAgeYieldModifiers ? m_piGoldenAgeYieldModifiers[i] : -1;
 }
 // Puppet City Yield Modifiers
 int CvTraitEntry::GetPuppetYieldModifiers(int i) const
@@ -1589,9 +1631,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	m_iNumTurnsBeforeMinorAlliesRefuseBribes = kResults.GetInt("NumTurnsBeforeMinorAlliesRefuseBribes");
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	m_iGoldenAgeTileBonusFaith              = kResults.GetInt("GoldenAgeTileBonusFaith");
-#endif
 	m_iCultureFromKills						= kResults.GetInt("CultureFromKills");
 	m_iFaithFromKills						= kResults.GetInt("FaithFromKills");
 	m_iCityCultureBonus						= kResults.GetInt("CityCultureBonus");
@@ -1604,7 +1643,9 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_iGoldenAgeDurationModifier			= kResults.GetInt("GoldenAgeDurationModifier");
 	m_iGoldenAgeMoveChange				    = kResults.GetInt("GoldenAgeMoveChange");
 	m_iGoldenAgeCombatModifier				= kResults.GetInt("GoldenAgeCombatModifier");
+#if !defined(LEK_YIELD_TOURISM)
 	m_iGoldenAgeTourismModifier				= kResults.GetInt("GoldenAgeTourismModifier");
+#endif
 	m_iGoldenAgeGreatArtistRateModifier		= kResults.GetInt("GoldenAgeGreatArtistRateModifier");
 	m_iGoldenAgeGreatMusicianRateModifier	= kResults.GetInt("GoldenAgeGreatMusicianRateModifier");
 	m_iGoldenAgeGreatWriterRateModifier		= kResults.GetInt("GoldenAgeGreatWriterRateModifier");
@@ -1615,7 +1656,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 #if defined(TRAITIFY) // CvTraitEntry::CacheResults, int and bool
 	m_bHalfMoreSpecialistUnhappiness		= kResults.GetBool("HalfMoreSpecialistUnhappiness");
 
-	m_iGoldenAgeCultureModifier				= kResults.GetInt("GoldenAgeCultureModifier");
 	m_iNumExtraLeagueVotes					= kResults.GetInt("NumExtraLeagueVotes");
 	m_iNumTradeRouteBonus					= kResults.GetInt("NumTradeRouteBonus");
 	m_iMinorFriendshipMinimum				= kResults.GetInt("MinorFriendshipMinimum");
@@ -1632,6 +1672,10 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_iIdeologyPressureUnhappinessModifier  = kResults.GetInt("IdeologyPressureUnhappinessModifier");
 	m_iForeignRelgionPressureModifier		= kResults.GetInt("ForeignRelgionPressureModifier");
 	m_iFriendlyLandsCitizenMoveChange		= kResults.GetInt("FriendlyLandsCitizenMoveChange");
+#endif
+#if defined(v35_TRAITIFY)
+	m_bEmbarkedUnitsFullStrength			= kResults.GetBool("EmbarkedUnitsFullStrength");
+	m_iCityStateUnitGiftExtraExperience		= kResults.GetInt("CityStateUnitGiftExtraExperience");
 #endif
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation			= kResults.GetBool("ReligionEnhanceReformation");
@@ -1918,11 +1962,76 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 		pResults->Reset();
 	}
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	{
+		kUtility.InitializeArray(m_paiGreatWorkYieldChanges, "Yields", 0);
+		kUtility.Initialize2DArray(m_ppiGreatWorkClassYieldChanges, "GreatWorkClasses", "Yields");
+		std::string strKey("Trait_GreatWorkYieldChanges");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey,
+				"SELECT COALESCE(GreatWorkClasses.ID, -1) AS GreatWorkClassID, Yields.ID AS YieldID, Trait_GreatWorkYieldChanges.YieldChange "
+				"FROM Trait_GreatWorkYieldChanges "
+				"LEFT JOIN GreatWorkClasses ON GreatWorkClasses.Type = Trait_GreatWorkYieldChanges.GreatWorkClassType "
+				"INNER JOIN Yields ON Yields.Type = Trait_GreatWorkYieldChanges.YieldType "
+				"WHERE Trait_GreatWorkYieldChanges.TraitType = ?");
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int GreatWorkClassID = pResults->GetInt(0);
+			const int YieldID = pResults->GetInt(1);
+			const int YieldChange = pResults->GetInt(2);
+
+			if (GreatWorkClassID == -1)
+			{
+				m_paiGreatWorkYieldChanges[YieldID] += YieldChange;
+			}
+			else
+			{
+				m_ppiGreatWorkClassYieldChanges[GreatWorkClassID][YieldID] += YieldChange;
+			}
+		}
+		pResults->Reset();
+	}
+#endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	kUtility.SetYields(m_piWorldWonderYieldChanges, "WorldWonderYieldChanges", "TraitType", szTraitType);
 #endif
 #if defined(TRAITIFY) // CvTraitEntry::CacheResults, ARRAY
 	kUtility.SetYields(m_piPuppetYieldModifiers, "Trait_PuppetYieldModifiers", "TraitType", szTraitType);
+#if defined(LEK_YIELD_TOURISM)
+	int iTourism = kResults.GetInt("GoldenAgeTourismModifier");
+#endif
+	// Golden Age Yield Modifiers
+	{
+		kUtility.InitializeArray(m_piGoldenAgeYieldModifiers, "Yields", 0);
+		std::string strKey("Trait_GoldenAgeYieldModifiers");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey,
+				"SELECT Yields.ID AS YieldID, Trait_GoldenAgeYieldModifiers.YieldModifier "
+				"FROM Trait_GoldenAgeYieldModifiers "
+				"INNER JOIN Yields ON Yields.Type = Trait_GoldenAgeYieldModifiers.YieldType "
+				"WHERE Trait_GoldenAgeYieldModifiers.TraitType = ?");
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int YieldID = pResults->GetInt(0);
+			const int YieldModifier = pResults->GetInt(1);
+#if defined(LEK_YIELD_TOURISM)
+			if (YieldID == YIELD_TOURISM)
+			{
+				const_cast<int&>(YieldModifier) += iTourism;
+			}
+#endif
+			m_piGoldenAgeYieldModifiers[YieldID] = YieldModifier;
+		}
+		pResults->Reset();
+	}
 	// Route Movement Change.
 	{
 		kUtility.InitializeArray(m_paiRouteMovementChange, "Routes", 0);
@@ -2197,6 +2306,107 @@ inner join BuildingClasses on BuildingClasses.Type = BuildingClassType inner joi
 			m_ppiFreshWaterImprovementYieldChanges[ImprovementID][YieldID] = freshWaterYield;
 			m_ppiNonFreshWaterImprovementYieldChanges[ImprovementID][YieldID] = nonFreshWaterYield;
 		}
+	}
+#endif
+#if defined(v35_TRAITIFY)
+	// Trait_UnitCombatWorkRateChange
+	{
+		kUtility.InitializeArray(m_paiUnitCombatWorkRateChange, "UnitCombatInfos", 0);
+		std::string strKey("Trait_UnitCombatWorkRateChange");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT UnitCombatInfos.ID AS UnitCombatID, Trait_UnitCombatWorkRateChange.WorkRateChange "
+				"FROM Trait_UnitCombatWorkRateChange "
+				"INNER JOIN UnitCombatInfos ON UnitCombatInfos.Type = Trait_UnitCombatWorkRateChange.UnitCombatType "
+				"WHERE Trait_UnitCombatWorkRateChange.TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int UnitCombatID = pResults->GetInt(0);
+			const int WorkRateChange = pResults->GetInt(1);
+			m_paiUnitCombatWorkRateChange[UnitCombatID] = WorkRateChange;
+		}
+		pResults->Reset();
+	}
+	// Trait_BuildCompleteTileClaimRange
+	{
+		kUtility.InitializeArray(m_paiBuildCompleteTileClaimRange, "Improvements", 0);
+		kUtility.InitializeArray(m_paiBuildCompleteTileStealRange, "Improvements", 0);
+
+		std::string strKey("Trait_BuildCompleteTileClaimRange");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Improvements.ID AS ImprovementID, Trait_BuildCompleteTileClaimRange.ClaimRange, Trait_BuildCompleteTileClaimRange.Steal "
+				"FROM Trait_BuildCompleteTileClaimRange "
+				"INNER JOIN Improvements ON Improvements.Type = Trait_BuildCompleteTileClaimRange.ImprovementType "
+				"WHERE Trait_BuildCompleteTileClaimRange.TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int ImprovementID = pResults->GetInt(0);
+			const int ClaimRange = pResults->GetInt(1);
+			const bool Steal = pResults->GetBool(2);
+			Steal ? m_paiBuildCompleteTileStealRange[ImprovementID] = ClaimRange : m_paiBuildCompleteTileClaimRange[ImprovementID] = ClaimRange;
+		}
+	}
+	// Trait_EmbarkAllowMissions
+	{
+		for (int MissionLoop = 0; MissionLoop < GC.getNumMissionInfos(); MissionLoop++)
+		{
+			m_vbEmbarkedMissionAllowed.push_back(false);
+		}
+		std::string strKey("Trait_EmbarkAllowMissions");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Missions.ID AS MissionID "
+				"FROM Trait_EmbarkAllowMissions "
+				"INNER JOIN Missions ON Missions.Type = Trait_EmbarkAllowMissions.MissionType "
+				"WHERE Trait_EmbarkAllowMissions.TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int MissionID = pResults->GetInt(0);
+			m_vbEmbarkedMissionAllowed[MissionID] = true;
+		}
+	}
+	// Trait_UnitCombatBuilds
+	{
+		std::string sqlKey("Trait_UnitCombatBuilds");
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT UnitCombatInfos.ID AS UnitCombatID, Builds.ID AS BuildID "
+				"FROM Trait_UnitCombatBuilds "
+				"INNER JOIN UnitCombatInfos ON UnitCombatInfos.Type = Trait_UnitCombatBuilds.UnitCombatType "
+				"INNER JOIN Builds ON Builds.Type = Trait_UnitCombatBuilds.BuildType "
+				"WHERE Trait_UnitCombatBuilds.TraitType = ?";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int unitCombatID = pResults->GetInt(0);
+			const int buildID = pResults->GetInt(1);
+
+			// Key by build, value by unit combat, because IsBuildableByUnitCombat(buildID, unitCombatID)
+			// searches by buildID and compares second against unitCombatID.
+			m_BuildableByUnitCombat.insert(std::pair<int, int>(buildID, unitCombatID));
+		}
+		pResults->Reset();
+		std::multimap<int, int>(m_BuildableByUnitCombat).swap(m_BuildableByUnitCombat);
 	}
 #endif
 	//Trait_Terrains
@@ -2614,41 +2824,82 @@ inner join BuildingClasses on BuildingClasses.Type = BuildingClassType inner joi
 		std::multimap<BuildTypes, std::pair<int, ResourceClassTypes>>(m_BuildTimeOverrides).swap(m_BuildTimeOverrides);
 	}
 #endif
-
-	// FreeResourceXCities
+	// FreeResourceCities
 	{
-		// Init vector
-#ifdef AUI_WARNING_FIXES
-		for (uint iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-#else
-		int iResourceLoop;
-		for(iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-#endif
-		{
-			FreeResourceXCities temp;
-			m_aFreeResourceXCities.push_back(temp);
-		}
-
-		std::string strKey("Trait_FreeResourceFirstXCities");
+		m_vFreeResourceCities.clear();
+		std::string strKey("Trait_FreeResourceCities");
 		Database::Results* pResults = kUtility.GetResults(strKey);
 		if(pResults == NULL)
 		{
-			pResults = kUtility.PrepareResults(strKey, "select Resources.ID as ResourceID, ResourceQuantity, NumCities from Trait_FreeResourceFirstXCities inner join Resources on Resources.Type = ResourceType where TraitType = ?");
+			const char* szSQL =
+				"SELECT Resources.ID, ResourceQuantity, COALESCE(Technologies.ID, -1), "
+				"NumCities, City, Found, Tech, UniqueArea, ClaimPlot, ResourceGroup, Priority, CycleGroup "
+				"FROM Trait_FreeResourceCities "
+				"INNER JOIN Resources ON Resources.Type = ResourceType "
+				"LEFT JOIN Technologies ON Technologies.Type = TechType "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
 		}
-
 		pResults->Bind(1, szTraitType);
 
-		while(pResults->Step())
+		while (pResults->Step())
 		{
-			FreeResourceXCities temp;
+			FreeResourceCities temp;
 
-			const int iResource = pResults->GetInt(0);
+			temp.m_eResource = static_cast<ResourceTypes>(pResults->GetInt(0));
 			temp.m_iResourceQuantity = pResults->GetInt(1);
-			temp.m_iNumCities = pResults->GetInt(2);
+			temp.m_eTechRequired = static_cast<TechTypes>(pResults->GetInt(2));
+			temp.m_iNumCities = pResults->GetInt(3);
+			
+			temp.m_bCity = pResults->GetBool(4);
+			temp.m_bFound = pResults->GetBool(5);
+			temp.m_bTech = pResults->GetBool(6);
+			temp.m_bUniqueArea = pResults->GetBool(7);
+			temp.m_bClaimPlot = pResults->GetBool(8);
 
-			m_aFreeResourceXCities[iResource] = temp;
+			temp.m_iGroup = pResults->GetInt(9);
+			temp.m_iPriority = pResults->GetInt(10);
+			temp.m_bCycleGroup = pResults->GetBool(11);
+
+			if (temp.m_eResource != NO_RESOURCE && temp.m_iResourceQuantity > 0)
+			{
+				m_vFreeResourceCities.push_back(temp);
+			}
 		}
+		pResults->Reset();
 	}
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	// GoldenAgeYieldThresholdBonus
+	{
+		m_sGoldenAgeYieldThresholds.clear();
+		std::string strKey("Trait_GoldenAgeYieldThresholdBonus");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT RequiredYields.ID as ThresholdYield, ThresholdAmount, BonusYields.ID as RwdYield, RwdAmount "
+				"FROM Trait_GoldenAgeYieldThresholdBonus "
+				"INNER JOIN Yields AS RequiredYields ON RequiredYields.Type = Trait_GoldenAgeYieldThresholdBonus.ThresholdYield "
+				"INNER JOIN Yields AS BonusYields ON BonusYields.Type = Trait_GoldenAgeYieldThresholdBonus.RwdYield "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szTraitType);
+
+		while (pResults->Step())
+		{
+			GoldenAgeYieldThreshold temp;
+
+			temp.m_eThresholdYield = static_cast<YieldTypes>(pResults->GetInt(0));
+			temp.m_iThresholdAmount = pResults->GetInt(1);
+			temp.m_eRwdYield = static_cast<YieldTypes>(pResults->GetInt(2));
+			temp.m_iRwdAmount = pResults->GetInt(3);
+
+			m_sGoldenAgeYieldThresholds.push_back(temp);
+		}
+		pResults->Reset();
+	}
+#endif
 
 	return true;
 }
@@ -2790,9 +3041,6 @@ void CvPlayerTraits::InitPlayerTraits()
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 			m_iNumTurnsBeforeMinorAlliesRefuseBribes += trait->GetNumTurnsBeforeMinorAlliesRefuseBribes();
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-			m_iGoldenAgeTileBonusFaith += trait->GetGoldenAgeTileBonusFaith();
-#endif
 			m_iCultureFromKills += trait->GetCultureFromKills();
 			m_iFaithFromKills += trait->GetFaithFromKills();
 			m_iCityCultureBonus += trait->GetCityCultureBonus();
@@ -2815,7 +3063,6 @@ void CvPlayerTraits::InitPlayerTraits()
 #if defined(TRAITIFY) // CvPlayerTraits::InitPlayerTraits
 			m_bHalfMoreSpecialistUnhappiness = trait->IsHalfMoreSpecialistUnhappiness();
 
-			m_iGoldenAgeCultureModifier += trait->GetGoldenAgeCultureModifier();
 			m_iNumExtraLeagueVotes += trait->GetNumExtraLeagueVotes();
 			m_iNumTradeRouteBonus += trait->GetNumTradeRouteBonus();
 			m_iMinorFriendshipMinimum += trait->GetMinorFriendshipMinimum();
@@ -2832,6 +3079,10 @@ void CvPlayerTraits::InitPlayerTraits()
 			m_iIdeologyPressureUnhappinessModifier += trait->GetIdeologyPressureUnhappinessModifier();
 			m_iForeignRelgionPressureModifier += trait->GetForeignRelgionPressureModifier();
 			m_iFriendlyLandsCitizenMoveChange += trait->GetFriendlyLandsCitizenMoveChange();
+#endif
+#if defined(v35_TRAITIFY)
+			m_bEmbarkedUnitsFullStrength += trait->IsEmbarkedUnitsFullStrength();
+			m_iCityStateUnitGiftExtraExperience += trait->GetCityStateUnitGiftExtraExperience();
 #endif
 #if defined(LEKMOD_v34)
 			m_bReligionEnhanceReformation = trait->IsReligionEnhanceReformation();
@@ -2987,6 +3238,7 @@ void CvPlayerTraits::InitPlayerTraits()
 #endif
 #if defined(TRAITIFY)
 				m_iPuppetYieldModifiers[iYield] = trait->GetPuppetYieldModifiers(iYield);
+				m_iGoldenAgeYieldModifier[iYield] = trait->GetGoldenAgeYieldModifier(iYield);
 #endif
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 				m_aiCapitalYieldChange[iYield] += trait->GetCapitalYieldChange(iYield);
@@ -3105,7 +3357,19 @@ void CvPlayerTraits::InitPlayerTraits()
 					}
 				}
 #endif
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+				m_iGreatWorkYieldChange[iYield] = trait->GetGreatWorkYieldChange((YieldTypes)iYield);
+				for (int iGreatWorkLoop = 0; iGreatWorkLoop < GC.getNumGreatWorkClassInfos(); iGreatWorkLoop++)
+				{
+					int iChange = trait->GetGreatWorkClassYieldChange((GreatWorkClass)iGreatWorkLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiGreatWorkClassYieldChange[iGreatWorkLoop];
+						yields[iYield] = (m_ppaaiGreatWorkClassYieldChange[iGreatWorkLoop][iYield] + iChange);
+						m_ppaaiGreatWorkClassYieldChange[iGreatWorkLoop] = yields;
+					}
+				}
+#endif
 #ifdef AUI_WARNING_FIXES
 				for (uint iImprovementLoop = 0; iImprovementLoop < GC.getNumImprovementInfos(); iImprovementLoop++)
 #else
@@ -3208,24 +3472,36 @@ void CvPlayerTraits::InitPlayerTraits()
 #endif
 			}
 
-#ifdef LEKMOD_TRAIT_NO_BUILD_IMPROVEMENTS
+
 			for (int iImprovement = 0; iImprovement < GC.getNumImprovementInfos(); iImprovement++)
 			{
+#ifdef LEKMOD_TRAIT_NO_BUILD_IMPROVEMENTS
 				m_abNoBuild[iImprovement] = trait->NoBuildImprovements((ImprovementTypes)iImprovement);
-			}
+#if defined(v35_TRAITIFY)
+				m_viBuildCompleteTileClaimRange[iImprovement] = trait->GetBuildCompleteTileClaimRange(iImprovement);
+				m_viBuildCompleteTileStealRange[iImprovement] = trait->GetBuildCompleteTileStealRange(iImprovement);
 #endif
-#if defined(LEKMOD_TRAIT_BAN_UNIT_MISSIONS)
+#endif
+			}
+
+
 			for (int iMission = 0; iMission < GC.getNumMissionInfos(); iMission++)
 			{
+#if defined(LEKMOD_TRAIT_BAN_UNIT_MISSIONS)
 				m_abBannedUnitMissions[iMission] = trait->IsBannedUnitMission((MissionTypes)iMission);
-			}
 #endif
+#if defined(v35_TRAITIFY) // mission loop
+				m_vbEmbarkedAllowedMissions[iMission] = trait->IsEmbarkedMissionAllowed((MissionTypes)iMission);
+#endif
+			}
+
 #ifdef LEKMOD_BUILD_TIME_OVERRIDE
 	// Copy the backward compatibility vectors
 	for (int iBuild = 0; iBuild < GC.getNumBuildInfos(); iBuild++)
 	{
 		m_aiBuildTimeOverride[iBuild] = trait->GetBuildTimeOverrideVector(iBuild);
 		m_aiBuildTimeOverrideResourceClassRequired[iBuild] = trait->GetBuildTimeOverrideResourceClassRequiredVector(iBuild);
+
 	}
 
 	// Copy all build time overrides in the multimap
@@ -3260,20 +3536,23 @@ void CvPlayerTraits::InitPlayerTraits()
 			{
 				m_paiMovesChangeUnitCombat[jJ] += trait->GetMovesChangeUnitCombat(jJ);
 				m_paiMaintenanceModifierUnitCombat[jJ] += trait->GetMaintenanceModifierUnitCombat(jJ);
+#if defined(v35_TRAITIFY)
+				m_viUnitCombatWorkRateChange[jJ] += trait->GetUnitCombatWorkRateChange(jJ);
+#endif
 			}
 
-#ifdef AUI_WARNING_FIXES
-			for (uint iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-#else
-			for(int iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-#endif
+			const std::vector<FreeResourceCities>& vRules = trait->GetFreeResourceCities();
+			for (size_t i = 0; i < vRules.size(); ++i)
 			{
-				FreeResourceXCities temp = trait->GetFreeResourceXCities((ResourceTypes)iResourceLoop);
-				if(temp.m_iResourceQuantity > 0)
-				{
-					m_aFreeResourceXCities[iResourceLoop] = temp;
-				}
+				m_vFreeResourceCities.push_back(vRules[i]);
 			}
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+			const std::vector<GoldenAgeYieldThreshold>& vThresholds = trait->GetGoldenAgeYieldThresholds();
+			for (size_t i = 0; i < vThresholds.size(); ++i)
+			{
+				m_sGoldenAgeYieldThreshold.push_back(vThresholds[i]);
+			}
+#endif
 		}
 	}
 }
@@ -3323,7 +3602,19 @@ void CvPlayerTraits::Uninit()
 	m_ppaaiCityEraYieldChange.clear();
 	m_ppaaiCityTechYieldChange.clear();
 #endif
-	m_aFreeResourceXCities.clear();
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_ppaaiGreatWorkClassYieldChange.clear();
+#endif
+	m_vFreeResourceCities.clear();
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	m_sGoldenAgeYieldThreshold.clear();
+#endif
+#if defined(v35_TRAITIFY)
+	m_viUnitCombatWorkRateChange.clear();
+	m_viBuildCompleteTileClaimRange.clear();
+	m_viBuildCompleteTileStealRange.clear();
+	m_vbEmbarkedAllowedMissions.clear();
+#endif
 }
 
 /// Reset data members
@@ -3364,9 +3655,6 @@ void CvPlayerTraits::Reset()
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	m_iNumTurnsBeforeMinorAlliesRefuseBribes = 0;
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	m_iGoldenAgeTileBonusFaith = 0;
-#endif
 	m_iCultureFromKills = 0;
 	m_iFaithFromKills = 0;
 	m_iCityCultureBonus = 0;
@@ -3389,7 +3677,6 @@ void CvPlayerTraits::Reset()
 #if defined(TRAITIFY) // CvPlayerTraits::Reset
 	m_bHalfMoreSpecialistUnhappiness = false;
 
-	m_iGoldenAgeCultureModifier = 0;
 	m_iNumExtraLeagueVotes = 0;
 	m_iNumTradeRouteBonus = 0;
 	m_iMinorFriendshipMinimum = 0;
@@ -3406,6 +3693,10 @@ void CvPlayerTraits::Reset()
 	m_iIdeologyPressureUnhappinessModifier = 0;
 	m_iForeignRelgionPressureModifier = 0;
 	m_iFriendlyLandsCitizenMoveChange = 0;
+#endif
+#if defined(v35_TRAITIFY)
+	m_bEmbarkedUnitsFullStrength = false;
+	m_iCityStateUnitGiftExtraExperience = 0;
 #endif
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation = false;
@@ -3520,6 +3811,20 @@ void CvPlayerTraits::Reset()
 	m_ppaaiNonFreshWaterImprovementYieldChange.clear();
 	m_ppaaiNonFreshWaterImprovementYieldChange.resize(GC.getNumImprovementInfos());
 #endif
+#if defined(v35_TRAITIFY)
+	m_viUnitCombatWorkRateChange.clear();
+	m_viUnitCombatWorkRateChange.resize(GC.getNumUnitCombatClassInfos());
+	m_viBuildCompleteTileClaimRange.clear();
+	m_viBuildCompleteTileClaimRange.resize(GC.getNumImprovementInfos());
+	m_viBuildCompleteTileStealRange.clear();
+	m_viBuildCompleteTileStealRange.resize(GC.getNumImprovementInfos());
+	m_vbEmbarkedAllowedMissions.clear();
+	m_vbEmbarkedAllowedMissions.resize(GC.getNumMissionInfos());
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_ppaaiGreatWorkClassYieldChange.clear();
+	m_ppaaiGreatWorkClassYieldChange.resize(GC.getNumGreatWorkClassInfos());
+#endif
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 	m_ppaaiCapitalEraYieldChange.clear();
 	m_ppaaiCapitalEraYieldChange.resize(GC.getNumEraInfos());
@@ -3555,6 +3860,7 @@ void CvPlayerTraits::Reset()
 #endif
 #if defined(TRAITIFY)
 		m_iPuppetYieldModifiers[iYield] = 0;
+		m_iGoldenAgeYieldModifier[iYield] = 0;
 #endif
 
 #ifdef AUI_WARNING_FIXES
@@ -3632,7 +3938,13 @@ void CvPlayerTraits::Reset()
 			m_ppaaiBuildingCostOverride[iBuilding] = yield;
 		}
 #endif
-		
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+		m_iGreatWorkYieldChange[iYield] = 0;
+		for (int iGreatWorkClass = 0; iGreatWorkClass < GC.getNumGreatWorkClassInfos(); iGreatWorkClass++)
+		{
+			m_ppaaiGreatWorkClassYieldChange[iGreatWorkClass] = yield;
+		}
+#endif
 	}
 
 #ifdef AUI_WARNING_FIXES
@@ -3691,16 +4003,29 @@ void CvPlayerTraits::Reset()
 	for (int iImprovement = 0; iImprovement < GC.getNumImprovementInfos(); iImprovement++)
 	{
 		m_abNoBuild[iImprovement] = false;
-	}
 #endif
+#if defined(v35_TRAITIFY)
+		m_viBuildCompleteTileClaimRange[iImprovement] = 0;
+		m_viBuildCompleteTileStealRange[iImprovement] = 0;
+#endif
+	}
+
 #if defined(LEKMOD_TRAIT_BAN_UNIT_MISSIONS)
 	m_abBannedUnitMissions.clear();
 	m_abBannedUnitMissions.resize(GC.getNumMissionInfos());
+	
 	for (int iMission = 0; iMission < GC.getNumMissionInfos(); iMission++)
 	{
 		m_abBannedUnitMissions[iMission] = false;
-	}
+#else
+	for (int iMission = 0; iMission < GC.getNumMissionInfos(); iMission++)
+	{
 #endif
+#if defined(v35_TRAITIFY) // mission loop
+		m_vbEmbarkedAllowedMissions[iMission] = true;
+#endif
+	}
+
 #ifdef LEKMOD_BUILD_TIME_OVERRIDE
 	m_aiBuildTimeOverride.clear();
 	m_aiBuildTimeOverrideResourceClassRequired.clear();
@@ -3733,18 +4058,12 @@ void CvPlayerTraits::Reset()
 	{
 		m_paiMovesChangeUnitCombat[iI] = 0;
 		m_paiMaintenanceModifierUnitCombat[iI] = 0;
+#if defined(v35_TRAITIFY)
+		m_viUnitCombatWorkRateChange[iI] = 0;
+#endif
 	}
 
-#ifdef AUI_WARNING_FIXES
-	for (uint iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-#else
-	int iResourceLoop;
-	for(iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-#endif
-	{
-		FreeResourceXCities temp;
-		m_aFreeResourceXCities.push_back(temp);
-	}
+	m_vFreeResourceCities.clear();
 }
 
 /// Does this player possess a specific trait?
@@ -3913,7 +4232,32 @@ int CvPlayerTraits::GetUnimprovedFeatureYieldChange(FeatureTypes eFeature, Yield
 
 	return m_ppaaiUnimprovedFeatureYieldChange[(int)eFeature][(int)eYield];
 }
+#if defined(v35_TRAITIFY)
+bool CvPlayerTraits::IsBuildableByUnitCombat(BuildTypes eBuild, UnitCombatTypes eUnitCombat) const
+{
+	if (eBuild == NO_BUILD || eUnitCombat == NO_UNITCOMBAT)
+	{
+		return false;
+	}
+	for (int iI = 0; iI < GC.getNumTraitInfos(); iI++)
+	{
+		const TraitTypes eTrait = static_cast<TraitTypes>(iI);
+		CvTraitEntry* pkTraitInfo = GC.getTraitInfo(eTrait);
+		if (pkTraitInfo)
+		{
+			if (HasTrait(eTrait))
+			{
+				if (pkTraitInfo->IsBuildableByUnitCombat(eBuild, eUnitCombat))
+				{
+					return true;
+				}
+			}
+		}
+	}
 
+	return false;
+}
+#endif
 /// Do all new units get a specific promotion?
 bool CvPlayerTraits::HasFreePromotionUnitCombat(const int promotionID, const int unitCombatID) const
 {
@@ -4263,6 +4607,18 @@ int CvPlayerTraits::GetYieldPerPopulationForeignReligion(YieldTypes eYieldType)
 	return rtnValue;
 }
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+int CvPlayerTraits::GetGreatWorkClassYieldChange(GreatWorkClass eGreatWorkClass, YieldTypes eYieldType)
+{
+	CvAssertMsg(eGreatWorkClass < GC.getNumGreatWorkClassInfos(), "Invalid eGreatWorkClass parameter in call to CvPlayerTraits::GetGreatWorkClassYieldChange()");
+	CvAssertMsg(eYieldType < NUM_YIELD_TYPES, "Invalid eYieldType parameter in call to CvPlayerTraits::GetGreatWorkClassYieldChange()");
+	if (eGreatWorkClass == NO_GREAT_WORK_CLASS)
+	{
+		return 0;
+	}
+	return m_ppaaiGreatWorkClassYieldChange[(int)eGreatWorkClass][(int)eYieldType];
+}
+#endif
 /// Should unique luxuries appear beneath this tile?
 void CvPlayerTraits::AddUniqueLuxuries(CvCity *pCity)
 {
@@ -4466,12 +4822,6 @@ int CvPlayerTraits::GetNextFreeUnit()
 	}
 
 	return NO_UNITCLASS;
-}
-
-/// Does this trait provide free resources in the first X cities?
-FreeResourceXCities CvPlayerTraits::GetFreeResourceXCities(ResourceTypes eResource) const
-{
-	return m_aFreeResourceXCities[(int)eResource];
 }
 
 /// Is this civ currently able to cross mountains with combat units?
@@ -4932,9 +5282,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	kStream >> m_iNumTurnsBeforeMinorAlliesRefuseBribes;
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	kStream >> m_iGoldenAgeTileBonusFaith;
-#endif
 	kStream >> m_iCultureFromKills;
 	if (uiVersion >= 19)
 	{
@@ -4989,7 +5336,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #if defined(TRAITIFY) // CvPlayerTraits::Read
 	kStream >> m_bHalfMoreSpecialistUnhappiness;
 
-	kStream >> m_iGoldenAgeCultureModifier;
 	kStream >> m_iNumExtraLeagueVotes;
 	kStream >> m_iNumTradeRouteBonus;
 	kStream >> m_iMinorFriendshipMinimum;
@@ -5006,6 +5352,10 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	kStream >> m_iIdeologyPressureUnhappinessModifier;
 	kStream >> m_iForeignRelgionPressureModifier;
 	kStream >> m_iFriendlyLandsCitizenMoveChange;
+#endif
+#if defined(v35_TRAITIFY)
+	kStream >> m_bEmbarkedUnitsFullStrength;
+	kStream >> m_iCityStateUnitGiftExtraExperience;
 #endif
 #if defined(LEKMOD_v34)
 	kStream >> m_bReligionEnhanceReformation;
@@ -5265,6 +5615,8 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #if defined(TRAITIFY) // CvPlayerTraits::Read (for CvPlayerTraits Arrays)
 	ArrayWrapper<int> kPuppetYieldModifiersWrapper(NUM_YIELD_TYPES, m_iPuppetYieldModifiers);
 	kStream >> kPuppetYieldModifiersWrapper;
+	ArrayWrapper<int> kGoldenAgeYieldModifierWrapper(NUM_YIELD_TYPES, m_iGoldenAgeYieldModifier);
+	kStream >> kGoldenAgeYieldModifierWrapper;
 	ArrayWrapper<int> kRouteMovementChangeWrapper(NUM_ROUTE_TYPES, m_iRouteMovementChange);
 	kStream >> kRouteMovementChangeWrapper;
 #endif
@@ -5310,6 +5662,19 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 		kStream >> bValue;
 		m_abForceSpawnCapital.push_back(bValue);
 	}
+#endif
+#if defined(v35_TRAITIFY)
+	kStream >> iNumEntries;
+	m_vbEmbarkedAllowedMissions.clear();
+	for (int i = 0; i < iNumEntries; i++)
+	{
+		bool bValue;
+		kStream >> bValue;
+		m_vbEmbarkedAllowedMissions.push_back(bValue);
+	}
+	kStream >> m_viBuildCompleteTileClaimRange;
+	kStream >> m_viBuildCompleteTileStealRange;
+	kStream >> m_viUnitCombatWorkRateChange;
 #endif
 	kStream >> iNumEntries;
 	m_abNoTrain.clear();
@@ -5409,6 +5774,11 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	kStream >> m_ppaaiCityEraYieldChange;
 	kStream >> m_ppaaiCityTechYieldChange;
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	ArrayWrapper<int> kGreatWorkYieldChangeWrapper(NUM_YIELD_TYPES, m_iWorldWonderYieldChange);
+	kStream >> kGreatWorkYieldChangeWrapper;
+	kStream >> m_ppaaiGreatWorkClassYieldChange;
+#endif
 	if (uiVersion >= 11)
 	{
 		kStream >> iNumEntries;
@@ -5431,6 +5801,11 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #ifdef LEKMOD_TRAIT_FIRST_PROPHET_COST_MOD
 	kStream >> m_iFirstProphetCostMod;
 #endif
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	kStream >> m_sGoldenAgeYieldThreshold;
+#endif
+	kStream >> m_vUsedGroupAreas;
+	kStream >> m_vGroupPriority;
 }
 
 /// Serialization write
@@ -5466,9 +5841,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	kStream << m_iNumTurnsBeforeMinorAlliesRefuseBribes;
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	kStream << m_iGoldenAgeTileBonusFaith;
-#endif
 	kStream << m_iCultureFromKills;
 	kStream << m_iFaithFromKills;
 	kStream << m_iCityCultureBonus;
@@ -5491,7 +5863,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 #if defined(TRAITIFY) // CvPlayerTraits::Write
 	kStream << m_bHalfMoreSpecialistUnhappiness;
 
-	kStream << m_iGoldenAgeCultureModifier;
 	kStream << m_iNumExtraLeagueVotes;
 	kStream << m_iNumTradeRouteBonus;
 	kStream << m_iMinorFriendshipMinimum;
@@ -5508,6 +5879,10 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_iIdeologyPressureUnhappinessModifier;
 	kStream << m_iForeignRelgionPressureModifier;
 	kStream << m_iFriendlyLandsCitizenMoveChange;
+#endif
+#if defined(v35_TRAITIFY)
+	kStream << m_bEmbarkedUnitsFullStrength;
+	kStream << m_iCityStateUnitGiftExtraExperience;
 #endif
 #if defined(LEKMOD_v34)
 	kStream << m_bReligionEnhanceReformation;
@@ -5616,6 +5991,7 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 #endif
 #if defined(TRAITIFY)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iPuppetYieldModifiers);
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iGoldenAgeYieldModifier);
 	kStream << ArrayWrapper<int>(NUM_ROUTE_TYPES, m_iRouteMovementChange);
 #endif
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldChangePerTradePartner);
@@ -5638,7 +6014,16 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 		kStream << m_abForceSpawnCapital[ui];
 	}
 #endif
-
+#if defined(v35_TRAITIFY)
+	kStream << m_vbEmbarkedAllowedMissions.size();
+	for (uint ui = 0; ui < m_vbEmbarkedAllowedMissions.size(); ui++)
+	{
+		kStream << m_vbEmbarkedAllowedMissions[ui];
+	}
+	kStream << m_viBuildCompleteTileClaimRange;
+	kStream << m_viBuildCompleteTileStealRange;
+	kStream << m_viUnitCombatWorkRateChange;
+#endif
 	kStream << m_abNoTrain.size();
 	for (uint ui = 0; ui < m_abNoTrain.size(); ui++)
 	{
@@ -5708,6 +6093,9 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_ppaaiCityEraYieldChange;
 	kStream << m_ppaaiCityTechYieldChange;
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	kStream << m_ppaaiGreatWorkClassYieldChange;
+#endif
 
 	kStream << (int)m_aUniqueLuxuryAreas.size();
 	for (unsigned int iI = 0; iI < m_aUniqueLuxuryAreas.size(); iI++)
@@ -5717,6 +6105,11 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 #ifdef LEKMOD_TRAIT_FIRST_PROPHET_COST_MOD
 	kStream << m_iFirstProphetCostMod;
 #endif
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	kStream << m_sGoldenAgeYieldThreshold;
+#endif
+	kStream << m_vUsedGroupAreas;
+	kStream << m_vGroupPriority;
 }
 
 // PRIVATE METHODS

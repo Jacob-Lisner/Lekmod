@@ -215,6 +215,8 @@ CvUnit::CvUnit() :
 	, m_iExtraOpenDefensePercent("CvUnit::m_iExtraOpenDefensePercent", m_syncArchive)
 	, m_iExtraRoughDefensePercent("CvUnit::m_iExtraRoughDefensePercent", m_syncArchive)
 	, m_iPillageChange("CvUnit::m_iPillageChange", m_syncArchive)
+	, m_iPillageXPChange("CvUnit::m_iPillageXPChange", m_syncArchive)
+	, m_iPillageHealChange("CvUnit::m_iPillageHealChange", m_syncArchive)
 	, m_iUpgradeDiscount("CvUnit::m_iUpgradeDiscount", m_syncArchive)
 	, m_iExperiencePercent("CvUnit::m_iExperiencePercent", m_syncArchive)
 	, m_iDropRange("CvUnit::m_iDropRange", m_syncArchive)
@@ -1051,6 +1053,8 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iExtraOpenDefensePercent = 0;
 	m_iExtraRoughDefensePercent = 0;
 	m_iPillageChange = 0;
+	m_iPillageXPChange = 0;
+	m_iPillageHealChange = 0;
 	m_iUpgradeDiscount = 0;
 	m_iExperiencePercent = 0;
 	m_iDropRange = 0;
@@ -3123,13 +3127,12 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 				return false;
 			}
 
-#ifdef AUI_UNIT_FIX_HOVERING_EMBARK
-			if (getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && (!IsHoveringUnit() || plot.getTerrainType() == GC.getDEEP_WATER_TERRAIN()) && !plot.IsAllowsWalkWater())
-#else
 			if(getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && !plot.IsAllowsWalkWater())
-#endif
 			{
-				return false;
+#if defined(v35_TRAITIFY)
+				if(!GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedUnitsFullStrength())
+#endif
+					return false;
 			}
 
 			if(!isHuman() || (plot.isVisible(getTeam())))
@@ -5113,9 +5116,19 @@ bool CvUnit::canSetUpForRangedAttack(const CvPlot* /*pPlot*/) const
 	{
 		return false;
 	}
-
+#if defined(v35_TRAITIFY)
+	if (isEmbarked())
+	{
+		if (!GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_SET_UP_FOR_RANGED_ATTACK"))))
+		{
+			return false;
+		}
+	}
+#else
 	if(isEmbarked())
 		return false;
+#endif
+		
 
 	if(movesLeft() <= 0)
 	{
@@ -6180,7 +6193,11 @@ bool CvUnit::canHeal(const CvPlot* pPlot, bool bTestVisible) const
 	if(!bTestVisible)
 	{
 		// Embarked Units can't heal
+#if defined(v35_TRAITIFY) // Heal Mission
+		if (isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_HEAL"))))
+#else
 		if(isEmbarked())
+#endif
 		{
 			return false;
 		}
@@ -6837,8 +6854,11 @@ bool CvUnit::canParadrop(const CvPlot* pPlot, bool bOnlyTestVisibility) const
 		{
 			return false;
 		}
-
+#if defined(v35_TRAITIFY)
+		if (isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_PARADROP"))))
+#else
 		if(isEmbarked())
+#endif
 		{
 			return false;
 		}
@@ -7392,8 +7412,11 @@ bool CvUnit::canPlunderTradeRoute(const CvPlot* pPlot, bool bOnlyTestVisibility)
 	{
 		return false;
 	}
-
+#if defined(v35_TRAITIFY)
+	if (isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_PLUNDER_TRADE_ROUTE"))))
+#else
 	if (isEmbarked())
+#endif
 	{
 		return false;
 	}
@@ -8012,7 +8035,11 @@ bool CvUnit::canPillage(const CvPlot* pPlot) const
             }
         }
     }
+#if defined(v35_TRAITIFY)
+	if(isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_PILLAGE"))))
+#else
 	if(isEmbarked())
+#endif
 	{
 		return false;
 	}
@@ -8192,6 +8219,8 @@ bool CvUnit::pillage()
 				}
 			}
 
+			changeExperience(getPillageXPChange());
+
 			//Unlock any possible achievements.
 			if(getOwner() == GC.getGame().getActivePlayer() && strcmp(pkImprovement->GetType(), "IMPROVEMENT_FARM") == 0)
 				CvAchievementUnlocker::FarmImprovementPillaged();
@@ -8236,7 +8265,7 @@ bool CvUnit::pillage()
 		}
 		else
 		{
-			int iHealAmount = min(getDamage(), GC.getPILLAGE_HEAL_AMOUNT());
+			int iHealAmount = min(getDamage(), GC.getPILLAGE_HEAL_AMOUNT() + getPillageHealChange());
 			changeDamage(-iHealAmount);
 		}
 	}
@@ -10754,8 +10783,11 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 	VALIDATE_OBJECT
 	CvAssertMsg(eBuild < GC.getNumBuildInfos() && eBuild >= 0, "Index out of bounds");
 
-
+#if defined(v35_TRAITIFY)
+	if (!(m_pUnitInfo->GetBuilds(eBuild)) && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsBuildableByUnitCombat(eBuild, getUnitCombatType()))
+#else
 	if(!(m_pUnitInfo->GetBuilds(eBuild)))
+#endif
 	{
 		return false;
 	}
@@ -12124,7 +12156,11 @@ bool CvUnit::canBuildRoute() const
 		CvBuildInfo* thisBuildInfo = GC.getBuildInfo((BuildTypes)iI);
 		if(NULL != thisBuildInfo && thisBuildInfo->getRoute() != NO_ROUTE)
 		{
-			if(m_pUnitInfo->GetBuilds(iI))
+#if defined(v35_TRAITIFY)
+			if (m_pUnitInfo->GetBuilds(iI) || GET_PLAYER(getOwner()).GetPlayerTraits()->IsBuildableByUnitCombat((BuildTypes)iI, getUnitCombatType()))
+#else
+			if (m_pUnitInfo->GetBuilds(iI))
+#endif
 			{
 				if(pTeamTechs->HasTech((TechTypes)(thisBuildInfo->getTechPrereq())))
 				{
@@ -12196,7 +12232,9 @@ int CvUnit::workRate(bool bMax, BuildTypes /*eBuild*/) const
 	iRate = m_pUnitInfo->GetWorkRate();
 
 	CvPlayerAI& kPlayer = GET_PLAYER(getOwner());
-
+#if defined(v35_TRAITIFY)
+	iRate += kPlayer.GetPlayerTraits()->GetUnitCombatWorkRateChange(static_cast<UnitCombatTypes>(m_pUnitInfo->GetUnitCombatType()));
+#endif
 	iRate *= std::max(0, (kPlayer.getWorkerSpeedModifier() + kPlayer.GetPlayerTraits()->GetWorkerSpeedModifier() + 100));
 	iRate /= 100;
 
@@ -12256,7 +12294,11 @@ bool CvUnit::IsFoundAbroad() const
 bool CvUnit::IsWork() const
 {
 	VALIDATE_OBJECT
+#if defined(v35_TRAITIFY)
+	return workRate(true) > 0;
+#else
 	return (m_pUnitInfo->GetWorkRate() > 0);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -13140,7 +13182,7 @@ int CvUnit::GetMaxDefenseStrength(const CvPlot* pInPlot, const CvUnit* pAttacker
 
 	if(m_bEmbarked)
 	{
-		return GetEmbarkedUnitDefense();;
+		return GetEmbarkedUnitDefense();
 	}
 
 	if(GetBaseCombatStrength() == 0)
@@ -13287,6 +13329,12 @@ int CvUnit::GetEmbarkedUnitDefense() const
 
 	iRtnValue = GC.getEraInfo(eEra)->getEmbarkedUnitDefense() * 100;
 
+#if defined(v35_TRAITIFY)
+	if (kPlayer.GetPlayerTraits()->IsEmbarkedUnitsFullStrength())
+	{
+		iRtnValue = GetBaseCombatStrength(true) * 100;
+	}
+#endif
 	iModifier = GetEmbarkDefensiveModifier();
 	if(iModifier > 0)
 	{
@@ -19956,7 +20004,24 @@ void CvUnit::changePillageChange(int iChange)
 		setInfoBarDirty(true);
 	}
 }
-
+void CvUnit::changePillageXPChange(int iChange)
+{
+	VALIDATE_OBJECT
+	if(iChange != 0)
+	{
+		m_iPillageXPChange += iChange;
+		setInfoBarDirty(true);
+	}
+}
+void CvUnit::changePillageHealChange(int iChange)
+{
+	VALIDATE_OBJECT
+	if(iChange != 0)
+	{
+		m_iPillageHealChange += iChange;
+		setInfoBarDirty(true);
+	}
+}
 //	--------------------------------------------------------------------------------
 int CvUnit::getUpgradeDiscount() const
 {
@@ -21581,7 +21646,9 @@ void CvUnit::setHasPromotion(PromotionTypes eIndex, bool bNewValue)
 #ifdef NQ_COMBAT_STRENGTH_NEAR_FRIENDLY_MINOR
 		changeCombatStrengthNearFriendlyMinor(thisPromotion.GetCombatStrengthNearFriendlyMinor() * iChange);
 #endif
-
+		changePillageChange(thisPromotion.GetPillageChange() * iChange);
+		changePillageXPChange(thisPromotion.GetPillageXPChange() * iChange);
+		changePillageHealChange(thisPromotion.GetPillageHealChange() * iChange);
 		changeUpgradeDiscount(thisPromotion.GetUpgradeDiscount() * iChange);
 		changeExperiencePercent(thisPromotion.GetExperiencePercent() * iChange);
 		changeCargoSpace(thisPromotion.GetCargoChange() * iChange);
@@ -22205,7 +22272,11 @@ void CvUnit::write(FDataStream& kStream) const
 bool CvUnit::canRangeStrike() const
 {
 	VALIDATE_OBJECT
+#if defined(v35_TRAITIFY)
+	if(isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_RANGE_ATTACK"))))
+#else
 	if(isEmbarked())
+#endif
 	{
 		return false;
 	}
@@ -22434,8 +22505,11 @@ bool CvUnit::canAirSweep() const
 	{
 		return false;
 	}
-
+#if defined(v35_TRAITIFY)
+	if(isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_AIR_SWEEP"))))
+#else
 	if(isEmbarked())
+#endif
 	{
 		return false;
 	}
@@ -23334,7 +23408,11 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 					if(getDomainType() != DOMAIN_AIR)
 					{
 						// Ranged units that are embarked can't do a move-attack
-						if(isRanged() && isEmbarked())
+#if defined(v35_TRAITIFY)
+						if(isRanged() && (isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_RANGE_ATTACK")))))
+#else
+						if (isRanged() && isEmbarked())
+#endif
 						{
 							return false;
 						}
@@ -23356,7 +23434,11 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 				}
 
 				// Ranged units that are embarked can't do a move-attack
-				if(isRanged() && isEmbarked())
+#if defined(v35_TRAITIFY)
+				if(isRanged() && (isEmbarked() && !GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedMissionAllowed(static_cast<MissionTypes>(GC.getInfoTypeForString("MISSION_RANGE_ATTACK")))))
+#else
+				if (isRanged() && isEmbarked())
+#endif
 				{
 					return false;
 				}

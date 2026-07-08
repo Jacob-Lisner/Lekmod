@@ -339,6 +339,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 
 	//Misc
 	PrefetchCollection(GC.getRouteInfo(), "Routes");
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	PrefetchCollection(GC.getGreatWorkClassInfo(), "GreatWorkClasses");
+#endif
 
 	CvNotificationXMLEntries* pkNotificationEntries =  GC.GetNotificationEntries();
 	if(pkNotificationEntries != NULL)
@@ -632,6 +635,9 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateCount(gc.getYieldInfo().size);
 
 	ValidateVectorSize(getNumRouteInfos);
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	ValidateVectorSize(getNumGreatWorkClassInfos);
+#endif
 	ValidateVectorSize(getNumImprovementInfos);
 	ValidateVectorSize(getNumBuildInfos);
 	ValidateVectorSize(getNumHandicapInfos);

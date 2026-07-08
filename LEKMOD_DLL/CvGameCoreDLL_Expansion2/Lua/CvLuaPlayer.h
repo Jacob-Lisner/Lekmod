@@ -1063,6 +1063,22 @@ protected:
 #ifdef ENHANCED_GRAPHS
 	static int lAddReplayOpenedDemographics(lua_State* L);
 #endif
+#if defined(STANDARDIZE_YIELDS)
+	static int lGetYield(lua_State* L);
+	static int lGetYieldTimes100(lua_State* L);
+	static int lGetYieldFromCitiesTimes100(lua_State* L);
+	static int lGetYieldFromOtherPlayersTimes100(lua_State* L);
+	static int lGetYieldFromHappinessTimes100(lua_State* L);
+	static int lGetYieldPenaltiesTimes100(lua_State* L);
+	static int lGetYieldFromMinorCivsTimes100(lua_State* L);
+	static int lGetYieldFromTraitsTimes100(lua_State* L);
+	static int lGetYieldFromReligionTimes100(lua_State* L);
+#endif
+	static int lGetNumCitiesPolicyCostDiscount(lua_State* L);
+#if defined(v35_TRAITIFY)
+	static int lIsEmbarkedUnitsFullStrength(lua_State* L);
+	static int lIsEmbarkedMissionAllowed(lua_State* L);
+#endif
 };
 
 #endif //CVLUAPLAYER_H

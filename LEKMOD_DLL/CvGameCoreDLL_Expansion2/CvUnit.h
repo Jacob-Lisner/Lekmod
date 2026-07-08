@@ -1043,6 +1043,12 @@ public:
 	int getPillageChange() const;
 	void changePillageChange(int iChange);
 
+	int getPillageXPChange() const { return m_iPillageXPChange; }
+	void changePillageXPChange(int iChange);
+	
+	int getPillageHealChange() const { return m_iPillageHealChange; }	
+	void changePillageHealChange(int iChange);
+
 	int getUpgradeDiscount() const;
 	void changeUpgradeDiscount(int iChange);
 
@@ -1532,6 +1538,8 @@ protected:
 	FAutoVariable<int, CvUnit> m_iExtraOpenDefensePercent;
 	FAutoVariable<int, CvUnit> m_iExtraRoughDefensePercent;
 	FAutoVariable<int, CvUnit> m_iPillageChange;
+	FAutoVariable<int, CvUnit> m_iPillageXPChange;
+	FAutoVariable<int, CvUnit> m_iPillageHealChange;
 	FAutoVariable<int, CvUnit> m_iUpgradeDiscount;
 	FAutoVariable<int, CvUnit> m_iExperiencePercent;
 	FAutoVariable<int, CvUnit> m_iDropRange;

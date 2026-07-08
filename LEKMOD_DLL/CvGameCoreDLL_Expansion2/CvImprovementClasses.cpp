@@ -90,6 +90,10 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_bFreshWaterMakesValid(false),
 	m_bRiverSideMakesValid(false),
 	m_bNoFreshWater(false),
+#if defined(LEKMOD_BUGANDA_LAKE)
+	m_bAdjacentCityMakesValid(false),
+	m_bFreshWaterSource(false),
+#endif
 	m_bRequiresFlatlands(false),
 	m_bRequiresFlatlandsOrFreshWater(false),
 	m_bRequiresFeature(false),
@@ -261,6 +265,10 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_bFreshWaterMakesValid = kResults.GetBool("FreshWaterMakesValid");
 	m_bRiverSideMakesValid = kResults.GetBool("RiverSideMakesValid");
 	m_bNoFreshWater = kResults.GetBool("NoFreshWater");
+#if defined(LEKMOD_BUGANDA_LAKE)
+	m_bAdjacentCityMakesValid = kResults.GetBool("AdjacentCityMakesValid");
+	m_bFreshWaterSource = kResults.GetBool("FreshWaterSource");
+#endif
 	m_bRequiresFlatlands = kResults.GetBool("RequiresFlatlands");
 	m_bRequiresFlatlandsOrFreshWater = kResults.GetBool("RequiresFlatlandsOrFreshWater");
 	m_bRequiresFeature = kResults.GetBool("RequiresFeature");
@@ -874,7 +882,18 @@ bool CvImprovementEntry::IsNoFreshWater() const
 {
 	return m_bNoFreshWater;
 }
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+// Requires being adjacent to a city to build
+bool CvImprovementEntry::IsAdjacentCityMakesValid() const
+{
+	return m_bAdjacentCityMakesValid;
+}
+// Is this a source of fresh water?
+bool CvImprovementEntry::IsFreshWaterSource() const
+{
+	return m_bFreshWaterSource;
+}
+#endif
 /// Requires that it must be built on something other than a hill
 bool CvImprovementEntry::IsRequiresFlatlands() const
 {

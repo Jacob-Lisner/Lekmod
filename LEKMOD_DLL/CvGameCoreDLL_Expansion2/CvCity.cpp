@@ -231,6 +231,9 @@ CvCity::CvCity() :
 	, m_iRazingTurns("CvCity::m_iRazingTurns", m_syncArchive)
 	, m_iCountExtraLuxuries("CvCity::m_iCountExtraLuxuries", m_syncArchive)
 	, m_iCheapestPlotInfluence("CvCity::m_iCheapestPlotInfluence", m_syncArchive)
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	, m_iNumThingsPurchasedThisTurn("CvCity::m_iNumThingsPurchasedThisTurn", m_syncArchive)
+#endif
 	, m_iEspionageModifier(0)
 	, m_iTradeRouteRecipientBonus(0)
 	, m_iTradeRouteTargetBonus(0)
@@ -335,6 +338,9 @@ CvCity::CvCity() :
 	, m_abBaseYieldRankValid("CvCity::m_abBaseYieldRankValid", m_syncArchive)
 	, m_aiYieldRank("CvCity::m_aiYieldRank", m_syncArchive)
 	, m_abYieldRankValid("CvCity::m_abYieldRankValid", m_syncArchive)
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	, m_viWonderYieldCache("CvCity::m_viWonderYieldCache", m_syncArchive)
+#endif
 	, m_bOwedCultureBuilding(false)
 {
 	OBJECT_ALLOCATED
@@ -407,37 +413,20 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	pPlot->SetCityPurchaseID(m_iID);
 
 	int iRange = 1;
-#ifdef AUI_HEXSPACE_DX_LOOPS
-	int iMaxDX, iDX;
-	CvPlot* pLoopPlot;
-	for (int iDY = -iRange; iDY <= iRange; iDY++)
-	{
-		iMaxDX = iRange - MAX(0, iDY);
-		for (iDX = -iRange - MIN(0, iDY); iDX <= iMaxDX; iDX++) // MIN() and MAX() stuff is to reduce loops (hexspace!)
-		{
-			// No need for range check because loops are set up properly
-			pLoopPlot = plotXY(getX(), getY(), iDX, iDY);
-#else
 	for(int iDX = -iRange; iDX <= iRange; iDX++)
 	{
 		for(int iDY = -iRange; iDY <= iRange; iDY++)
 		{
 			CvPlot* pLoopPlot = plotXYWithRangeCheck(getX(), getY(), iDX, iDY, iRange);
-#endif
-#ifndef AUI_WARNING_FIXES
 			if(pLoopPlot != NULL)
-#endif
 			{
-				if(pLoopPlot != NULL)
+				if(pLoopPlot->getOwner() == NO_PLAYER)
 				{
-					if(pLoopPlot->getOwner() == NO_PLAYER)
-					{
-						pLoopPlot->setOwner(getOwner(), m_iID, bBumpUnits);
-					}
-					if(pLoopPlot->getOwner() == getOwner())
-					{
-						pLoopPlot->SetCityPurchaseID(m_iID);
-					}
+					pLoopPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+				}
+				if(pLoopPlot->getOwner() == getOwner())
+				{
+					pLoopPlot->SetCityPurchaseID(m_iID);
 				}
 			}
 		}
@@ -576,25 +565,201 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	
 	if (bInitialFounding)
 	{
+		CvPlayerTraits* trait = owningPlayer.GetPlayerTraits();
+		if (!owningPlayer.isFoundedFirstCity())
+		{
+			const std::vector<FreeResourceCities>& freeResource = trait->GetFreeResourceCities();
+			std::vector<std::pair<int, int> >& usedGroupAreas = trait->GetUsedGroupAreas();
+			std::vector<std::pair<int, int> >& groupPriority = trait->GetGroupPriority();
+			for (size_t i = 0; i < freeResource.size(); ++i)
+			{
+				const FreeResourceCities& kRule = freeResource[i];
+				if (kRule.m_iGroup < 0)
+					continue;
+				if (kRule.m_bUniqueArea)
+				{
+					bool bAlreadyStored = false;
+					for (size_t iUsed = 0; iUsed < usedGroupAreas.size(); ++iUsed)
+					{
+						if (usedGroupAreas[iUsed].first == kRule.m_iGroup && usedGroupAreas[iUsed].second == plot()->getArea())
+						{
+							bAlreadyStored = true;
+							break;
+						}
+					}
+					if (!bAlreadyStored)
+						usedGroupAreas.push_back(std::make_pair(kRule.m_iGroup, plot()->getArea()));
+				}
+
+				bool bFoundPriority = false;
+				for (size_t iPriority = 0; iPriority < groupPriority.size(); ++iPriority)
+				{
+					if (groupPriority[iPriority].first == kRule.m_iGroup)
+					{
+						bFoundPriority = true;
+						break;
+					}
+				}
+				if (!bFoundPriority)
+					groupPriority.push_back(std::make_pair(kRule.m_iGroup, 0));
+			}
+		}
 		owningPlayer.setFoundedFirstCity(true);
 		owningPlayer.ChangeNumCitiesFounded(1);
+		
+		
+		const std::vector<FreeResourceCities>& vRules = trait->GetFreeResourceCities();
+		std::vector<const FreeResourceCities*> vRulesToPlace;
+		std::map<int, std::vector<const FreeResourceCities*> > groupedRules;
 
-		// Free resources under city?
-#ifdef AUI_WARNING_FIXES
-		for (uint i = 0; i < GC.getNumResourceInfos(); i++)
-#else
-		for(int i = 0; i < GC.getNumResourceInfos(); i++)
-#endif
+		for (size_t i = 0; i < vRules.size(); ++i)
 		{
-			ResourceTypes eResource = (ResourceTypes)i;
-			FreeResourceXCities freeResource = owningPlayer.GetPlayerTraits()->GetFreeResourceXCities(eResource);
+			const FreeResourceCities& kRule = vRules[i];
 
-			if(freeResource.m_iResourceQuantity > 0)
+			if (!kRule.m_bFound)
+				continue;
+			if (kRule.m_eResource == NO_RESOURCE)
+				continue;
+			if (kRule.m_iResourceQuantity <= 0)
+				continue;
+			if (kRule.m_eTechRequired != NO_TECH && !GET_TEAM(owningPlayer.getTeam()).GetTeamTechs()->HasTech(kRule.m_eTechRequired))
+				continue;
+			if (kRule.m_iNumCities > 0 && owningPlayer.GetNumCitiesFounded() > kRule.m_iNumCities)
+				continue;
+			if (kRule.m_iGroup < 0)
+				continue;
+			if (kRule.m_bUniqueArea)
 			{
-				if(owningPlayer.GetNumCitiesFounded() <= freeResource.m_iNumCities)
+				bool bAlreadyUsedArea = false;
+
+				const std::vector<std::pair<int, int> >& areaPair = trait->GetUsedGroupAreas();
+				for (size_t iUsed = 0; iUsed < areaPair.size(); ++iUsed)
 				{
-					plot()->setResourceType(NO_RESOURCE, 0);
-					plot()->setResourceType(eResource, freeResource.m_iResourceQuantity);
+					if (areaPair[iUsed].first == kRule.m_iGroup && areaPair[iUsed].second == plot()->getArea())
+					{
+						bAlreadyUsedArea = true;
+						break;
+					}
+				}
+
+				if (bAlreadyUsedArea)
+					continue;
+			}
+
+			if (kRule.m_bCycleGroup)
+			{
+				groupedRules[kRule.m_iGroup].push_back(&kRule);
+			}
+			else
+			{
+				vRulesToPlace.push_back(&kRule);
+			}
+		}
+
+		std::vector<std::pair<int, int> >& vGroupPriority = trait->GetGroupPriority();
+
+		for (std::map<int, std::vector<const FreeResourceCities*> >::iterator it = groupedRules.begin(); it != groupedRules.end(); ++it)
+		{
+			const int iGroup = it->first;
+			const std::vector<const FreeResourceCities*>& vGroupRules = it->second;
+
+			int iWantedPriority = 0;
+			bool bFoundPriorityEntry = false;
+
+			for (size_t iPriority = 0; iPriority < vGroupPriority.size(); ++iPriority)
+			{
+				if (vGroupPriority[iPriority].first == iGroup)
+				{
+					iWantedPriority = vGroupPriority[iPriority].second;
+					bFoundPriorityEntry = true;
+					break;
+				}
+			}
+
+			const FreeResourceCities* pChosen = NULL;
+
+			for (size_t iRule = 0; iRule < vGroupRules.size(); ++iRule)
+			{
+				const FreeResourceCities* pRule = vGroupRules[iRule];
+				if (!pRule)
+					continue;
+
+				if (pRule->m_iPriority == iWantedPriority)
+				{
+					pChosen = pRule;
+					break;
+				}
+			}
+
+			if (!pChosen)
+				continue;
+
+			vRulesToPlace.push_back(pChosen);
+
+			// Advance this group's wanted priority for the next founding.
+			if (bFoundPriorityEntry)
+			{
+				for (size_t iPriority = 0; iPriority < vGroupPriority.size(); ++iPriority)
+				{
+					if (vGroupPriority[iPriority].first == iGroup)
+					{
+						vGroupPriority[iPriority].second = iWantedPriority + 1;
+						break;
+					}
+				}
+			}
+			else
+			{
+				vGroupPriority.push_back(std::make_pair(iGroup, iWantedPriority + 1));
+			}
+		}
+
+		for (size_t i = 0; i < vRulesToPlace.size(); ++i)
+		{
+			const FreeResourceCities* pRule = vRulesToPlace[i];
+			if (!pRule)
+				continue;
+
+			if (pRule->m_bCity)
+			{
+				// Resource is placed under the city and overrides any existing resource.
+				// Cities already claim their founding plot, so no claim check is needed here.
+				plot()->setResourceType(NO_RESOURCE, 0);
+				plot()->setResourceType(pRule->m_eResource, pRule->m_iResourceQuantity);
+				plot()->updateYield();
+			}
+			else
+			{
+				CvPlot* pTargetPlot = addResourceLocally(NULL, pRule->m_eResource, pRule->m_iResourceQuantity);
+				if (pTargetPlot)
+				{
+					if (pRule->m_bClaimPlot && pTargetPlot->getOwner() == NO_PLAYER)
+					{
+						pTargetPlot->setOwner(getOwner(), GetID());
+					}
+
+					pTargetPlot->updateYield();
+				}
+			}
+
+			if (pRule->m_bUniqueArea)
+			{
+				std::vector<std::pair<int, int> >& areaPair = trait->GetUsedGroupAreas();
+
+				bool bAlreadyStored = false;
+
+				for (size_t iUsed = 0; iUsed < areaPair.size(); ++iUsed)
+				{
+					if (areaPair[iUsed].first == pRule->m_iGroup && areaPair[iUsed].second == plot()->getArea())
+					{
+						bAlreadyStored = true;
+						break;
+					}
+				}
+
+				if (!bAlreadyStored)
+				{
+					areaPair.push_back(std::make_pair(pRule->m_iGroup, plot()->getArea()));
 				}
 			}
 		}
@@ -996,6 +1161,9 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_iRazingTurns = 0;
 	m_iCountExtraLuxuries = 0;
 	m_iCheapestPlotInfluence = 0;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	m_iNumThingsPurchasedThisTurn = 0;
+#endif
 	m_unitBeingBuiltForOperation.Invalidate();
 
 	m_bNeverLost = true;
@@ -1105,12 +1273,18 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_abYieldRankValid.resize(NUM_YIELD_TYPES);
 	m_aiBaseYieldRank.resize(NUM_YIELD_TYPES);
 	m_aiYieldRank.resize(NUM_YIELD_TYPES);
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	m_viWonderYieldCache.resize(GC.getNumBuildingInfos());
+#endif
 	for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
 		m_abBaseYieldRankValid.setAt(iI, false);
 		m_abYieldRankValid.setAt(iI, false);
 		m_aiBaseYieldRank.setAt(iI, -1);
 		m_aiYieldRank.setAt(iI, -1);
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+		m_viWonderYieldCache.setAt(iI, 0);
+#endif
 	}
 
 	if(!bConstructorCall)
@@ -1865,6 +2039,12 @@ void CvCity::doResourceDemands()
 	}
 }
 #endif
+void CvCity::doUpdateCacheOnTurn()
+{
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX) // Cache yields from World Wonders.
+	buildWonderYieldCache();
+#endif
+}
 
 //	--------------------------------------------------------------------------------
 void CvCity::doTurn()
@@ -1874,6 +2054,8 @@ void CvCity::doTurn()
 #else
 	AI_PERF_FORMAT("City-AI-perf.csv", ("CvCity::doTurn, Turn %03d, %s, %s,", GC.getGame().getElapsedGameTurns(), GetPlayer()->getCivilizationShortDescription(), getName().c_str()) );
 #endif
+
+	doUpdateCacheOnTurn();
 
 	VALIDATE_OBJECT
 	CvPlot* pLoopPlot;
@@ -1918,6 +2100,9 @@ void CvCity::doTurn()
 	GetCityBuildings()->SetSoldBuildingThisTurn(false);
 #if defined(LEKMOD_v34) // Move WLTKD to happen before yield calculations
 	DoTestResourceDemanded();
+#endif
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	SetNumThingsPurchasedThisTurn(0);
 #endif
 	DoUpdateFeatureSurrounded();
 
@@ -2667,8 +2852,140 @@ int CvCity::findYieldRateRank(YieldTypes eYield)
 
 	return m_aiYieldRank[eYield];
 }
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+std::vector<int> CvCity::getWonderYieldCache()
+{
+	return m_viWonderYieldCache;
+}
+int CvCity::getWonderYields(YieldTypes eYield) const
+{
+	return m_viWonderYieldCache[eYield];
+}
+void CvCity::buildWonderYieldCache()
+{
+	std::vector<int> cache = getWonderYieldCache();
+	if (cache.size() != NUM_YIELD_TYPES)
+	{
+		cache.resize(NUM_YIELD_TYPES);
+	}
+	std::fill(cache.begin(), cache.end(), 0);
+	CvPlayer& kPlayer = GET_PLAYER(getOwner());
+	for (int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
+	{
+		const BuildingTypes eBuilding = static_cast<BuildingTypes>(iBuildingLoop);
+		if (eBuilding == NO_BUILDING)
+			continue;
+		CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+		if (pkBuildingInfo == NULL)
+			continue;
+		const BuildingClassTypes eBuildingClass = static_cast<BuildingClassTypes>(pkBuildingInfo->GetBuildingClassType());
+		if (eBuildingClass == NO_BUILDINGCLASS)
+			continue;
+		CvBuildingClassInfo* pkBuildingClassInfo = GC.getBuildingClassInfo(eBuildingClass);
+		if (pkBuildingClassInfo == NULL)
+			continue;
+		if (!isWorldWonderClass(*pkBuildingClassInfo))
+			continue;
 
+		int iNumBuilding = GetCityBuildings()->GetNumBuilding(eBuilding);
+		if (iNumBuilding <= 0)
+		{
+			for (int iYieldLoop = 0; iYieldLoop < NUM_YIELD_TYPES; iYieldLoop++)
+			{
+				const YieldTypes eYield = static_cast<YieldTypes>(iYieldLoop);
+				if (eYield == NO_YIELD)
+					continue;
+				// Base building yield
+				int iYieldChange = pkBuildingInfo->GetYieldChange(eYield);
 
+				// League/world congress wonder yield
+				if (GC.getGame().GetGameLeagues() != NULL)
+				{
+					iYieldChange += GC.getGame().GetGameLeagues()->GetWorldWonderYieldChange(getOwner(), eYield);
+				}
+				// Contains Trait and Policy stuff for WW specifically.
+				iYieldChange += kPlayer.GetWorldWonderYieldChanges(eYield);
+				// Religion, Tracked independently due to the wonky religion stuff
+				ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
+				if (eMajority != NO_RELIGION)
+				{
+					const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eMajority, getOwner());
+					if (pReligion != NULL)
+					{
+						const int iFollowers = GetCityReligions()->GetNumFollowers(eMajority);
+
+						int iReligionYield = pReligion->m_Beliefs.GetBuildingClassYieldChange(eBuildingClass, eYield, iFollowers);
+						BeliefTypes eSecondaryPantheon = NO_BELIEF;
+#if defined(LEKMOD_RELIGIOUS_TOLERANCE_EXTENDED)
+						eSecondaryPantheon = GetCityReligions()->GetSecondaryReligionPantheonBelief();
+						if (eSecondaryPantheon != NO_BELIEF)
+						{
+							CvBeliefEntry* pkSecondaryBelief = GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon);
+							if (pkSecondaryBelief != NULL)
+							{
+								iReligionYield += pkSecondaryBelief->GetBuildingClassYieldChange(eBuildingClass, eYield);
+							}
+						}
+#endif
+						iReligionYield += pReligion->m_Beliefs.GetYieldChangeWorldWonder(eYield);
+#if defined(LEKMOD_RELIGIOUS_TOLERANCE_EXTENDED)
+						if (eSecondaryPantheon != NO_BELIEF)
+						{
+							CvBeliefEntry* pkSecondaryBelief = GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon);
+							if (pkSecondaryBelief != NULL)
+							{
+								iReligionYield += pkSecondaryBelief->GetYieldChangeWorldWonder(eYield);
+							}
+						}
+#endif
+						iYieldChange += iReligionYield;
+					}
+				}
+				iYieldChange += kPlayer.GetPlayerPolicies()->GetBuildingClassYieldChange(eBuildingClass, eYield);
+#if defined(TRAITIFY)
+				iYieldChange += kPlayer.GetPlayerTraits()->GetBuildingClassYieldChange(eBuildingClass, eYield);
+#endif
+				iYieldChange += kPlayer.GetBuildingClassYieldChange(eBuildingClass, eYield);
+				iYieldChange += GetCityBuildings()->GetBuildingYieldChange(eBuildingClass, eYield);
+
+				if (eYield == YIELD_CULTURE)
+				{
+					if (pkBuildingInfo->GetYieldChange(YIELD_CULTURE) > 0)
+					{
+						if (kPlayer.GetPlayerTraits() != NULL)
+						{
+							iYieldChange += kPlayer.GetPlayerTraits()->GetCultureBuildingYieldChange();
+						}
+					}
+				}
+
+				if (pkBuildingInfo->GetEnhancedYieldTech() != NO_TECH)
+				{
+					if (GET_TEAM(kPlayer.getTeam()).GetTeamTechs()->HasTech((TechTypes)pkBuildingInfo->GetEnhancedYieldTech()))
+					{
+						iYieldChange += pkBuildingInfo->GetTechEnhancedYieldChange(eYield);
+					}
+				}
+
+#if defined(LEKMOD_ERA_ENHANCED_YIELDS)
+				for (int iEraLoop = 0; iEraLoop < GC.getNumEraInfos(); iEraLoop++)
+				{
+					const EraTypes eEra = static_cast<EraTypes>(iEraLoop);
+					if (eEra != NO_ERA && kPlayer.GetCurrentEra() >= eEra)
+					{
+						iYieldChange += pkBuildingInfo->GetEraEnhancedYieldChange(eEra, eYield);
+					}
+				}
+#endif
+				if (iYieldChange != 0)
+				{
+					cache[eYield] += (iYieldChange * iNumBuilding);
+				}
+			}
+		}
+	}
+}
+#endif
 //	--------------------------------------------------------------------------------
 // Returns one of the upgrades...
 #ifdef AUI_WARNING_FIXES
@@ -5484,7 +5801,13 @@ int CvCity::GetPurchaseCost(UnitTypes eUnit)
 	// Cost of purchasing units modified?
 	iCost *= (100 + GET_PLAYER(getOwner()).GetUnitPurchaseCostModifier());
 	iCost /= 100;
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	if (GetNumThingsPurchasedThisTurn() == 0)
+	{
+		iCost *= (100 - m_pCityBuildings->GetFirstPurchaseDiscount());
+		iCost /= 100;
+	}
+#endif
 	// Make the number not be funky
 	int iDivisor = /*10*/ GC.getGOLD_PURCHASE_VISIBLE_DIVISOR();
 	iCost /= iDivisor;
@@ -5687,7 +6010,13 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 			}
 		}
 	}
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	if (GetNumThingsPurchasedThisTurn() == 0)
+	{
+		iCost *= (100 - m_pCityBuildings->GetFirstPurchaseDiscount());
+		iCost /= 100;
+	}
+#endif
 	// Make the number not be funky
 #ifdef NQ_FAITH_COST_ROUNDS_TO_NEAREST_5
 #if !defined(MISC_CHANGES) // new Global value for FAITH_PURCHASE_VISIBLE_DIVISOR
@@ -5731,6 +6060,13 @@ int CvCity::GetPurchaseCost(BuildingTypes eBuilding)
 				int iCostL = iRaw;
 				iCostL *= (100 + iHurryMod);
 				iCostL /= 100;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+				if (GetNumThingsPurchasedThisTurn() == 0)
+				{
+					iCostL *= (100 - m_pCityBuildings->GetFirstPurchaseDiscount());
+					iCostL /= 100;
+				}
+#endif
 				iCostL *= GC.getGame().getGameSpeedInfo().getConstructPercent();
 				iCostL /= 100;
 				iCostL *= (100 + GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_BUILDING_PURCHASE_COST_MODIFIER));
@@ -5789,7 +6125,13 @@ int CvCity::GetPurchaseCost(BuildingTypes eBuilding)
 	// Cost of purchasing buildings modified?
 	iCost *= (100 + GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_BUILDING_PURCHASE_COST_MODIFIER));
 	iCost /= 100;
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	if (GetNumThingsPurchasedThisTurn() == 0)
+	{
+		iCost *= (100 - m_pCityBuildings->GetFirstPurchaseDiscount());
+		iCost /= 100;
+	}
+#endif
 	// Make the number not be funky
 	int iDivisor = /*10*/ GC.getGOLD_PURCHASE_VISIBLE_DIVISOR();
 	iCost /= iDivisor;
@@ -5882,7 +6224,13 @@ int CvCity::GetFaithPurchaseCost(BuildingTypes eBuilding)
 		iCost *= GC.getGame().getHandicapInfo().getAIConstructPercent();
 		iCost /= 100;
 	}
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	if (GetNumThingsPurchasedThisTurn() == 0)
+	{
+		iCost *= (100 - m_pCityBuildings->GetFirstPurchaseDiscount());
+		iCost /= 100;
+	}
+#endif
 	// Make the number not be funky
 #if !defined(MISC_CHANGES) // new Global value for FAITH_PURCHASE_VISIBLE_DIVISOR
 	int iDivisor = /*10*/ GC.getGOLD_PURCHASE_VISIBLE_DIVISOR();
@@ -5905,7 +6253,13 @@ int CvCity::GetPurchaseCost(ProjectTypes eProject)
 	VALIDATE_OBJECT
 
 	int iCost = GetPurchaseCostFromProduction(getProductionNeeded(eProject));
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	if (GetNumThingsPurchasedThisTurn() == 0)
+	{
+		iCost *= (100 - m_pCityBuildings->GetFirstPurchaseDiscount());
+		iCost /= 100;
+	}
+#endif
 	// Make the number not be funky
 	int iDivisor = /*10*/ GC.getGOLD_PURCHASE_VISIBLE_DIVISOR();
 	iCost /= iDivisor;
@@ -6112,7 +6466,7 @@ int CvCity::getGeneralProductionModifiers(CvString* toolTipSink) const
 		}
 
 #ifdef NQ_RAIL_CONNECTION_PRODUCTION_MODIFIER_FROM_POLICIES
-		int iPolicyMod = GET_PLAYER(this->getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_RAIL_CONNECTION_PRODUCTION_MODIFIER);
+		int iPolicyMod = GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_RAIL_CONNECTION_PRODUCTION_MODIFIER);
 		if (iPolicyMod != 0)
 		{
 			iMultiplier += iPolicyMod;
@@ -6155,7 +6509,7 @@ int CvCity::getProductionModifier(UnitTypes eUnit, CvString* toolTipSink) const
 	// Which means we wont see the GameSpeed, StartEra and oter such costs encounter here which is desired.
 	int iPlayerCost = GET_PLAYER(getOwner()).getProductionNeeded(eUnit);
 	// This city's Cost for Unit
-	int iCityCost = this->getProductionNeeded(eUnit);
+	int iCityCost = getProductionNeeded(eUnit);
 	// Find the % that this city's cost is of the true cost
 	float fUnitCostReduction = 100.0f * (iCityCost - iPlayerCost) / iPlayerCost;
 	if (fUnitCostReduction != 0.0f)
@@ -6199,7 +6553,11 @@ int CvCity::getProductionModifier(UnitTypes eUnit, CvString* toolTipSink) const
 	// Military production bonus (only for units with actual combat or ranged combat strength)
 	if(pkUnitInfo->IsMilitaryProduction() && (pkUnitInfo->GetCombat() > 0 || pkUnitInfo->GetRangedCombat() > 0))
 	{
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS) // Military Production Bonus from Great Works
 		iTempMod = getMilitaryProductionModifier();
+#else
+		iTempMod = getMilitaryProductionModifier() + getMilitaryProductionFromGreatWorks();
+#endif
 		iMultiplier += iTempMod;
 		if(toolTipSink && iTempMod)
 		{
@@ -7958,8 +8316,16 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 #endif
 			}
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-			m_pCityBuildings->ChangeSameLandMassYieldChange(eYield, pBuildingInfo->GetSameLandMassYieldChange(eYield));
-			m_pCityBuildings->ChangeDifferentLandMassYieldChange(eYield, pBuildingInfo->GetDifferentLandMassYieldChange(eYield));
+			m_pCityBuildings->ChangeSameLandMassYieldChange(eYield, pBuildingInfo->GetSameLandMassYieldChange(eYield) * iChange);
+			m_pCityBuildings->ChangeDifferentLandMassYieldChange(eYield, pBuildingInfo->GetDifferentLandMassYieldChange(eYield) * iChange);
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+			m_pCityBuildings->ChangeCityGreatWorkYieldChange(eYield, pBuildingInfo->GetCityGreatWorkYieldChange(eYield) * iChange);
+			for (int i = 0; i < GC.getNumGreatWorkClassInfos(); i++)
+			{
+				GreatWorkClass eGreatWorkClass = static_cast<GreatWorkClass>(i);
+				m_pCityBuildings->ChangeCityGreatWorkClassYieldChanges(eGreatWorkClass, eYield, pBuildingInfo->GetCityGreatWorkClassYieldChange(eGreatWorkClass, eYield) * iChange);
+			}
 #endif
 		} // NUM_YIELD_TYPES loop end
 
@@ -8015,7 +8381,11 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 	{
 		m_pCityBuildings->ChangeBuildingDefense(pBuildingInfo->GetDefenseModifier() * iChange);
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS) // Add the garrison strength bonus NOTE: this is not inside of a if(GetGarrisonedUnit()) since that would make it only apply if the city is garrisoned on construction
-		m_pCityBuildings->ChangeGarrisonStrengthBonus(pBuildingInfo->GetGarrisonStrengthBonus()* iChange);
+		m_pCityBuildings->ChangeGarrisonStrengthBonus(pBuildingInfo->GetGarrisonStrengthBonus() * iChange);
+		m_pCityBuildings->ChangeGarrisonMaintenanceFreeCount(pBuildingInfo->IsGarrisonMaintenanceFree() * iChange);
+#endif
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+		m_pCityBuildings->ChangeFirstPurchaseDiscount(pBuildingInfo->GetFirstPurchaseDiscount() * iChange);
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 		m_pCityBuildings->ChangeBuildingDefensePerCitizen(pBuildingInfo->GetDefensePerCitizen() * iChange);
@@ -8026,7 +8396,12 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 	}
 
 	UpdateReligion(GetCityReligions()->GetReligiousMajority());
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	if (::isWorldWonderClass(pBuildingInfo->GetBuildingClassInfo()))
+	{
+		buildWonderYieldCache();
+	}
+#endif
 	owningPlayer.DoUpdateHappiness();
 
 #ifdef AUI_CITIZENS_MID_TURN_ASSIGN_RUNS_SELF_CONSISTENCY
@@ -10493,15 +10868,35 @@ int CvCity::getMilitaryProductionModifier()	const
 	return m_iMilitaryProductionModifier;
 }
 
-
 //	--------------------------------------------------------------------------------
 void CvCity::changeMilitaryProductionModifier(int iChange)
 {
 	VALIDATE_OBJECT
-	m_iMilitaryProductionModifier = (m_iMilitaryProductionModifier + iChange);
+		m_iMilitaryProductionModifier = (m_iMilitaryProductionModifier + iChange);
 }
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+int CvCity::getMilitaryProductionFromGreatWorks() const
+{
+	VALIDATE_OBJECT
+	int RtnValue = 0;
 
+	CvBuildingXMLEntries* pkBuildings = GetCityBuildings()->GetBuildings();
+	for (int iBuilding = 0; iBuilding < pkBuildings->GetNumBuildings(); iBuilding++)
+	{
+		CvBuildingEntry* pInfo = pkBuildings->GetEntry(iBuilding);
+		if (pInfo)
+		{
+			if (pInfo->GetGreatWorkMilitaryProductionModifier() != 0)
+			{
+				int iGreatWorks = GetCityBuildings()->GetNumGreatWorksInBuilding((BuildingClassTypes)pInfo->GetBuildingClassType());
+				RtnValue += (iGreatWorks * pInfo->GetGreatWorkMilitaryProductionModifier());
+			}
+		}
+	}
 
+	return RtnValue;
+}
+#endif
 //	--------------------------------------------------------------------------------
 int CvCity::getSpaceProductionModifier() const
 {
@@ -11142,8 +11537,9 @@ int CvCity::GetLocalHappiness() const
 	iLocalHappiness += iTraitBuildingHappiness;
 #endif // TRAITIFY
 #endif // LEKMOD_NONCIV_BUILDINGCLASS_YIELD_CHANGE
-
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS) // Legacy Great Works Happiness
+	iLocalHappiness += GetCityBuildings()->GetHappinessFromGreatWorks();
+#endif
 	// India has unique way to compute local happiness cap
 	if(kPlayer.GetPlayerTraits()->GetPopulationUnhappinessModifier() != 0)
 	{
@@ -11788,6 +12184,7 @@ int CvCity::getBaseYieldRateModifier(YieldTypes eIndex, int iExtra, CvString* to
 #else
 	const CvYieldInfo& kYield = *GC.getYieldInfo(eIndex);
 #endif
+	CvPlayer& kPlayer = GET_PLAYER(getOwner());
 
 	// Yield Rate Modifier
 	iTempMod = getYieldRateModifier(eIndex);
@@ -11802,11 +12199,7 @@ int CvCity::getBaseYieldRateModifier(YieldTypes eIndex, int iExtra, CvString* to
 		GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_RESOURCES", iTempMod);
 
 	// Happiness Yield Rate Modifier
-#ifdef AUI_CITIZENS_CONSIDER_HAPPINESS_VALUE_ON_OTHER_YIELDS
-	iTempMod = getHappinessModifier(eIndex, iExtraHappiness);
-#else
 	iTempMod = getHappinessModifier(eIndex);
-#endif
 	iModifier += iTempMod;
 	if(toolTipSink)
 		GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_HAPPINESS", iTempMod);
@@ -11821,7 +12214,7 @@ int CvCity::getBaseYieldRateModifier(YieldTypes eIndex, int iExtra, CvString* to
 	}
 
 	// Player Yield Rate Modifier
-	iTempMod = GET_PLAYER(getOwner()).getYieldRateModifier(eIndex);
+	iTempMod = kPlayer.getYieldRateModifier(eIndex);
 	iModifier += iTempMod;
 	if(toolTipSink)
 		GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_PLAYER", iTempMod);
@@ -11829,12 +12222,26 @@ int CvCity::getBaseYieldRateModifier(YieldTypes eIndex, int iExtra, CvString* to
 	// Player Capital Yield Rate Modifier
 	if(isCapital())
 	{
-		iTempMod = GET_PLAYER(getOwner()).getCapitalYieldRateModifier(eIndex);
+		iTempMod = kPlayer.getCapitalYieldRateModifier(eIndex);
 		iModifier += iTempMod;
 		if(toolTipSink)
 			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_CAPITAL", iTempMod);
 	}
+#if defined(LEK_YIELD_TOURISM)
+	// World Religion' Holy City Tourism Bonus
+	iTempMod = YIELD_TOURISM == eIndex ? GC.getGame().GetGameLeagues()->GetCityTourismModifier(getOwner(), this) : 0; // Tourism Only
+	iModifier += iTempMod;
+	if(toolTipSink)
+		GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_WORLD_RELIGION", iTempMod);
 
+	if (kPlayer.GetTourismBonusTurns() > 0 && YIELD_TOURISM == eIndex) // International Games
+	{
+		iTempMod = GC.getTEMPORARY_TOURISM_BOOST_MOD();
+		iModifier += iTempMod;
+		if (toolTipSink)
+			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_INTERNATIONAL_GAMES", iTempMod);
+	}
+#endif
 	// Golden Age Yield Modifier
 	if(GET_PLAYER(getOwner()).isGoldenAge())
 	{
@@ -11849,6 +12256,9 @@ int CvCity::getBaseYieldRateModifier(YieldTypes eIndex, int iExtra, CvString* to
 		}
 #else
 		iTempMod = kYield.getGoldenAgeYieldMod();
+#if defined(TRAITIFY) // Golden Age Yield Modifiers from Traits
+		iTempMod += kPlayer.GetPlayerTraits()->GetGoldenAgeYieldModifier(eIndex);
+#endif
 		iModifier += iTempMod;
 		if (toolTipSink)
 			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_YIELD_GOLDEN_AGE", iTempMod);
@@ -12379,8 +12789,11 @@ int CvCity::GetBaseYieldRateFromThemedBuildings(YieldTypes eYield) const
 	VALIDATE_OBJECT
 	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
 	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
-
-	return (eYield == YIELD_CULTURE) ? m_pCityBuildings->GetThemingBonuses() : 0;
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	return m_pCityBuildings->GetThemingBonuses(eYield);
+#else
+	return YIELD_CULTURE == eYield ? m_pCityBuildings->GetThemingBonuses() : 0;
+#endif
 }
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
@@ -12715,7 +13128,7 @@ void CvCity::changeDomainFreeExperience(DomainTypes eIndex, int iChange)
 int CvCity::getDomainFreeExperienceFromGreatWorks(DomainTypes eIndex) const
 {
 	VALIDATE_OBJECT
-		CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
 	CvAssertMsg(eIndex < NUM_DOMAIN_TYPES, "eIndex expected to be < NUM_DOMAIN_TYPES");
 
 	int iXP = 0;
@@ -12899,7 +13312,118 @@ void CvCity::ChangeExtraLuxuryResources(int iChange)
 {
 	m_iCountExtraLuxuries += iChange;
 }
+#if defined(LEKMOD_RELOCATE_RESOURCE)
+CvPlot* CvCity::addResourceLocally(CvPlot* pFromPlot, ResourceTypes eResource, int iAmount)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eResource >= 0, "eResource expected to be >= 0");
+	CvAssertMsg(eResource < GC.getNumResourceInfos(), "eResource expected to be < GC.getNumResourceInfos()");
+	if (iAmount < 0) // negative amount, nonsense.
+		return NULL;
+	// Scan every plot the city could ever own
+	CvPlot* pLoopPlot;
+	CvWeightedVector<CvPlot*, MAX_CITY_PLOTS> potentialPlots;
+	
+	for (int iJ = 0; iJ < MAX_CITY_PLOTS; iJ++)
+	{
+		int iWeight = 0;
+		pLoopPlot = plotCity(getX(), getY(), iJ);
+		if (pLoopPlot != NULL)
+		{
+			// store off reused stuff
+			TerrainTypes ePlotTerrain = pLoopPlot->getTerrainType();
+			FeatureTypes ePlotFeature = pLoopPlot->getFeatureType();
+			ImprovementTypes ePlotImprovement = pLoopPlot->getImprovementType();
+			ResourceTypes ePlotResource = pLoopPlot->getResourceType();
+			// no overriding
+			if (ePlotResource != NO_RESOURCE)
+				continue;
+			// no giving to other players
+			if(pLoopPlot->getOwner() != NO_PLAYER && pLoopPlot->getOwner() != getOwner())
+				continue;
+			// not placing on improvements that cannot be removed
+			if (ePlotImprovement != NO_IMPROVEMENT && GC.getImprovementInfo(ePlotImprovement)->IsPermanent())
+				continue;
+			// not in lakes, fake lakes, or mountains
+			if (pLoopPlot->isLake() || pLoopPlot->isPseudoLake() || pLoopPlot->isMountain())
+				continue;
+			// not on plots that cannot be walked on or a natural wonder
+			if (pLoopPlot->isImpassable() || GC.getFeatureInfo(ePlotFeature)->IsNaturalWonder())
+				continue;
+			// Owned by us, +50
+			if (pLoopPlot->getOwner() == getOwner())
+			{
+				iWeight += 50;
+			}
+			// Closer to city center is better, so weight by distance
+			int iDistance = plotDistance(pLoopPlot->getX(), pLoopPlot->getY(), getX(), getY());
+			iWeight += 100 - (iDistance * 15);
 
+			// Now look into the Parameters of the resource itself.
+			CvResourceInfo* info = GC.getResourceInfo(eResource);
+			TerrainTypes coast = static_cast<TerrainTypes>(GC.getInfoTypeForString("TERRAIN_COAST", false));
+			iWeight += info->isTerrain(ePlotTerrain) ? ePlotTerrain == coast ? 1000 : 40 : -20; // Preferred terrain, heavy emphasis on coast if that is a valid place, to not have land fish
+			if (ePlotFeature != NO_FEATURE) // If there's a feature, check if it's a preferred one or not.
+			{
+				iWeight += info->isFeature(ePlotFeature) ? 20 : 0;
+				iWeight += info->isFeatureTerrain(ePlotTerrain) ? 20 : 0;
+			}
+			iWeight += pLoopPlot->isHills() && info->isHills() ? 15 : -10; // Hills
+			iWeight += pLoopPlot->isRiver() && info->isNoRiverSide() ? -15 : 5; // River
+			iWeight += pLoopPlot->isFlatlands() && info->isFlatlands() ? 15 : -10; // Flatlands
+			potentialPlots.push_back(pLoopPlot, iWeight);
+		}
+	}
+	if (potentialPlots.size() > 0)
+	{
+		potentialPlots.SortItems();
+		CvPlot* pBestPlot = potentialPlots.GetElement(0);
+		if (eResource == static_cast<ResourceTypes>(GC.getInfoTypeForString("RESOURCE_HIDDEN_ARTIFACTS")))
+		{
+			// artifacts aren't generated until the tech is researched so this shouldn't come up very often
+			// but if we are removing one by accident, we also need to move the archaelogical record
+			if (pFromPlot != NULL)
+			{
+				CvArchaeologyData data = pFromPlot->GetArchaeologicalRecord();
+				pBestPlot->ClearArchaeologicalRecord();
+				pBestPlot->AddArchaeologicalRecord(data.m_eArtifactType, data.m_eEra, data.m_ePlayer1, data.m_ePlayer2);
+				pBestPlot->SetArtifactGreatWork(data.m_eWork);
+				pFromPlot->ClearArchaeologicalRecord();
+			}
+		}
+		pBestPlot->setResourceType(eResource, iAmount);
+		pBestPlot->setLayoutDirty(true);
+
+		if (pBestPlot->getResourceType(getTeam()) != NO_RESOURCE)
+		{
+			Localization::String localizedText;
+			CvNotifications* pNotifications = GET_PLAYER(getOwner()).GetNotifications();
+			CvResourceInfo* resource = GC.getResourceInfo(eResource);
+			NotificationTypes eNotificationType;
+			if (pNotifications)
+			{
+				switch (resource->getResourceUsage())
+				{
+					case RESOURCEUSAGE_LUXURY:
+						eNotificationType = NOTIFICATION_DISCOVERED_LUXURY_RESOURCE;
+					break;
+					case RESOURCEUSAGE_STRATEGIC:
+						eNotificationType = NOTIFICATION_DISCOVERED_STRATEGIC_RESOURCE;
+					break;
+					default: 				
+						eNotificationType = NOTIFICATION_DISCOVERED_BONUS_RESOURCE;
+					break;
+				}
+				localizedText = Localization::Lookup("TXT_KEY_RESOURCE_MOVED");
+				localizedText << GC.getResourceInfo(eResource)->GetTextKey() << getNameKey();
+				pNotifications->Add(eNotificationType, localizedText.toUTF8(), localizedText.toUTF8(), pBestPlot->getX(), pBestPlot->getY(), eResource);
+			}
+		}
+		return pBestPlot;
+	}
+	return NULL;
+}
+#endif
 //	--------------------------------------------------------------------------------
 int CvCity::getProjectProduction(ProjectTypes eIndex) const
 {
@@ -14547,7 +15071,7 @@ int CvCity::GetBuyPlotCost(int iPlotX, int iPlotY) const
 	iCost /= iDivisor;
 	iCost *= iDivisor;
 
-	return iCost;
+	return std::max(GC.getPLOT_COST_APPEARANCE_DIVISOR(), iCost);
 }
 
 //	--------------------------------------------------------------------------------
@@ -14922,7 +15446,18 @@ void CvCity::DoUpdateCheapestPlotInfluence()
 
 	SetCheapestPlotInfluence(iLowestCost);
 }
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+void CvCity::SetNumThingsPurchasedThisTurn(int iNumThingsPurchasedThisTurn)
+{
+	VALIDATE_OBJECT
+	m_iNumThingsPurchasedThisTurn = iNumThingsPurchasedThisTurn;
+}
+void CvCity::ChangeNumThingsPurchasedThisTurn(int iChange)
+{
+	VALIDATE_OBJECT
+	m_iNumThingsPurchasedThisTurn += iChange;
+}
+#endif
 //	--------------------------------------------------------------------------------
 /// Setting the danger value threat amount
 void CvCity::SetThreatValue(int iThreatValue)
@@ -16480,7 +17015,9 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 #ifdef ENHANCED_GRAPHS
 		GET_PLAYER(getOwner()).ChangeGoldSpentBuys(iGoldCost);
 #endif
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+		ChangeNumThingsPurchasedThisTurn(1);
+#endif
 		bool bResult = false;
 		if(eUnitType >= 0)
 		{
@@ -16659,7 +17196,9 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 			}
 
 			kPlayer.ChangeFaith(-iFaithCost);
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+			ChangeNumThingsPurchasedThisTurn(1);
+#endif
 			UnitClassTypes eUnitClass = pUnit->getUnitClassType();
 			if (eUnitClass == GC.getInfoTypeForString("UNITCLASS_WRITER"))
 			{
@@ -17590,6 +18129,9 @@ void CvCity::read(FDataStream& kStream)
 	kStream >> m_iRazingTurns;
 	kStream >> m_iCountExtraLuxuries;
 	kStream >> m_iCheapestPlotInfluence;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	kStream >> m_iNumThingsPurchasedThisTurn;
+#endif
 	kStream >> m_unitBeingBuiltForOperation.m_iOperationID;
 	kStream >> m_unitBeingBuiltForOperation.m_iArmyID;
 	kStream >> m_unitBeingBuiltForOperation.m_iSlotID;
@@ -17802,7 +18344,9 @@ void CvCity::read(FDataStream& kStream)
 	kStream >> m_abBaseYieldRankValid;
 	kStream >> m_aiYieldRank;
 	kStream >> m_abYieldRankValid;
-
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	kStream >> m_viWonderYieldCache;
+#endif
 	kStream >> m_iGameTurnLastExpanded;
 	m_strName = "";
 
@@ -17946,6 +18490,9 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_iRazingTurns;
 	kStream << m_iCountExtraLuxuries;
 	kStream << m_iCheapestPlotInfluence;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	kStream << m_iNumThingsPurchasedThisTurn;
+#endif
 	kStream << m_unitBeingBuiltForOperation.m_iOperationID;
 	kStream << m_unitBeingBuiltForOperation.m_iArmyID;
 	kStream << m_unitBeingBuiltForOperation.m_iSlotID;
@@ -18082,6 +18629,9 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_abBaseYieldRankValid;
 	kStream << m_aiYieldRank;
 	kStream << m_abYieldRankValid;
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	kStream << m_viWonderYieldCache;
+#endif
 
 	kStream << m_iGameTurnLastExpanded;
 
@@ -18151,14 +18701,13 @@ bool CvCity::isValidBuildingLocation(BuildingTypes eBuilding) const
 		bool bFoundLake = false;
 		
 		CvPlot* pAdjacentPlot;
-		FeatureTypes eLakeVictoria = (FeatureTypes)GC.getInfoTypeForString("FEATURE_LAKE_VICTORIA");
 		for (int iDirectionLoop = 0; iDirectionLoop < NUM_DIRECTION_TYPES; iDirectionLoop++)
 		{
 			pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iDirectionLoop));
 
 			if (pAdjacentPlot != NULL)
 			{
-				if (pAdjacentPlot->isLake() || pAdjacentPlot->getFeatureType() == eLakeVictoria)
+				if (pAdjacentPlot->isLake() || pAdjacentPlot->isPseudoLake())
 				{
 					bFoundLake = true;
 					break;

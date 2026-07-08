@@ -147,6 +147,10 @@ CvBuildingEntry::CvBuildingEntry(void):
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iGarrisonStrengthBonus(0),
+	m_bGarrisonMaintenanceFree(false),
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_iGreatWorkHappiness(0),
 #endif
 	m_iPreferredDisplayPosition(0),
 	m_iPortraitIndex(-1),
@@ -185,6 +189,9 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_bAllowsFoodTradeRoutes(false),
 	m_bAllowsProductionTradeRoutes(false),
 	m_bNullifyInfluenceModifier(false),
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	m_iFirstPurchaseDiscount(0),
+#endif
 	m_piLockedBuildingClasses(NULL),
 	m_piPrereqAndTechs(NULL),
 	m_piResourceQuantityRequirements(NULL),
@@ -218,6 +225,11 @@ CvBuildingEntry::CvBuildingEntry(void):
 #endif
 	m_piDomainFreeExperience(NULL),
 	m_piDomainFreeExperiencePerGreatWork(NULL),
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_iGreatWorkMilitaryProductionModifier(0),
+	m_piBuildingGreatWorkYieldChange(NULL),
+	m_piCityGreatWorkYieldChange(NULL),
+#endif
 	m_piDomainProductionModifier(NULL),
 	m_piPrereqNumOfBuildingClass(NULL),
 	m_piFlavorValue(NULL),
@@ -313,6 +325,10 @@ CvBuildingEntry::~CvBuildingEntry(void)
 #endif
 	SAFE_DELETE_ARRAY(m_piDomainFreeExperience);
 	SAFE_DELETE_ARRAY(m_piDomainFreeExperiencePerGreatWork);
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	SAFE_DELETE_ARRAY(m_piBuildingGreatWorkYieldChange);
+	SAFE_DELETE_ARRAY(m_piCityGreatWorkYieldChange);
+#endif
 	SAFE_DELETE_ARRAY(m_piDomainProductionModifier);
 	SAFE_DELETE_ARRAY(m_piPrereqNumOfBuildingClass);
 	SAFE_DELETE_ARRAY(m_piFlavorValue);
@@ -365,6 +381,9 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 
 	//Basic Properties
 	m_iGoldMaintenance = kResults.GetInt("GoldMaintenance");
+#if defined(BEE)
+	m_bNoSell = kResults.GetBool("Sellable");
+#endif
 	m_iMutuallyExclusiveGroup = kResults.GetInt("MutuallyExclusiveGroup");
 	m_bTeamShare = kResults.GetBool("TeamShare");
 	m_bWater = kResults.GetBool("Water");
@@ -408,6 +427,9 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_bAllowsFoodTradeRoutes = kResults.GetBool("AllowsFoodTradeRoutes");
 	m_bAllowsProductionTradeRoutes = kResults.GetBool("AllowsProductionTradeRoutes");
 	m_bNullifyInfluenceModifier = kResults.GetBool("NullifyInfluenceModifier");
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	m_iFirstPurchaseDiscount = kResults.GetInt("FirstPurchaseDiscount");
+#endif
 	m_iNumCityCostMod = kResults.GetInt("NumCityCostMod");
 	m_iHurryCostModifier = kResults.GetInt("HurryCostModifier");
 	m_iMinAreaSize = kResults.GetInt("MinAreaSize");
@@ -504,6 +526,10 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iGarrisonStrengthBonus = kResults.GetInt("GarrisonStrengthBonus");
+	m_bGarrisonMaintenanceFree = kResults.GetBool("GarrisonMaintenanceFree");
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_iGreatWorkHappiness = kResults.GetInt("GreatWorkHappiness");
 #endif
 	m_iPreferredDisplayPosition = kResults.GetInt("DisplayPosition");
 	m_iPortraitIndex = kResults.GetInt("PortraitIndex");
@@ -684,11 +710,41 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 #if defined(LEKMOD_v34)
 	kUtility.SetYields(m_piGarrisonYieldChange, "Building_GarrisonYieldChanges", "BuildingType", szBuildingType);
 #endif
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	kUtility.SetYields(m_piSameLandMassYieldChange, "Building_SameLandMassYieldChanges", "BuildingType", szBuildingType);
-	kUtility.SetYields(m_piDifferentLandMassYieldChange, "Building_DifferentLandMassYieldChanges", "BuildingType", szBuildingType);
-#endif 
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_iGreatWorkMilitaryProductionModifier = kResults.GetInt("GreatWorkMilitaryProductionModifier");
+	// Great Work Yield Changes
+	{
+		kUtility.InitializeArray(m_piBuildingGreatWorkYieldChange, "Yields");
+		kUtility.InitializeArray(m_piCityGreatWorkYieldChange, "Yields");
+		kUtility.Initialize2DArray(m_ppiCityGreatWorkClassYieldChange, "GreatWorkClasses", "Yields");
+		std::string strKey("Building_GreatWorkYieldChanges");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Yields.ID as YieldID, COALESCE(GreatWorkClasses.ID, -1) as GreatWorkClassID, YieldChange, HoldingYield "
+				"FROM Building_GreatWorkYieldChanges "
+				"INNER JOIN Yields on Yields.Type = YieldType "
+				"INNER JOIN GreatWorkClasses on GreatWorkClasses.Type = GreatWorkClassType "
+				"WHERE BuildingType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szBuildingType);
+		while (pResults->Step())
+		{
+			const int YieldID = pResults->GetInt(0);
+			const int GreatWorkClassID = pResults->GetInt(1);
+			const int YieldChange = pResults->GetInt(2);
+			const int HoldingYield = pResults->GetInt(3);
+			m_piBuildingGreatWorkYieldChange[YieldID] = HoldingYield;
+			m_piCityGreatWorkYieldChange[YieldID] = YieldChange;
+			if (GreatWorkClassID != NO_GREAT_WORK_CLASS) 
+			{
+				m_ppiCityGreatWorkClassYieldChange[GreatWorkClassID][YieldID] = YieldChange;
+			}
+		}
+	}
+#endif
 	//ResourceYieldChanges
 	{
 #ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
@@ -752,22 +808,20 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 		Database::Results* pResults = kUtility.GetResults(strKey);
 		if (pResults == NULL)
 		{
-			pResults = kUtility.PrepareResults(strKey,
-				"SELECT ResourceClasses.ID AS ResourceClassID, Yields.ID AS YieldID, Building_ResourceClassYieldChanges.Yield \
-			 FROM Building_ResourceClassYieldChanges \
-			 INNER JOIN ResourceClasses ON ResourceClasses.Type = ResourceClassType \
-			 INNER JOIN Yields ON Yields.Type = YieldType \
-			 WHERE BuildingType = ?");
+			const char* szSQL = 
+				"SELECT ResourceClasses.ID AS ResourceClassID, Yields.ID AS YieldID, Building_ResourceClassYieldChanges.Yield "
+				"FROM Building_ResourceClassYieldChanges "
+				"INNER JOIN ResourceClasses ON ResourceClasses.Type = ResourceClassType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE BuildingType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
 		}
-
 		pResults->Bind(1, szBuildingType);
-
 		while (pResults->Step())
 		{
 			const int iResourceClassID = pResults->GetInt(0);
 			const int iYieldID = pResults->GetInt(1);
 			const int iYield = pResults->GetInt(2);
-
 			m_ppaiResourceClassYieldChange[iResourceClassID][iYieldID] = iYield;
 		}
 	}
@@ -1835,6 +1889,13 @@ int CvBuildingEntry::GetGarrisonStrengthBonus() const
 	return m_iGarrisonStrengthBonus;
 }
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+/// How much happiness does this building provide to Great Works inside it
+int CvBuildingEntry::GetGreatWorkHappiness() const
+{
+	return m_iGreatWorkHappiness;
+}
+#endif
 /// What ring the engine will try to display this building
 int CvBuildingEntry::GetPreferredDisplayPosition() const
 {
@@ -2306,7 +2367,37 @@ int CvBuildingEntry::GetDomainFreeExperiencePerGreatWork(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_piDomainFreeExperiencePerGreatWork ? m_piDomainFreeExperiencePerGreatWork[i] : -1;
 }
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+// Military production modifier for each Great Work in this building
+int CvBuildingEntry::GetGreatWorkMilitaryProductionModifier() const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_iGreatWorkMilitaryProductionModifier;
+}
+/// Yield for great works being held in this building
+int CvBuildingEntry::GetBuildingGreatWorkYieldChange(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piBuildingGreatWorkYieldChange ? m_piBuildingGreatWorkYieldChange[i] : 0;
+}
+// Yield For Great Works in the same City as this Building
+int CvBuildingEntry::GetCityGreatWorkYieldChange(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piCityGreatWorkYieldChange ? m_piCityGreatWorkYieldChange[i] : 0;
+}
+int CvBuildingEntry::GetCityGreatWorkClassYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < GC.getNumBuildingClassInfos(), "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiCityGreatWorkClassYieldChange ? m_ppiCityGreatWorkClassYieldChange[i][j] : 0;
+}
+#endif
 /// Production modifier in this domain
 int CvBuildingEntry::GetDomainProductionModifier(int i) const
 {
@@ -2650,11 +2741,7 @@ int CvBuildingEntry::GetBuildingClassYieldChange(int i, int j) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
 	CvAssertMsg(j > -1, "Index out of bounds");
-#ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
-	return m_ppiBuildingClassYieldChanges.first ? (m_ppiBuildingClassYieldChanges.first)[i][j] : -1;
-#else
-	return m_ppiBuildingClassYieldChanges[i][j];
-#endif
+	return m_ppiBuildingClassYieldChanges ? m_ppiBuildingClassYieldChanges[i][j] : -1;
 }
 
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
@@ -2800,6 +2887,7 @@ CvCityBuildings::CvCityBuildings():
 	m_iBuildingDefense(0),
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iBuildingGarrisonStrengthBonus(0),
+	m_iGarrisonMaintenanceFreeCount(0),
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 	m_iBuildingDefensePerCitizen(0),
@@ -2809,6 +2897,14 @@ CvCityBuildings::CvCityBuildings():
 	m_iLandmarksTourismPercent(0),
 	m_iGreatWorksTourismModifier(0),
 	m_bSoldBuildingThisTurn(false),
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_bGreatWorkClassMapDirty(true),
+	m_iHappinessFromGreatWorks(0),
+#endif
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	m_iFirstPurchaseDiscount(0),
+#endif
+
 	m_pBuildings(NULL),
 #ifdef AUI_CITY_FIX_COMPONENT_CONSTRUCTORS_CONTAIN_POINTERS
 	m_pCity(pCity)
@@ -2860,8 +2956,16 @@ void CvCityBuildings::Init(CvBuildingXMLEntries* pBuildings, CvCity* pCity)
 	m_paiDifferentLandMassYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
 #endif
 
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	CvAssertMsg(m_paiSameLandMassYieldChange == NULL, "about to leak memory, CvCityBuildings::m_paiSameLandMassYieldChange");
+	m_paiSameLandMassYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+	CvAssertMsg(m_paiDifferentLandMassYieldChange == NULL, "about to leak memory, CvCityBuildings::m_paiDifferentLandMassYieldChange");
+	m_paiDifferentLandMassYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+#endif
+
 	m_aBuildingYieldChange.clear();
 	m_aBuildingGreatWork.clear();
+
 
 	Reset();
 }
@@ -2879,6 +2983,9 @@ void CvCityBuildings::Uninit()
 	SAFE_DELETE_ARRAY(m_paiSameLandMassYieldChange);
 	SAFE_DELETE_ARRAY(m_paiDifferentLandMassYieldChange);
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_aaiCityGreatWorkClassYieldChange.clear();
+#endif
 }
 
 /// Reset status arrays to all false
@@ -2893,26 +3000,50 @@ void CvCityBuildings::Reset()
 	// Initialize non-arrays
 	m_iNumBuildings = 0;
 	m_iBuildingProductionModifier = 0;
-#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+
 	for (int i = 0; i < NUM_YIELD_TYPES; i++)
 	{
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 		m_paiSameLandMassYieldChange[i] = 0;
 		m_paiDifferentLandMassYieldChange[i] = 0;
-	}
 #endif
+	}
 	m_iBuildingDefense = 0;
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iBuildingGarrisonStrengthBonus = 0;
+	m_iGarrisonMaintenanceFreeCount = 0;
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 	m_iBuildingDefensePerCitizen = 0;
 #endif
 	m_iBuildingDefenseMod = 0;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	m_iFirstPurchaseDiscount = 0;
+#endif
 	m_iMissionaryExtraSpreads = 0;
 	m_iLandmarksTourismPercent = 0;
 	m_iGreatWorksTourismModifier = 0;
 
 	m_bSoldBuildingThisTurn = false;
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_bGreatWorkClassMapDirty = true;
+	m_iHappinessFromGreatWorks = 0;
+	m_aaiCityGreatWorkClassYieldChange.clear();
+	m_aaiCityGreatWorkClassYieldChange.resize(GC.getNumGreatWorkClassInfos());
+	Firaxis::Array< int, NUM_YIELD_TYPES > yield;
+	for (unsigned int j = 0; j < NUM_YIELD_TYPES; ++j)
+	{
+		yield[j] = 0;
+	}
+
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+	{
+		for (int iClass = 0; iClass < GC.getNumGreatWorkClassInfos(); iClass++)
+		{
+			m_aaiCityGreatWorkClassYieldChange[iClass] = yield;
+		}
+	}
+#endif
 
 	for(iI = 0; iI < m_pBuildings->GetNumBuildings(); iI++)
 	{
@@ -2942,11 +3073,15 @@ void CvCityBuildings::Read(FDataStream& kStream)
 	kStream >> m_iBuildingDefense;
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	kStream >> m_iBuildingGarrisonStrengthBonus;
+	kStream >> m_iGarrisonMaintenanceFreeCount;
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 	kStream >> m_iBuildingDefensePerCitizen;
 #endif
 	kStream >> m_iBuildingDefenseMod;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	kStream >> m_iFirstPurchaseDiscount;
+#endif
 	kStream >> m_iMissionaryExtraSpreads;
 	kStream >> m_iLandmarksTourismPercent;
 	kStream >> m_iGreatWorksTourismModifier;
@@ -2955,6 +3090,9 @@ void CvCityBuildings::Read(FDataStream& kStream)
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	BuildingArrayHelpers::Read(kStream, m_paiSameLandMassYieldChange);
 	BuildingArrayHelpers::Read(kStream, m_paiDifferentLandMassYieldChange);
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	kStream >> m_aaiCityGreatWorkClassYieldChange;
 #endif
 	BuildingArrayHelpers::Read(kStream, m_paiBuildingProduction);
 	BuildingArrayHelpers::Read(kStream, m_paiBuildingProductionTime);
@@ -2982,11 +3120,15 @@ void CvCityBuildings::Write(FDataStream& kStream)
 	kStream << m_iBuildingDefense;
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	kStream << m_iBuildingGarrisonStrengthBonus;
+	kStream << m_iGarrisonMaintenanceFreeCount;
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 	kStream << m_iBuildingDefensePerCitizen;
 #endif
 	kStream << m_iBuildingDefenseMod;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	kStream << m_iFirstPurchaseDiscount;
+#endif	
 	kStream << m_iMissionaryExtraSpreads;
 	kStream << m_iLandmarksTourismPercent;
 	kStream << m_iGreatWorksTourismModifier;
@@ -3003,6 +3145,9 @@ void CvCityBuildings::Write(FDataStream& kStream)
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	BuildingArrayHelpers::Write(kStream, m_paiSameLandMassYieldChange, iNumBuildings);
 	BuildingArrayHelpers::Write(kStream, m_paiDifferentLandMassYieldChange, iNumBuildings);
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	kStream << m_aaiCityGreatWorkClassYieldChange;
 #endif
 	BuildingArrayHelpers::Write(kStream, m_paiBuildingProduction, iNumBuildings);
 	BuildingArrayHelpers::Write(kStream, m_paiBuildingProductionTime, iNumBuildings);
@@ -3090,11 +3235,10 @@ bool CvCityBuildings::IsBuildingSellable(const CvBuildingEntry& kBuilding) const
 	
 	if(kBuilding.GetGoldMaintenance() <= 0)
 		return false;
-
-	// Can't sell a building if it's a shrine (no exploits)
-    if (kBuilding.GetBuildingClassType() == (BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_SHRINE"))
-        return false;
-
+#if defined(BEE)
+	if (!kBuilding.IsSellable())
+		return false;
+#endif
 	// Is this a free building?
 	if(GetNumFreeBuilding((BuildingTypes)kBuilding.GetID()) > 0)
 		return false;
@@ -3735,12 +3879,8 @@ int CvCityBuildings::GetBuildingGreatWork(BuildingClassTypes eBuildingClass, int
 	return -1;
 }
 
-/// Accessor: Set yield boost for a specific building by yield type
-#ifdef AUI_WARNING_FIXES
-void CvCityBuildings::SetBuildingGreatWork(BuildingClassTypes eBuildingClass, uint iSlot, int iGreatWorkIndex)
-#else
+/// Accessor: Set Great Work in a specific building by slot index
 void CvCityBuildings::SetBuildingGreatWork(BuildingClassTypes eBuildingClass, int iSlot, int iGreatWorkIndex)
-#endif
 {
 	for(std::vector<BuildingGreatWork>::iterator it = m_aBuildingGreatWork.begin(); it != m_aBuildingGreatWork.end(); ++it)
 	{
@@ -3756,9 +3896,14 @@ void CvCityBuildings::SetBuildingGreatWork(BuildingClassTypes eBuildingClass, in
 				else
 				{
 					(*it).iGreatWorkIndex = iGreatWorkIndex;
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+				}
+#else
+					rebuildGreatWorkYields(GC.getGame().GetGameCulture()->GetGreatWorkClass(iGreatWorkIndex));
+					calculateHappinessFromGreatWorks();
 				}
 			}
-
+#endif
 			GC.GetEngineUserInterface()->setDirty(CityInfo_DIRTY_BIT, true);
 			GC.GetEngineUserInterface()->setDirty(GreatWorksScreen_DIRTY_BIT, true);
 			return;
@@ -3772,6 +3917,11 @@ void CvCityBuildings::SetBuildingGreatWork(BuildingClassTypes eBuildingClass, in
 		kWork.iSlot = iSlot;
 		kWork.iGreatWorkIndex = iGreatWorkIndex;
 		m_aBuildingGreatWork.push_back(kWork);
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+		m_bGreatWorkClassMapDirty = true;
+		rebuildGreatWorkYields(GC.getGame().GetGameCulture()->GetGreatWorkClass(iGreatWorkIndex));
+		calculateHappinessFromGreatWorks();
+#endif
 	}
 
 	GC.GetEngineUserInterface()->setDirty(CityInfo_DIRTY_BIT, true);
@@ -4067,6 +4217,7 @@ int CvCityBuildings::GetCultureFromGreatWorks() const
 	return iRtnValue;
 }
 #endif
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 // NQMP GJS - Artistic Genius fix to add science to Great Works
 /// Accessor: How much of a yield are we generating from Great Works in our buildings?
 int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eIndex) const
@@ -4075,7 +4226,246 @@ int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eIndex) const
 	int iRtnValue = iYieldPerWork * m_aBuildingGreatWork.size();
 	return iRtnValue;
 }
+/// Accessor: Total theming bonus from all buildings in the city
+int CvCityBuildings::GetThemingBonuses() const
+{
+	int iBonus = 0;
 
+#ifdef AUI_WARNING_FIXES
+	for (uint iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+#else
+	for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+#endif
+	{
+		BuildingClassTypes eLoopBuildingClass = (BuildingClassTypes)iI;
+		CvCivilizationInfo* pkCivInfo = GC.getCivilizationInfo(m_pCity->getCivilizationType());
+		if (pkCivInfo)
+		{
+			BuildingTypes eBuilding = (BuildingTypes)pkCivInfo->getCivilizationBuildings(eLoopBuildingClass);
+			if (NO_BUILDING != eBuilding)
+			{
+				if (GetNumBuilding(eBuilding) > 0)
+				{
+					iBonus += m_pCity->GetCityCulture()->GetThemingBonus(eLoopBuildingClass);
+				}
+			}
+		}
+	}
+	return iBonus;
+}
+#else
+int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eIndex) const
+{
+	int iTotalYield = 0;
+#if defined(LEK_YIELD_TOURISM)
+	int iMod = 100 + (YIELD_TOURISM == eIndex ? GetGreatWorksTourismModifier() : 0);
+#endif
+	CvGameCulture* culture = GC.getGame().GetGameCulture();
+	if (!culture)
+		return 0;
+	for (std::vector<BuildingGreatWork>::const_iterator it = m_aBuildingGreatWork.begin(); it != m_aBuildingGreatWork.end(); ++it)
+	{
+		const CvGreatWork* pWork = &culture->m_CurrentGreatWorks[(*it).iGreatWorkIndex];
+		if (pWork)
+		{
+			iTotalYield += pWork->m_viYield[eIndex];
+#if defined(LEK_YIELD_TOURISM)
+			iTotalYield *= iMod;
+			iTotalYield /= 100;
+#endif
+		}
+	}
+	return iTotalYield;
+}
+int CvCityBuildings::GetNumGreatWorks(GreatWorkClass eGreatWorkClass) const
+{
+	const std::map<GreatWorkClass, int>& mClassCounts = GetGreatWorkClassCounts();
+
+	std::map<GreatWorkClass, int>::const_iterator it = mClassCounts.find(eGreatWorkClass);
+	if (it != mClassCounts.end())
+	{
+		return it->second;
+	}
+
+	return 0;
+}
+const std::map<GreatWorkClass, int>& CvCityBuildings::GetGreatWorkClassCounts() const
+{
+	// If dirty, rebuild the cache
+	if (m_bGreatWorkClassMapDirty)
+	{
+		m_cachedGreatWorkClassCounts.clear();
+
+		CvGameCulture* pCulture = GC.getGame().GetGameCulture();
+		if (pCulture)
+		{
+			for (size_t i = 0; i < m_aBuildingGreatWork.size(); ++i)
+			{
+				const BuildingGreatWork& kWork = m_aBuildingGreatWork[i];
+				if (kWork.iGreatWorkIndex < 0)
+					continue;
+
+				GreatWorkClass eClass = pCulture->GetGreatWorkClass(kWork.iGreatWorkIndex);
+				if (eClass != NO_GREAT_WORK_CLASS)
+				{
+					std::map<GreatWorkClass, int>::iterator it = m_cachedGreatWorkClassCounts.find(eClass);
+					if (it != m_cachedGreatWorkClassCounts.end())
+					{
+						it->second += 1;
+					}
+					else
+					{
+						m_cachedGreatWorkClassCounts.insert(std::make_pair(eClass, 1));
+					}
+				}
+			}
+		}
+		// Mark cache as valid
+		m_bGreatWorkClassMapDirty = false;
+	}
+
+	return m_cachedGreatWorkClassCounts;
+}
+void CvCityBuildings::rebuildGreatWorkYields(GreatWorkClass eClass)
+{
+	CvGameCulture* culture = GC.getGame().GetGameCulture();
+	if (!culture)
+		return;
+	CvPlayerCulture* playerCulture = GET_PLAYER(m_pCity->getOwner()).GetCulture();
+	if (playerCulture)
+	{
+		for (std::vector<BuildingGreatWork>::const_iterator it = m_aBuildingGreatWork.begin(); it != m_aBuildingGreatWork.end(); ++it)
+		{
+			CvGreatWork* work = &culture->m_CurrentGreatWorks[(*it).iGreatWorkIndex];
+			if (work->m_eClassType != eClass)
+				continue;
+
+			int iCityID, iSlot, workYield;
+			BuildingTypes eBuilding;
+			playerCulture->GetGreatWorkLocation((*it).iGreatWorkIndex, iCityID, eBuilding, iSlot);
+			CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+
+			if (work)
+			{
+				for (int yield = 0; yield < NUM_YIELD_TYPES; yield++)
+				{
+					YieldTypes eYield = static_cast<YieldTypes>(yield);
+					work->m_viYield[eYield] = 0;
+					workYield = GC.getGreatWorkClassInfo(work->m_eClassType)->getGreatWorkClassBaseYield(eYield);
+					workYield += GET_PLAYER(m_pCity->getOwner()).GetGreatWorkClassYieldChange(work->m_eClassType, eYield);
+					workYield += pkBuildingInfo->GetBuildingGreatWorkYieldChange(eYield);
+					workYield += GetCityGreatWorkClassYieldChanges(work->m_eClassType, eYield);
+					work->m_viYield[eYield] = workYield;
+				}
+			}
+		}
+	}
+}
+int CvCityBuildings::GetHappinessFromGreatWorks() const
+{
+	return m_iHappinessFromGreatWorks;
+}
+void CvCityBuildings::calculateHappinessFromGreatWorks()
+{
+	m_iHappinessFromGreatWorks = 0;
+	int iTotalHappiness = 0;
+	CvGameCulture* culture = GC.getGame().GetGameCulture();
+	if (!culture)
+		return;
+	CvPlayerCulture* playerCulture = GET_PLAYER(m_pCity->getOwner()).GetCulture();
+	if (playerCulture)
+	{
+		for (std::vector<BuildingGreatWork>::const_iterator it = m_aBuildingGreatWork.begin(); it != m_aBuildingGreatWork.end(); ++it)
+		{
+			int iCityID, iSlot;
+			BuildingTypes eBuilding;
+			playerCulture->GetGreatWorkLocation((*it).iGreatWorkIndex, iCityID, eBuilding, iSlot);
+			CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+			CvGreatWork* pWork = &culture->m_CurrentGreatWorks[(*it).iGreatWorkIndex];
+			if (pWork)
+			{
+				int buildingHappiness = pkBuildingInfo->GetGreatWorkHappiness();
+				iTotalHappiness += buildingHappiness;
+			}
+		}
+	}
+	m_iHappinessFromGreatWorks = iTotalHappiness;
+	GET_PLAYER(m_pCity->getOwner()).DoUpdateHappiness();
+}
+int CvCityBuildings::countNumThemesActive() const
+{
+	int iCount = 0;
+	for (int iBuildingClass = 0; iBuildingClass < GC.getNumBuildingClassInfos(); iBuildingClass++)
+	{
+		BuildingClassTypes eBuildingClass = (BuildingClassTypes)iBuildingClass;
+		if (m_pCity->GetCityCulture()->GetPublicThemingBonusIndex(eBuildingClass) != -1)
+			iCount++;
+	}
+	return iCount;
+}
+int CvCityBuildings::GetThemingBonuses(YieldTypes eYield) const
+{
+	int iBonus = 0;
+	if (YIELD_CULTURE == eYield
+#if defined(LEK_YIELD_TOURISM)
+		|| YIELD_TOURISM == eYield)
+#else 
+		)
+#endif
+	{
+		for (int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+		{
+			BuildingClassTypes eLoopBuildingClass = (BuildingClassTypes)iI;
+			CvCivilizationInfo* pkCivInfo = GC.getCivilizationInfo(m_pCity->getCivilizationType());
+			if (pkCivInfo)
+			{
+				BuildingTypes eBuilding = (BuildingTypes)pkCivInfo->getCivilizationBuildings(eLoopBuildingClass);
+				if (NO_BUILDING != eBuilding)
+				{
+					if (GetNumBuilding(eBuilding) > 0)
+					{
+						iBonus += m_pCity->GetCityCulture()->GetThemingBonus(eLoopBuildingClass);
+					}
+				}
+			}
+		}
+	}
+	return iBonus;
+}
+int CvCityBuildings::GetGreatWorkClassGreatPersonPoints(SpecialistTypes eSpecialist) const
+{
+	return 0;
+	int points = 0;
+	for (int workclass = 0; workclass < GC.getNumGreatWorkClassInfos(); workclass++)
+	{
+		GreatWorkClass eWorkClass = (GreatWorkClass)workclass;
+		int numWorks = GetNumGreatWorks(eWorkClass);
+		if (numWorks > 0)
+		{
+			points += 0; // None yet?
+		}
+	}
+	return points;
+}
+#endif
+#if defined(LEK_YIELD_TOURISM)
+int CvCityBuildings::GetYieldFromLandmarks(YieldTypes eYield) const
+{
+	int iRtnValue = 0;
+	if (YIELD_TOURISM != eYield)
+		return iRtnValue;
+	int iPercent = GetLandmarksTourismPercent();
+	if (iPercent > 0)
+	{
+		iRtnValue += m_pCity->GetCityCulture()->GetCultureFromWonders();
+		iRtnValue += m_pCity->GetCityCulture()->GetCultureFromImprovements();
+		iRtnValue += m_pCity->GetCityCulture()->GetCultureFromNaturalWonders();
+		iRtnValue *= iPercent;
+		iRtnValue /= 100;
+	}
+	return iRtnValue;
+}
+#endif
 /// Accessor: How many Great Works of specific slot type present in this city?
 #ifdef AUI_WARNING_FIXES
 uint CvCityBuildings::GetNumGreatWorks() const
@@ -4378,7 +4768,47 @@ void CvCityBuildings::ChangeGarrisonStrengthBonus(int iChange)
 	}
 }
 #endif
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+void CvCityBuildings::ChangeFirstPurchaseDiscount(int iChange)
+{
+	if (iChange != 0)
+	{
+		m_iFirstPurchaseDiscount = (m_iFirstPurchaseDiscount + iChange);
+		CvAssert(GetFirstPurchaseDiscount() >= 0);
+	}
+}
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+int CvCityBuildings::GetCityGreatWorkClassYieldChanges(GreatWorkClass eClass, YieldTypes eYield) const
+{
+	CvAssertMsg(eClass >= 0, "eClass expected to be >= 0");
+	CvAssertMsg(eClass < GC.getNumGreatWorkClassInfos(), "eClass expected to be < GC.getNumGreatWorkClassInfos()");
+	CvAssertMsg(eYield >= 0, "eYield expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield expected to be < NUM_YIELD_TYPES");
+	return NO_GREAT_WORK_CLASS != eClass ? m_aaiCityGreatWorkClassYieldChange[eClass][eYield] : 0;
+}
+void CvCityBuildings::ChangeCityGreatWorkClassYieldChanges(GreatWorkClass eClass, YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eClass >= 0, "eClass expected to be >= 0");
+	CvAssertMsg(eClass < GC.getNumGreatWorkClassInfos(), "eClass expected to be < GC.getNumGreatWorkClassInfos()");
+	CvAssertMsg(eYield >= 0, "eYield expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield expected to be < NUM_YIELD_TYPES");
+	if (NO_GREAT_WORK_CLASS != eClass)
+	{
+		m_aaiCityGreatWorkClassYieldChange[eClass][eYield] += iChange;
+	}
+	rebuildGreatWorkYields(eClass);
+}
+void CvCityBuildings::ChangeCityGreatWorkYieldChange(YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eYield expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield expected to be < NUM_YIELD_TYPES");
+	for (int i = 0; i < GC.getNumGreatWorkClassInfos(); i++)
+	{
+		ChangeCityGreatWorkClassYieldChanges(static_cast<GreatWorkClass>(i), eYield, iChange);
+	}
+}
+#endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 /// Accessor: Get current defense boost from buildings
 int CvCityBuildings::GetBuildingDefensePerCitizen() const

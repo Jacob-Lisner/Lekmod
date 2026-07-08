@@ -96,6 +96,9 @@ public:
 	int GetEnhancedYieldTech() const;
 	int GetTechEnhancedTourism() const;
 	int GetGoldMaintenance() const;
+#if defined(BEE)
+	bool IsSellable() const { return m_bNoSell; }
+#endif
 	int GetMutuallyExclusiveGroup() const;
 	int GetReplacementBuildingClass() const;
 	int GetPrereqAndTech() const;
@@ -223,6 +226,10 @@ public:
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	int GetGarrisonStrengthBonus() const;
+	int IsGarrisonMaintenanceFree() const { return m_bGarrisonMaintenanceFree; };
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetGreatWorkHappiness() const;
 #endif
 	int GetPreferredDisplayPosition() const;
 	int GetPortraitIndex() const;
@@ -262,6 +269,9 @@ public:
 	bool AllowsFoodTradeRoutes() const;
 	bool AllowsProductionTradeRoutes() const;
 	bool NullifyInfluenceModifier() const;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	int GetFirstPurchaseDiscount() const { return m_iFirstPurchaseDiscount; };
+#endif
 
 	const char* GetArtDefineTag() const;
 	void SetArtDefineTag(const char* szVal);
@@ -310,6 +320,12 @@ public:
 #endif
 	int GetDomainFreeExperience(int i) const;
 	int GetDomainFreeExperiencePerGreatWork(int i) const;
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetGreatWorkMilitaryProductionModifier() const;
+	int GetBuildingGreatWorkYieldChange(int i) const;
+	int GetCityGreatWorkYieldChange(int i) const;
+	int GetCityGreatWorkClassYieldChange(int i, int y) const;
+#endif
 	int GetDomainProductionModifier(int i) const;
 	int GetLockedBuildingClasses(int i) const;
 	int GetPrereqAndTechs(int i) const;
@@ -383,6 +399,9 @@ private:
 	int m_iEnhancedYieldTech;
 	int m_iTechEnhancedTourism;
 	int m_iGoldMaintenance;
+#if defined(BEE)
+	bool m_bNoSell;
+#endif
 	int m_iMutuallyExclusiveGroup;
 	int m_iReplacementBuildingClass;
 	int m_iPrereqAndTech;
@@ -510,6 +529,10 @@ private:
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	int m_iGarrisonStrengthBonus;
+	bool m_bGarrisonMaintenanceFree;
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int m_iGreatWorkHappiness;
 #endif
 	int m_iPreferredDisplayPosition;
 	int m_iPortraitIndex;
@@ -549,6 +572,9 @@ private:
 	bool m_bAllowsFoodTradeRoutes;
 	bool m_bAllowsProductionTradeRoutes;
 	bool m_bNullifyInfluenceModifier;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	int m_iFirstPurchaseDiscount;
+#endif
 
 	bool m_bArtInfoCulturalVariation;
 	bool m_bArtInfoEraVariation;
@@ -593,6 +619,12 @@ private:
 #endif
 	int* m_piDomainFreeExperience;
 	int* m_piDomainFreeExperiencePerGreatWork;
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int m_iGreatWorkMilitaryProductionModifier;
+	int* m_piBuildingGreatWorkYieldChange;
+	int* m_piCityGreatWorkYieldChange;
+	int** m_ppiCityGreatWorkClassYieldChange;
+#endif
 	int* m_piDomainProductionModifier;
 	int* m_piPrereqNumOfBuildingClass;
 	int* m_piFlavorValue;
@@ -769,6 +801,21 @@ public:
 
 	int GetYieldFromGreatWorks(YieldTypes eIndex) const; // NQMP GJS - Artistic Genius fix to add science to Great Works
 	int GetCultureFromGreatWorks() const;
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetThemingBonuses() const;
+#else
+	int GetNumGreatWorks(GreatWorkClass eGreatWorkClass) const;
+	const std::map<GreatWorkClass, int>& GetGreatWorkClassCounts() const;
+	void rebuildGreatWorkYields(GreatWorkClass eGreatWorkClass);
+	int countNumThemesActive() const;
+	int GetThemingBonuses(YieldTypes eYield) const;
+	int GetGreatWorkClassGreatPersonPoints(SpecialistTypes eSpecialist) const;
+	int GetHappinessFromGreatWorks() const;
+	void calculateHappinessFromGreatWorks();
+#endif
+#if defined(LEK_YIELD_TOURISM)
+	int GetYieldFromLandmarks(YieldTypes eYield) const;
+#endif
 #ifdef AUI_WARNING_FIXES
 	uint GetNumGreatWorks() const;
 	uint GetNumGreatWorks(GreatWorkSlotType eGreatWorkSlot) const;
@@ -801,6 +848,18 @@ public:
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	int GetGarrisonStrengthBonus() const;
 	void ChangeGarrisonStrengthBonus(int iChange);
+	bool IsGarrisonMaintenanceFree() const { return m_iGarrisonMaintenanceFreeCount > 0; };
+	int getGarrisonMaintenanceFreeCount() const { return m_iGarrisonMaintenanceFreeCount; };
+	void ChangeGarrisonMaintenanceFreeCount(int iChange) { m_iGarrisonMaintenanceFreeCount += iChange; };
+#endif
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	int GetFirstPurchaseDiscount() const { return m_iFirstPurchaseDiscount; };
+	void ChangeFirstPurchaseDiscount(int iChange);
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetCityGreatWorkClassYieldChanges(GreatWorkClass eClass, YieldTypes eYield) const;
+	void ChangeCityGreatWorkClassYieldChanges(GreatWorkClass eClass, YieldTypes eYield, int iChange);
+	void ChangeCityGreatWorkYieldChange(YieldTypes eYield, int iChange);
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 	int GetBuildingDefensePerCitizen() const;
@@ -828,6 +887,7 @@ private:
 	int m_iBuildingDefense;
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	int m_iBuildingGarrisonStrengthBonus;
+	int m_iGarrisonMaintenanceFreeCount;
 #endif
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
 	int m_iBuildingDefensePerCitizen;
@@ -840,7 +900,9 @@ private:
 	int* m_paiSameLandMassYieldChange;
 	int* m_paiDifferentLandMassYieldChange;
 #endif
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	int m_iFirstPurchaseDiscount;
+#endif
 	bool m_bSoldBuildingThisTurn;
 
 	int* m_paiBuildingProduction;
@@ -849,7 +911,12 @@ private:
 	int* m_paiBuildingOriginalTime;
 	int* m_paiNumRealBuilding;
 	int* m_paiNumFreeBuilding;
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	mutable std::map<GreatWorkClass, int> m_cachedGreatWorkClassCounts;
+	mutable bool m_bGreatWorkClassMapDirty;
+	int m_iHappinessFromGreatWorks;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_aaiCityGreatWorkClassYieldChange;
+#endif
 /// CMP
 
 	std::vector<BuildingTypes> m_buildingsThatExistAtLeastOnce;

@@ -216,7 +216,12 @@ public:
 	int getExperience() const;
 
 	bool isVisible() const;
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	const char* getIconString() const;
+	void setIconString(const char* szVal);
+	const char* getGreatPersonIconString() const;
+	void setGreatPersonIconString(const char* szVal);
+#endif
 	// Arrays
 	int getYieldChange(int i) const;
 	const int* getYieldChangeArray() const;
@@ -237,7 +242,10 @@ protected:
 	int m_iExperience;
 
 	bool m_bVisible;
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	CvString m_szIconString;
+	CvString m_szGreatPersonIconString;
+#endif
 	CvString m_strTexture;
 
 	// Arrays
@@ -1342,7 +1350,25 @@ private:
 	CvRouteInfo(const CvRouteInfo&);
 	CvRouteInfo& operator=(const CvRouteInfo&);
 };
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  class : CvGreatWorkClassInfo
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CvGreatWorkClassInfo : public CvBaseInfo
+{
+public:
+	CvGreatWorkClassInfo();
+	virtual ~CvGreatWorkClassInfo();
+#if !defined(LEK_YIELD_TOURISM)
+	int getBaseTourism() const;
+#endif
+	int getGreatWorkClassBaseYield(int i) const;
+	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
+protected:
+	int m_iBaseTourism;
+	int* m_piBaseYield;
+};
+#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  class : CvResourceClassInfo
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1669,6 +1695,9 @@ public:
 #endif
 	int getAIWeightPercent() const;
 
+	CvString getIconString() const;
+	void setIconString(const char* szVal);
+
 	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
 
 protected:
@@ -1692,6 +1721,8 @@ protected:
 	int m_iPuppetYieldMod;
 #endif
 	int m_iAIWeightPercent;
+
+	CvString m_strIconString;
 };
 
 

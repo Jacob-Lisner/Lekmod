@@ -1058,7 +1058,22 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 #ifdef ENHANCED_GRAPHS
 	Method(AddReplayOpenedDemographics);
 #endif
-
+#if defined(STANDARDIZE_YIELDS)
+	Method(GetYield);
+	Method(GetYieldTimes100);
+	Method(GetYieldFromCitiesTimes100);
+	Method(GetYieldFromOtherPlayersTimes100);
+	Method(GetYieldFromHappinessTimes100);
+	Method(GetYieldPenaltiesTimes100);
+	Method(GetYieldFromMinorCivsTimes100);
+	Method(GetYieldFromTraitsTimes100);
+	Method(GetYieldFromReligionTimes100);
+#endif
+	Method(GetNumCitiesPolicyCostDiscount);
+#if defined(v35_TRAITIFY)
+	Method(IsEmbarkedUnitsFullStrength);
+	Method(IsEmbarkedMissionAllowed);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvLuaPlayer::HandleMissingInstance(lua_State* L)
@@ -6667,7 +6682,6 @@ int CvLuaPlayer::lGetMinorCivCultureFriendshipBonus(lua_State* L)
 
 	int iValue = 0;
 	iValue += pkPlayer->GetMinorCivAI()->GetCultureFlatFriendshipBonus(ePlayer);
-	iValue += pkPlayer->GetMinorCivAI()->GetCulturePerBuildingFriendshipBonus(ePlayer);
 	lua_pushinteger(L, iValue);
 	return 1;
 }
@@ -6684,7 +6698,7 @@ int CvLuaPlayer::lGetMinorCivCurrentCulturePerBuildingBonus(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
 	PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
-	lua_pushinteger(L, pkPlayer->GetMinorCivAI()->GetCurrentCulturePerBuildingBonus(ePlayer));
+	lua_pushinteger(L, /*pkPlayer->GetMinorCivAI()->GetCurrentCulturePerBuildingBonus(ePlayer)*/ 0);
 	return 1;
 }
 //------------------------------------------------------------------------------
@@ -7741,9 +7755,12 @@ int CvLuaPlayer::lGetReplayData(lua_State* L)
 	lua_createtable(L, 0, numDataSets);
 	for(unsigned int uiDataSet = 0; uiDataSet < numDataSets; ++uiDataSet)
 	{
-		lua_pushstring(L, pkPlayer->getReplayDataSetName(uiDataSet));
-
 		CvPlayer::TurnData data = pkPlayer->getReplayDataHistory(uiDataSet);
+
+		if (data.size() == 0)
+			continue;
+
+		lua_pushstring(L, pkPlayer->getReplayDataSetName(uiDataSet));
 
 		lua_createtable(L, data.size() - 1, 1);
 
@@ -11570,6 +11587,93 @@ int CvLuaPlayer::lAddReplayOpenedDemographics(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
 	pkPlayer->ChangeNumTimesOpenedDemographics(1);
+	return 1;
+}
+#endif
+#if defined(STANDARDIZE_YIELDS)
+int CvLuaPlayer::lGetYield(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYield(eYield, false));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldTimes100(eYield, false));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldFromCitiesTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldFromCitiesTimes100(eYield, false));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldFromOtherPlayersTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldFromOtherPlayersTimes100(eYield));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldFromHappinessTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldFromHappinessTimes100(eYield));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldPenaltiesTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldPenaltiesTimes100(eYield));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldFromMinorCivsTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldFromMinorCivsTimes100(eYield));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldFromTraitsTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->getYieldFromTraitsTimes100(eYield));
+	return 1;
+}
+int CvLuaPlayer::lGetYieldFromReligionTimes100(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	const int iValue = lua_tointeger(L, 3);
+	lua_pushinteger(L, pkPlayer->getYieldFromReligionTimes100(eYield, iValue));
+	return 1;
+}
+#endif
+int CvLuaPlayer::lGetNumCitiesPolicyCostDiscount(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	lua_pushinteger(L, pkPlayer->GetNumCitiesPolicyCostDiscount());
+	return 1;
+}
+#if defined(v35_TRAITIFY)
+int CvLuaPlayer::lIsEmbarkedUnitsFullStrength(lua_State* L)
+{
+	CvPlayerAI* pkThisPlayer = GetInstance(L);
+	lua_pushboolean(L, pkThisPlayer->GetPlayerTraits()->IsEmbarkedUnitsFullStrength());
+	return 1;
+}
+int CvLuaPlayer::lIsEmbarkedMissionAllowed(lua_State* L)
+{
+	CvPlayerAI* pkThisPlayer = GetInstance(L);
+	MissionTypes eMission = (MissionTypes)lua_tointeger(L, 2);
+	lua_pushboolean(L, pkThisPlayer->GetPlayerTraits()->IsEmbarkedMissionAllowed(eMission));
 	return 1;
 }
 #endif

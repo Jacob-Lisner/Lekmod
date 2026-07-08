@@ -2829,7 +2829,25 @@ CvTerrainInfo* CvGlobals::getTerrainInfo(TerrainTypes eTerrainNum)
 	else
 		return NULL;
 }
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+int CvGlobals::getNumGreatWorkClassInfos()
+{
+	return (int)m_paGreatWorkClassInfo.size();
+}
+std::vector<CvGreatWorkClassInfo*>& CvGlobals::getGreatWorkClassInfo()
+{
+	return m_paGreatWorkClassInfo;
+}
+CvGreatWorkClassInfo* CvGlobals::getGreatWorkClassInfo(GreatWorkClass eGreatWorkClassNum)
+{
+	CvAssert(eGreatWorkClassNum > -1);
+	CvAssert(eGreatWorkClassNum < GC.getNumGreatWorkClassInfos());
+	if(eGreatWorkClassNum > -1 && eGreatWorkClassNum < (int)m_paGreatWorkClassInfo.size())
+		return m_paGreatWorkClassInfo[eGreatWorkClassNum];
+	else
+		return NULL;
+}
+#endif
 #ifdef AUI_WARNING_FIXES
 uint CvGlobals::getNumResourceClassInfos() const
 {
@@ -7039,7 +7057,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paInterfaceModeInfo);
 
 	deleteInfoArray(m_paRouteInfo);
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	deleteInfoArray(m_paGreatWorkClassInfo);
+#endif
 	deleteInfoArray(m_aEraInfo);
 
 	deleteInfoArray(m_paBuildInfo);

@@ -7068,8 +7068,8 @@ bool CvMinorCivAI::DoMajorCivEraChange(PlayerTypes ePlayer, EraTypes eNewEra)
 		// Friends
 		if(IsFriends(ePlayer))
 		{
-			int iOldCulture = GetCultureFlatFriendshipBonus(ePlayer) + GetCulturePerBuildingFriendshipBonus(ePlayer);
-			int iNewCulture = GetCultureFlatFriendshipBonus(ePlayer, eNewEra) + GetCulturePerBuildingFriendshipBonus(ePlayer, eNewEra);
+			int iOldCulture = GetCultureFlatFriendshipBonus(ePlayer);
+			int iNewCulture = GetCultureFlatFriendshipBonus(ePlayer, eNewEra);
 
 			if(iOldCulture != iNewCulture)
 			{
@@ -7080,8 +7080,8 @@ bool CvMinorCivAI::DoMajorCivEraChange(PlayerTypes ePlayer, EraTypes eNewEra)
 		// Allies
 		if(IsAllies(ePlayer))
 		{
-			int iOldCulture = GetCultureFlatAlliesBonus(ePlayer) + GetCulturePerBuildingAlliesBonus(ePlayer);
-			int iNewCulture = GetCultureFlatAlliesBonus(ePlayer, eNewEra) + GetCulturePerBuildingAlliesBonus(ePlayer, eNewEra);
+			int iOldCulture = GetCultureFlatAlliesBonus(ePlayer);
+			int iNewCulture = GetCultureFlatAlliesBonus(ePlayer, eNewEra);
 
 			if(iOldCulture != iNewCulture)
 			{
@@ -7330,66 +7330,13 @@ int CvMinorCivAI::GetCurrentCultureFlatBonus(PlayerTypes ePlayer)
 	return iAmount;
 }
 
-//antonjs: This feature was prototyped, but later removed. Rewrite this function to add the bonus back in.
-/// Cumulative per building culture bonus from friendship with a minor
-int CvMinorCivAI::GetCulturePerBuildingFriendshipBonus(PlayerTypes /*ePlayer*/, EraTypes /*eAssumeEra*/)
-{
-	return 0;
-}
-
-//antonjs: This feature was prototyped, but later removed. Rewrite this function to add the bonus back in.
-/// Cumulative per building culture bonus from being allies with a minor
-int CvMinorCivAI::GetCulturePerBuildingAlliesBonus(PlayerTypes /*ePlayer*/, EraTypes /*eAssumeEra*/)
-{
-	return 0;
-}
-
-//antonjs: This feature was prototyped, but later removed. It will return 0 (no bonus).
-int CvMinorCivAI::GetCurrentCulturePerBuildingBonus(PlayerTypes ePlayer)
-{
-	CvAssertMsg(ePlayer >= 0, "eIndex is expected to be non-negative (invalid Index)");
-	CvAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be within maximum bounds (invalid Index)");
-	if(ePlayer < 0 || ePlayer >= MAX_PLAYERS) return 0;
-
-	// Don't give a bonus to a minor civ player
-	if(ePlayer >= MAX_MAJOR_CIVS)
-		return 0;
-
-	// Only give a bonus if we are Cultural trait
-	if(GetTrait() != MINOR_CIV_TRAIT_CULTURED)
-		return 0;
-
-	int iAmount = 0;
-
-	if(IsAllies(ePlayer))
-		iAmount += GetCulturePerBuildingAlliesBonus(ePlayer);
-
-	if(IsFriends(ePlayer))
-		iAmount += GetCulturePerBuildingFriendshipBonus(ePlayer);
-
-	// Modify the bonus if called for by our trait
-	int iModifier = GET_PLAYER(ePlayer).GetPlayerTraits()->GetCityStateBonusModifier();
-	if(iModifier > 0)
-	{
-		iAmount *= (iModifier + 100);
-		iAmount /= 100;
-	}
-
-	return iAmount;
-}
-
 int CvMinorCivAI::GetCurrentCultureBonus(PlayerTypes ePlayer)
 {
 	CvAssertMsg(ePlayer >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	CvAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be within maximum bounds (invalid Index)");
 	if(ePlayer < 0 || ePlayer >= MAX_PLAYERS) return 0;
 
-	int iAmount = 0;
-
-	iAmount += GetCurrentCultureFlatBonus(ePlayer);
-	iAmount += GetCurrentCulturePerBuildingBonus(ePlayer); //antonjs: This feature was prototyped, but later removed. Its value is 0 (no bonus).
-
-	return iAmount;
+	return GetCurrentCultureFlatBonus(ePlayer);
 }
 
 /// Flat happiness bonus from friendship with a minor
@@ -8092,11 +8039,16 @@ void CvMinorCivAI::DoSpawnUnit(PlayerTypes eMajor)
 				// NQMP GJS - the code inside this for loop is pre-existing, it was put inside the for loop for the mod
 				CvUnit* pNewUnit = GET_PLAYER(eMajor).initUnit(eUnit, iX, iY);
 
+#if defined(v35_TRAITIFY)
+				pNewUnit->changeExperience(GET_PLAYER(eMajor).GetPlayerTraits()->GetCityStateUnitGiftExtraExperience());
+#else
 				// If player trait is to enhance minor bonuses, give this unit some free experience
-				if(GET_PLAYER(eMajor).GetPlayerTraits()->GetCityStateBonusModifier() > 0)
+				if (GET_PLAYER(eMajor).GetPlayerTraits()->GetCityStateBonusModifier() > 0)
 				{
 					pNewUnit->changeExperience(GC.getMAX_EXPERIENCE_PER_COMBAT()); //NQMP GJS - Patronage Finisher
 				}
+#endif
+				
 
 				if (pNewUnit->jumpToNearestValidPlot())
 				{
@@ -10343,11 +10295,11 @@ CvString CvMinorCivAI::GetStatusChangeDetails(PlayerTypes ePlayer, bool bAdd, bo
 		int iCultureBonusAmount = 0;
 		if (bFriends)
 		{
-			iCultureBonusAmount += GetCultureFlatFriendshipBonus(ePlayer) + GetCulturePerBuildingFriendshipBonus(ePlayer);
+			iCultureBonusAmount += GetCultureFlatFriendshipBonus(ePlayer);
 		}
 		if (bAllies)
 		{
-			iCultureBonusAmount += GetCultureFlatAlliesBonus(ePlayer) + GetCulturePerBuildingAlliesBonus(ePlayer);
+			iCultureBonusAmount += GetCultureFlatAlliesBonus(ePlayer);
 		}
 		if (!bAdd)
 		{

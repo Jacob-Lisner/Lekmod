@@ -421,9 +421,6 @@ public:
 	int GetCultureFlatFriendshipBonus(PlayerTypes ePlayer, EraTypes eAssumeEra = NO_ERA);
 	int GetCultureFlatAlliesBonus(PlayerTypes ePlayer, EraTypes eAssumeEra = NO_ERA);
 	int GetCurrentCultureFlatBonus(PlayerTypes ePlayer);
-	int GetCulturePerBuildingFriendshipBonus(PlayerTypes ePlayer, EraTypes eAssumeEra = NO_ERA);
-	int GetCulturePerBuildingAlliesBonus(PlayerTypes ePlayer, EraTypes eAssumeEra = NO_ERA);
-	int GetCurrentCulturePerBuildingBonus(PlayerTypes ePlayer);
 	int GetCurrentCultureBonus(PlayerTypes ePlayer);
 
 	// Happiness bonuses

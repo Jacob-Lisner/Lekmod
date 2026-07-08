@@ -6757,7 +6757,11 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 			kPlayer.changeUnitFortificationModifier(pTech->GetUnitFortificationModifier() * iChange);
 			kPlayer.changeUnitBaseHealModifier(pTech->GetUnitBaseHealModifier() * iChange);
 			kPlayer.changeWorkerSpeedModifier(pTech->GetWorkerSpeedModifier() * iChange);
+#if !defined(LEK_YIELD_TOURISM) // Instead of loading it into its own int, just put it into the player YieldModifier array
 			kPlayer.ChangeInfluenceSpreadModifier(pTech->GetInfluenceSpreadModifier() * iChange);
+#else
+			kPlayer.changeYieldRateModifier(YIELD_TOURISM, pTech->GetInfluenceSpreadModifier() * iChange);
+#endif
 			kPlayer.ChangeExtraVotesPerDiplomat(pTech->GetExtraVotesPerDiplomat() * iChange);
 #if defined(MISC_CHANGES) // Change votes if the tech gives the player extra votes
 			kPlayer.ChangeTechExtraLeagueVotes(pTech->GetExtraLeagueVotes() * iChange);
@@ -6957,8 +6961,227 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 					}
 				}
 			}
+#if defined(LEKMOD_INSTANT_UNLOCK_TRANSFER)
+			// Ok, loop through every city if this tech obsoletes a Unit and transfer the production to the newly unlocked unit.
+			for (int unit = 0; unit < GC.getNumUnitInfos(); unit++)
+			{
+				UnitTypes eUnit = static_cast<UnitTypes>(unit);
+				if (eUnit == NO_UNIT)
+					continue;
+				CvUnitEntry* pUnitInfo = GC.getUnitInfo(eUnit);
+				if (pUnitInfo == NULL)
+					continue;
+				if (pUnitInfo->GetObsoleteTech() == eTech)
+				{
+					// What unit do we upgrade into?
+					UnitTypes eUpgradeUnitType = NO_UNIT;
+					for (int unitClass = 0; unitClass < GC.getNumUnitClassInfos(); unitClass++)
+					{
+						if (static_cast<UnitTypes>(pUnitInfo->GetUpgradeUnitClass(unitClass)))
+						{
+							eUpgradeUnitType = static_cast<UnitTypes>(kPlayer.getCivilizationInfo().getCivilizationUnits(unitClass));
+						}
+					}
+					if (eUpgradeUnitType == NO_UNIT)
+						continue;
+					int iLoop;
+					CvCity* pLoopCity;
+					for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+					{
+						int iProductionTimes100 = pLoopCity->getUnitProductionTimes100(eUnit);
+						OrderData* pOrder = pLoopCity->headOrderQueueNode();
+						if (pOrder == NULL) // Nothing in queue.
+							continue;
+						// Has this city commited production to making this unit, or is it currently trying to make this unit?
+						if (iProductionTimes100 || (iProductionTimes100 > 0 || pOrder->iData1 == eUnit))
+						{
+							// clean order queue and insert the new unit to produce into the queue positions previously occupied by the old unit
+							int iNumOrders = pLoopCity->getOrderQueueLength();
+							std::vector<OrderData> oldQueue;
+							for (int i = 0; i < iNumOrders; i++)
+							{
+								OrderData* order = pLoopCity->getOrderFromQueue(i);
+								if (order != NULL)
+								{
+									oldQueue.push_back(*order);
+								}
+							}
+							pLoopCity->clearOrderQueue();
+							for (int old = 0; old < oldQueue.size(); old++)
+							{
+								OrderData order = oldQueue[old];
+								if (order.eOrderType == ORDER_TRAIN && order.iData1 == eUnit && pLoopCity->canTrain(eUpgradeUnitType))
+								{
+									order.iData1 = eUpgradeUnitType;
+								}
+								pLoopCity->pushOrder(order.eOrderType, order.iData1, order.iData2, order.bSave, false, true, false);
+							}
+							pLoopCity->setUnitProductionTimes100(eUnit, 0);
+							pLoopCity->setUnitProductionTimes100(eUpgradeUnitType, iProductionTimes100);
+						}
+					}
+				}
+			}
+#endif
+			CvPlayerTraits* pTraits = kPlayer.GetPlayerTraits();
+			const std::vector<FreeResourceCities>& vRules = pTraits->GetFreeResourceCities();
+			std::vector<std::pair<int, int> >& vGroupPriority = pTraits->GetGroupPriority();
+			std::vector<std::pair<int, int> >& vUsedGroupAreas = pTraits->GetUsedGroupAreas();
 
+			int iLoop = 0;
+			for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+			{
+				if (!pLoopCity)
+					continue;
 
+				CvPlot* pCityPlot = pLoopCity->plot();
+				if (!pCityPlot)
+					continue;
+
+				std::vector<const FreeResourceCities*> vRulesToPlace;
+				std::map<int, std::vector<const FreeResourceCities*> > groupedRules;
+
+				for (size_t i = 0; i < vRules.size(); ++i)
+				{
+					const FreeResourceCities& kRule = vRules[i];
+					if (!kRule.m_bTech)
+						continue;
+					if (kRule.m_eTechRequired != eTech)
+						continue;
+					if (kRule.m_eResource == NO_RESOURCE)
+						continue;
+					if (kRule.m_iResourceQuantity <= 0)
+						continue;
+					if (kRule.m_iGroup < 0)
+						continue;
+					if (kRule.m_bUniqueArea)
+					{
+						bool bAlreadyUsedArea = false;
+						const int iArea = pCityPlot->getArea();
+
+						for (size_t iUsed = 0; iUsed < vUsedGroupAreas.size(); ++iUsed)
+						{
+							if (vUsedGroupAreas[iUsed].first == kRule.m_iGroup && vUsedGroupAreas[iUsed].second == iArea)
+							{
+								bAlreadyUsedArea = true;
+								break;
+							}
+						}
+
+						if (bAlreadyUsedArea)
+							continue;
+					}
+					if (kRule.m_bCycleGroup)
+					{
+						groupedRules[kRule.m_iGroup].push_back(&kRule);
+					}
+					else
+					{
+						vRulesToPlace.push_back(&kRule);
+					}
+				}
+				for (std::map<int, std::vector<const FreeResourceCities*> >::iterator it = groupedRules.begin(); it != groupedRules.end(); ++it)
+				{
+					const int iGroup = it->first;
+					const std::vector<const FreeResourceCities*>& vGroupRules = it->second;
+
+					int iWantedPriority = 0;
+					bool bFoundPriorityEntry = false;
+
+					for (size_t iPriority = 0; iPriority < vGroupPriority.size(); ++iPriority)
+					{
+						if (vGroupPriority[iPriority].first == iGroup)
+						{
+							iWantedPriority = vGroupPriority[iPriority].second;
+							bFoundPriorityEntry = true;
+							break;
+						}
+					}
+					const FreeResourceCities* pChosen = NULL;
+					for (size_t iRule = 0; iRule < vGroupRules.size(); ++iRule)
+					{
+						const FreeResourceCities* pRule = vGroupRules[iRule];
+						if (!pRule)
+							continue;
+						if (pRule->m_iPriority == iWantedPriority)
+						{
+							pChosen = pRule;
+							break;
+						}
+					}
+					if (!pChosen)
+						continue;
+					vRulesToPlace.push_back(pChosen);
+					if (bFoundPriorityEntry)
+					{
+						for (size_t iPriority = 0; iPriority < vGroupPriority.size(); ++iPriority)
+						{
+							if (vGroupPriority[iPriority].first == iGroup)
+							{
+								vGroupPriority[iPriority].second = iWantedPriority + 1;
+								break;
+							}
+						}
+					}
+					else
+					{
+						vGroupPriority.push_back(std::make_pair(iGroup, iWantedPriority + 1));
+					}
+				}
+
+				for (size_t i = 0; i < vRulesToPlace.size(); ++i)
+				{
+					const FreeResourceCities* pRule = vRulesToPlace[i];
+					if (!pRule)
+						continue;
+
+					bool bPlaced = false;
+
+					if (pRule->m_bCity)
+					{
+						pCityPlot->setResourceType(NO_RESOURCE, 0);
+						pCityPlot->setResourceType(pRule->m_eResource, pRule->m_iResourceQuantity);
+						pCityPlot->updateYield();
+
+						bPlaced = true;
+					}
+					else
+					{
+						CvPlot* pTargetPlot = pLoopCity->addResourceLocally(NULL, pRule->m_eResource, pRule->m_iResourceQuantity);
+						if (pTargetPlot)
+						{
+							if (pRule->m_bClaimPlot && pTargetPlot->getOwner() == NO_PLAYER)
+							{
+								pTargetPlot->setOwner(kPlayer.GetID(), pLoopCity->GetID());
+							}
+
+							pTargetPlot->updateYield();
+							bPlaced = true;
+						}
+					}
+
+					if (bPlaced && pRule->m_bUniqueArea)
+					{
+						bool bAlreadyStored = false;
+						const int iArea = pCityPlot->getArea();
+
+						for (size_t iUsed = 0; iUsed < vUsedGroupAreas.size(); ++iUsed)
+						{
+							if (vUsedGroupAreas[iUsed].first == pRule->m_iGroup &&
+								vUsedGroupAreas[iUsed].second == iArea)
+							{
+								bAlreadyStored = true;
+								break;
+							}
+						}
+
+						if (!bAlreadyStored)
+						{
+							vUsedGroupAreas.push_back(std::make_pair(pRule->m_iGroup, iArea));
+						}
+					}
+				}
+			}
 		}
 	}
 

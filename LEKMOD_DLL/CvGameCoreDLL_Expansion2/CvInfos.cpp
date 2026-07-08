@@ -807,6 +807,24 @@ void CvSpecialistInfo::setTexture(const char* szVal)
 {
 	m_strTexture = szVal;
 }
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+const char* CvSpecialistInfo::getIconString() const
+{
+	return m_szIconString;
+}
+void CvSpecialistInfo::setIconString(const char* szVal)
+{
+	m_szIconString = szVal;
+}
+const char* CvSpecialistInfo::getGreatPersonIconString() const
+{
+	return m_szGreatPersonIconString;
+}
+void CvSpecialistInfo::setGreatPersonIconString(const char* szVal)
+{
+	m_szGreatPersonIconString = szVal;
+}
+#endif
 //------------------------------------------------------------------------------
 bool CvSpecialistInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility)
 {
@@ -818,7 +836,10 @@ bool CvSpecialistInfo::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	m_iExperience = kResults.GetInt("Experience");
 	m_iGreatPeopleRateChange = kResults.GetInt("GreatPeopleRateChange");
 	m_iCulturePerTurn = kResults.GetInt("CulturePerTurn");
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	setIconString(kResults.GetText("IconString"));
+	setGreatPersonIconString(kResults.GetText("GreatPersonIconString"));
+#endif
 	setTexture(kResults.GetText("Texture"));
 
 	const char* szGreatPeople = kResults.GetText("GreatPeopleUnitClass");
@@ -4411,7 +4432,48 @@ bool CvRouteInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 
 	return true;
 }
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+//======================================================================================================
+//					CvGreatWorkClassInfo
+//======================================================================================================
+CvGreatWorkClassInfo::CvGreatWorkClassInfo() :
+	m_iBaseTourism(0),
+	m_piBaseYield(NULL)
+{
+}
+//------------------------------------------------------------------------------
+CvGreatWorkClassInfo::~CvGreatWorkClassInfo()
+{
+	SAFE_DELETE_ARRAY(m_piBaseYield);
+}
+#if !defined(LEK_YIELD_TOURISM)
+//------------------------------------------------------------------------------
+int CvGreatWorkClassInfo::getBaseTourism() const
+{
+	return m_iBaseTourism;
+}
+#endif
+//------------------------------------------------------------------------------
+int CvGreatWorkClassInfo::getGreatWorkClassBaseYield(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piBaseYield ? m_piBaseYield[i] : -1;
+}
+//------------------------------------------------------------------------------
+bool CvGreatWorkClassInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility)
+{
+	if (!CvBaseInfo::CacheResults(kResults, kUtility))
+		return false;
+#if !defined(LEK_YIELD_TOURISM)
+	m_iBaseTourism = kResults.GetInt("BaseTourism");
+#endif
+	//Arrays
+	const char* szGreatWorkClassType = GetType();
+	kUtility.SetYields(m_piBaseYield, "GreatWorkClasses_Yields", "GreatWorkClassType", szGreatWorkClassType);
+	return true;
+}
+#endif
 //======================================================================================================
 //					CvResourceClassInfo
 //======================================================================================================
@@ -4886,7 +4948,7 @@ bool CvResourceInfo::isTerrain(int i) const
 {
 	CvAssertMsg(i < GC.getNumTerrainInfos(), "Index out of bounds");
 	CvAssertMsg(i > -1, "Index out of bounds");
-	return m_pbTerrain ?	m_pbTerrain[i] : false;
+	return m_pbTerrain ? m_pbTerrain[i] : false;
 }
 //------------------------------------------------------------------------------
 bool CvResourceInfo::isFeature(int i) const
@@ -5565,6 +5627,16 @@ int CvYieldInfo::getAIWeightPercent() const
 	return m_iAIWeightPercent;
 }
 //------------------------------------------------------------------------------
+CvString CvYieldInfo::getIconString() const
+{
+	return m_strIconString;
+}
+//------------------------------------------------------------------------------
+void CvYieldInfo::setIconString(const char* szVal)
+{
+	m_strIconString = szVal;
+}
+//------------------------------------------------------------------------------
 bool CvYieldInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility)
 {
 	if(!CvBaseInfo::CacheResults(kResults, kUtility))
@@ -5590,6 +5662,8 @@ bool CvYieldInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	kResults.GetValue("PuppetYieldMod", m_iPuppetYieldMod);
 #endif
 	kResults.GetValue("AIWeightPercent", m_iAIWeightPercent);
+
+	setIconString(kResults.GetText("IconString"));
 
 	return true;
 

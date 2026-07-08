@@ -33,7 +33,196 @@
 			<Text>[COLOR_POSITIVE_TEXT]LEKMOD v34.13[ENDCOLOR]</Text>
 		</Row>
 		<!-- END VERSION -->
-
+		<!-- Start v35 -->
+		<Row Tag="TXT_KEY_YIELD_TOURISM">
+			<Text>
+				Tourism
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TOURISM_HELP_INFO">
+			<Text>
+				While [ICON_TOURISM] Tourism has no local impacts, it works towards empowering your Civilization's [ICON_INTERNATIONAL_TRADE] Trade and [ICON_SPY] Spies and hindering your Enemies. Once you have eclipsed all other civilization's culture with your [ICON_TOURISM] Tourism, you win a [ICON_VICTORY_CULTURE] [COLOR_GREEN]Culture Victory[ENDCOLOR]!
+			</Text>
+		</Row>
+		<!-- New Civs -->
+		<!-- Mali Trait -->
+		<Row Tag="TXT_KEY_TRAIT_MALI_DESC">
+			<Text>
+				+3 [ICON_GOLD] Gold and +3 [ICON_HAPPINESS_1] Global Happiness from the [ICON_BUILDING_PALACE] [COLOR_YELLOW]Palace[ENDCOLOR]. +1 [ICON_PEACE] Faith to tiles with at least 1 [ICON_GOLD] Gold while in a [ICON_GOLDEN_AGE] Golden Age.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TRAIT_MALI_SHORT_DESC">
+			<Text>
+				Golden Hajj
+			</Text>
+		</Row>
+		<!-- Mali Civ -->
+		<Row Tag="TXT_KEY_CIV_MALI_DESC">
+			<Text>
+				Malian Empire
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_MALI_SHORT_DESC">
+			<Text>
+				Mali
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_MALI_ADJECTIVE">
+			<Text>
+				Malian
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DAWN_OF_MAN_MALI_TEXT">
+			<Text>
+				O great Mansa Musa, Lion of Mali and lord of the golden lands, your people look to you beneath the burning sun of the Sahel. From the banks of the Niger to the sands of the Sahara, merchants speak your name with awe, for the caravans of gold, salt, ivory, and learning flow through your empire like lifeblood through the veins of the world.[NEWLINE][NEWLINE]You inherit a realm already rich in earth and trade, yet it is by wisdom, faith, and command that riches become greatness. Let the cities of Mali rise as beacons to scholars, merchants, and pilgrims. Let Timbuktu’s libraries fill with knowledge, and let your generosity carry the fame of Mali beyond desert, sea, and empire. [NEWLINE][NEWLINE]O Mansa, will you gather the wealth of the world beneath your banner? Will your gold build monuments, feed wisdom, and humble distant kings? Can you forge an empire whose splendor will be remembered long after the caravans have vanished into the sand?
+			</Text>
+		</Row>
+		<!-- Mansa Musa -->
+		<Row Tag="TXT_KEY_LEADER_MALI">
+			<Text>
+				Mansa Musa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA">
+			<Text>
+				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Mansa_Musa[ENDCOLOR][NEWLINE][NEWLINE]Mansa Musa[b] (c.1280 - c.1337) was the ninth Mansa of the Mali Empire, which reached its territorial peak during his reign. Musa's reign is often regarded as the zenith of Mali's power and prestige, although he features less in Mandinka oral traditions than his predecessors. Musa went on Hajj to Mecca in 1324, traveling with an enormous entourage and a vast supply of gold. En route he spent time in Cairo, where his lavish gift-giving is said to have noticeably affected the value of gold in Egypt and garnered the attention of the wider Muslim world. Musa expanded the borders of the Mali Empire, in particular incorporating the cities of Gao and Timbuktu into its territory. He sought closer ties with the rest of the Muslim world, particularly the Mamluk and Marinid Sultanates. He recruited scholars from the wider Muslim world to travel to Mali, such as the Andalusian poet Abu Ishaq al-Sahili, and helped establish Timbuktu as a center of Islamic learning. His reign is associated with numerous construction projects, including a portion of Djinguereber Mosque in Timbuktu.
+			</Text>
+		</Row>
+		<!-- Mali National Treasury -->
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_DESC">
+			<Text>
+				Grand Treasury of Mali[COLOR_CULTURE_STORED]*[ENDCOLOR]
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_PEDIA">
+			<Text>
+				[COLOR_XP_BLUE]https://www.worldhistory.org/Mali_Empire/[ENDCOLOR][NEWLINE][NEWLINE]The Grand Treasury of Mali represents the imperial wealth of the mansa: gold from Bambuk, Bure, and Galam; salt from Saharan trade; tribute from subject peoples; and taxes from caravans crossing Mali's domains. Though not a single documented building, it reflects the financial power that made Mali one of the richest states of the medieval world and made Mansa Musa's pilgrimage famous from West Africa to Cairo.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_STRATEGY">
+			<Text>
+				The Grand Treasury can be a potent force multiplier with a high [ICON_GOLD] Gold or [ICON_PEACE] Faith income by discounting the first purchase in the city it's made in.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_HELP">
+			<Text>
+				[COLOR_CULTURE_STORED]Unique National Wonder (only [COLOR_GREEN]Mali[ENDCOLOR] may build one)[ENDCOLOR][NEWLINE][NEWLINE]In addition to the effects of the [ICON_WONDER_NATIONAL_TREASURY] [COLOR_YELLOW]East India Company[ENDCOLOR] that it replaces, the Grand Treasury of Mali provides +5 [ICON_PEACE] Faith and a [COLOR_GREEN]25%[ENDCOLOR] discount to the first Unit or Building purchased in the city each Turn with [ICON_GOLD] Gold or [ICON_PEACE] Faith. Requires a [ICON_BUILDING_MARKET] [COLOR_YELLOW]Market[ENDCOLOR] to be constructed, but does not require a [ICON_BUILDING_MARKET] [COLOR_YELLOW]Market[ENDCOLOR] in all cities. 
+			</Text>
+		</Row>
+		<!-- Mali Composite Bowman -->
+		<Row Tag="TXT_KEY_UNIT_MALI_COMPOSITE_BOWMAN">
+			<Text>
+				Skirmisher
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_UNIT_HELP_MALI_COMPOSITE_BOWMAN">
+			<Text>
+				Has +1 [ICON_STRENGTH] Melee Strength compared to the [ICON_UNIT_COMPOSITE_BOWMAN] [COLOR_YELLOW]Composite Bowman[ENDCOLOR] that it replaces. If the Skirmisher attacks an enemy unit, it gains +1 [ICON_MOVES] movement at the start of the next turn. If the Skirmisher successfully kills a unit, it immediately regains all [ICON_MOVES] Movement and [ICON_WAR] Attacks. Abilities are Kept on Upgrade
+			</Text>
+		</Row>
+		<!-- Buganda -->
+		<Row Tag="TXT_KEY_TRAIT_BUGANDA_DESC">
+			<Text>
+				[ICON_MISSION_EMBARK] Embarked Military units fight as if they are on land and may perform most actions as if they are not embarked. Units heal an additional [ICON_MISSION_HEAL] [COLOR_GREEN]+10[ENDCOLOR] HP and gain +100% more [ICON_GOLD] Gold when [ICON_MISSION_PILLAGE] Pillaging
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TRAIT_BUGANDA_SHORT_DESC">
+			<Text>
+				War Canoes
+			</Text>
+		</Row>
+		<!-- Buganda Civ -->
+		<!-- Kabaka Muteesa I -->
+		<Row Tag="TXT_KEY_LEADER_MALI">
+			<Text>
+				Kabaka Muteesa I
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA">
+			<Text>
+				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Muteesa_I_of_Buganda[ENDCOLOR][NEWLINE][NEWLINE]Muteesa I Mukaabya Walugembe Kayiira (c. 1837–9 October 1884) was the 30th Kabaka of the Kingdom of Buganda, from 1856 until 1884. In Ugandan historiography, Muteesa left a mixed legacy, with some regarding him as the most important of the kings of Buganda because of his vision and diplomatic skills, while others are more critical and believe he welcomed foreign influence that ultimately undermined Buganda's sovereignty.
+			</Text>
+		</Row>
+		<!-- Buganda Unit -->
+		<Row Tag="TXT_KEY_UNIT_BUGANDA_EXPEDITIONARY_FORCE_DESC">
+			<Text>
+				Abambowa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_UNIT_BUGANDA_EXPEDITIONARY_FORCE_HELP">
+			<Text>
+				While weaker than the Expeditionary Force that it replaces, it arrives at [ICON_TECH_MILITARY_SCIENCE] [COLOR_CYAN]Military Science[ENDCOLOR] instead of [ICON_TECH_BIOLOGY] [COLOR_CYAN]Biology[ENDCOLOR] and recieves a [COLOR_GREEN]+25%[ENDCOLOR] combat bonus when on or adjacent to Coast, Ocean, Lake or River tile. Additionally, gains [COLOR_XP_BLUE]+5[ENDCOLOR] XP upon [ICON_MISSION_PILLAGE] pillaging an Improvement.
+			</Text>
+		</Row>
+		<!-- Buganda Improvement -->
+		<Row Tag="TXT_KEY_BAGANDA_LAKE">
+			<Text>
+				Kabaka's Lake
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV5_BAGANDA_LAKE_TEXT">
+			<Text>
+				Available at [ICON_TECH_CIVIL_SERVICE] [COLOR_CYAN]Civil Service[ENDCOLOR]. Must be constructed next to a [COLOR_GREEN]City[ENDCOLOR] and on [COLOR_GREEN]flat land[ENDCOLOR]. [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] may not be removed or pillaged, [COLOR_RED]May not be adjacent to another[ENDCOLOR] [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] and will [COLOR_GREEN]remove[ENDCOLOR] the resource it is on. Receives all bonuses a regular [COLOR_GREEN]lake[ENDCOLOR] would, and the tile and adjacent tiles become fresh water tiles (if not already). It is still a land tile. +2 [ICON_FOOD] Food and +1 [ICON_GOLD] Gold. Receives +2 [ICON_CULTURE] Culture and [ICON_TOURISM] Tourism at [ICON_TECH_FLIGHT] [COLOR_CYAN]Flight[ENDCOLOR]. [NEWLINE][NEWLINE]If  [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] removes a resource that you cannot see at the time of constructing the lake, the resource will instead be moved to another valid plot within the nearest city's range.
+			</Text>
+		</Row>
+		<Replace Tag="TXT_KEY_BUILD_BAGANDA_LAKE"> 
+			<Text>
+				Construct [LINK=IMPROVEMENT_BAGANDA_LAKE]Kabaka's Lake[\LINK]
+			</Text>
+		</Replace>
+		<!-- End New Civs -->
+		<!-- Yield Standardization, Decimal Precision later -->
+		<Row Tag="TXT_KEY_TP_YIELD">
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} Total <!-- insert the icon and string -->
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_CITIES"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by Cities.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_OTHER_PLAYERS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by agreements with other Players.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_HAPPINESS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by Excess [ICON_HAPPINESS_1] Happiness.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_TRAITS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your Trait.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_RELIGION"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_RELIGION] Religion.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_PENALTIES"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} lost from Penalities.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_MINORS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_INFLUENCE] Influence over [ICON_CITY_STATE] City-States.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_BONUS_TURNS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by The World's Fair!
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_GOLDEN_AGE"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_GOLDEN_AGE]
+			</Text>
+		</Row>
+		<!-- End v35 -->
 		<Row Tag="TXT_KEY_DIPLO_ITEM_PLAYER_ALREADY_OWNS_ONE_LINE">
 			<Text>
 				[COLOR_WARNING_TEXT]Both players already own this item![ENDCOLOR]
@@ -610,7 +799,7 @@
 			<Text>Tunisian replacement for the [ICON_BUILDING_CASTLE]Castle. Generates +4 [ICON_GOLDEN_AGE] Golden Age points per turn. Costs 50% less [ICON_PRODUCTION] Production and does not require [ICON_BUILDING_WALLS] Walls.</Text>
 		</Row>
 		<Row Tag="TXT_KEY_BUILDING_TUNISIA_CASTLE_STRATEGY">			
-			<Text>The Ribat is significantly more accessible than regular Castles since it doesn't require Walls as a prerequisite and costs 50% less [ICON_PRODUCTION] Production. Beyond its defensive capabilities, it generates valuable [ICON_GOLD] Gold and [ICON_FAITH] Faith, while the +4 [ICON_GOLDEN_AGE] Golden Age points per turn help Tunisia trigger Golden Ages more frequently.</Text>
+			<Text>The Ribat is significantly more accessible than regular Castles since it doesn't require Walls as a prerequisite and costs 50% less [ICON_PRODUCTION] Production. Beyond its defensive capabilities, it generates valuable [ICON_GOLD] Gold and [ICON_PEACE] Faith, while the +4 [ICON_GOLDEN_AGE] Golden Age points per turn help Tunisia trigger Golden Ages more frequently.</Text>
 		</Row>
 		
 		<Row Tag="TXT_KEY_PROMOTION_TUNISIA_CITY_ATTACK">			
@@ -1333,7 +1522,7 @@
 			<Text>Movement Penalty Attacking Cities</Text>
 		</Row>
 		<Row Tag="TXT_KEY_PROMOTION_CITY_MOVEMENT_PENALTY_HELP">
-			<Text>Unit spends 2 additional [ICON_MOVEMENT] Moves attacking a City (total 3).</Text>
+			<Text>Unit spends 2 additional [ICON_MOVES] Moves attacking a City (total 3).</Text>
 		</Row>
 		<Row Tag="TXT_KEY_GAME_OPTION_NO_SCIENTIST_SAVING">
 			<Text>No Scientist Saving</Text>
@@ -1390,7 +1579,7 @@
 			<Text>Naval Targeting III</Text>
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_HELP_CAROLEAN">
-			<Text>Unique Swedish Unit. Replaces the Musketman. Comes with the March promotion and one addition [ICON_MOVEMENT] Movement.</Text>
+			<Text>Unique Swedish Unit. Replaces the Musketman. Comes with the March promotion and one addition [ICON_MOVES] Movement.</Text>
 		</Row>
 		<Row Tag="TXT_KEY_PROMOTION_MOVEMENT_TO_LAND">
 			<Text>Overseer</Text>
@@ -6227,7 +6416,7 @@ Many individual cacicazgos have been studied in colonial Mexico, showing that en
 			<Text>Defender</Text>
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_HELP_JFD_DEFENDER">
-			<Text>Replaces the Ironclad. May only be trained by New Zealand. 50 Strength (vs. 45). Earns a +15% [ICON_STRENGTH] Combat bonus inside [COLOR_POSITIVE_TEXT] Friendly[ENDCOLOR] territory and ignores [COLOR_POSITIVE_TEXT]Zone of Control[ENDCOLOR] [ICON_MOVEMENT] Movement penalties when within 2 tiles of an owned City or a City from a player whom you have an active [COLOR_POSITIVE_TEXT]Declaration of Friendship[ENDCOLOR] with. In addition to the typical traits, arrives with [COLOR_POSITIVE_TEXT]Cover I[ENDCOLOR] (gain a +33% [ICON_STRENGTH] Combat bonus defending against Ranged attacks).[NEWLINE][NEWLINE]Does not require [ICON_RES_COAL] Coal.
+			<Text>Replaces the Ironclad. May only be trained by New Zealand. 50 Strength (vs. 45). Earns a +15% [ICON_STRENGTH] Combat bonus inside [COLOR_POSITIVE_TEXT] Friendly[ENDCOLOR] territory and ignores [COLOR_POSITIVE_TEXT]Zone of Control[ENDCOLOR] [ICON_MOVES] Movement penalties when within 2 tiles of an owned City or a City from a player whom you have an active [COLOR_POSITIVE_TEXT]Declaration of Friendship[ENDCOLOR] with. In addition to the typical traits, arrives with [COLOR_POSITIVE_TEXT]Cover I[ENDCOLOR] (gain a +33% [ICON_STRENGTH] Combat bonus defending against Ranged attacks).[NEWLINE][NEWLINE]Does not require [ICON_RES_COAL] Coal.
 		</Text>
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_JFD_DEFENDER_STRATEGY">
@@ -15857,11 +16046,6 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				+2 [ICON_FOOD] Food, +1 [ICON_PRODUCTION] Production and +1 [ICON_GOLD] Gold in Cities working any [ICON_CITIZEN] Specialist
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_GURUSHIPP_SHORT"> 
-			<Text>
-				Guruship
-			</Text>
-		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GURUSHIP_SHORT"> 
 			<Text>
 				Guruship
@@ -15872,12 +16056,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				+5 [ICON_CULTURE] Culture and +5 [ICON_PEACE] Faith
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_HAJJJJ"> 
+		<Replace Tag="TXT_KEY_BELIEF_HAJJ"> 
 			<Text>
 				+3 [ICON_PRODUCTION] Production, +3 [ICON_FOOD] Food and +3 [ICON_CULTURE] Culture from the [COLOR_POSITIVE_TEXT]Palace[ENDCOLOR]
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_HAJJJJ_SHORT"> 
+		<Replace Tag="TXT_KEY_BELIEF_HAJJ_SHORT"> 
 			<Text>
 				Hajj
 			</Text>
@@ -15942,7 +16126,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				Holy Warriors
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_HORY_WARRIORS"> 
+		<Replace Tag="TXT_KEY_BELIEF_HOLY_WARRIORS"> 
 			<Text>
 				May purchase military units with [ICON_PEACE] Faith
 			</Text>
@@ -16747,12 +16931,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				Work Ethic
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIQ"> 
+		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIC"> 
 			<Text>
 				May purchase [COLOR_POSITIVE_TEXT]Workshops[ENDCOLOR], [COLOR_POSITIVE_TEXT]Windmills[ENDCOLOR], [COLOR_POSITIVE_TEXT]Factories[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Hydro Plants[ENDCOLOR] with [ICON_PEACE] Faith
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIQ_SHORT"> 
+		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIC_SHORT"> 
 			<Text>
 				Work Ethic
 			</Text>
@@ -16777,12 +16961,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				Gain [ICON_PEACE] Faith if you win a battle, and use [ICON_PEACE] Faith to purchase Classical Era land units.
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_ZACRED_SITES"> 
+		<Replace Tag="TXT_KEY_BELIEF_SACRED_SITES"> 
 			<Text>
 				+2 [ICON_CULTURE] Culture, +2 [ICON_GOLD] Gold, and +2 [ICON_PEACE] Faith from buildings unlocked by [COLOR_POSITIVE_TEXT]Religious Beliefs[ENDCOLOR]
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_ZACRED_SITES_SHORT"> 
+		<Replace Tag="TXT_KEY_BELIEF_SACRED_SITES_SHORT"> 
 			<Text>
 				Sacred Sites
 			</Text>

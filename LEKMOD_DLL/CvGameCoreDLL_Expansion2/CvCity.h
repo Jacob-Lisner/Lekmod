@@ -75,6 +75,7 @@ public:
 	int getCachedProductionT100ForThisTurn() const;
 	int getCachedCultureT100ForThisTurn() const;
 #endif
+	void doUpdateCacheOnTurn();
 	void doTurn();
 
 	bool isCitySelected();
@@ -119,7 +120,11 @@ public:
 	int findPopulationRank();
 	int findBaseYieldRateRank(YieldTypes eYield);
 	int findYieldRateRank(YieldTypes eYield);
-
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	std::vector<int> getWonderYieldCache();
+	int getWonderYields(YieldTypes eYield) const;
+	void buildWonderYieldCache();
+#endif
 #ifdef AUI_WARNING_FIXES
 	UnitTypes allUpgradesAvailable(UnitTypes eUnit, uint iUpgradeCount = 0) const;
 #else
@@ -527,7 +532,9 @@ public:
 
 	int getMilitaryProductionModifier() const;
 	void changeMilitaryProductionModifier(int iChange);
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int getMilitaryProductionFromGreatWorks() const;
+#endif
 	int getSpaceProductionModifier() const;
 	void changeSpaceProductionModifier(int iChange);
 
@@ -751,7 +758,9 @@ public:
 #endif
 	void SetExtraLuxuryResources(int iNewValue);
 	void ChangeExtraLuxuryResources(int iChange);
-
+#if defined(LEKMOD_RELOCATE_RESOURCE)
+	CvPlot* addResourceLocally(CvPlot* pFromPlot,ResourceTypes eResource, int iAmount);
+#endif
 	CvCityBuildings* GetCityBuildings() const;
 
 	int getProjectProduction(ProjectTypes eIndex) const;
@@ -860,7 +869,11 @@ public:
 	int GetCheapestPlotInfluence() const;
 	void SetCheapestPlotInfluence(int iValue);
 	void DoUpdateCheapestPlotInfluence();
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	int GetNumThingsPurchasedThisTurn() const { return m_iNumThingsPurchasedThisTurn; }
+	void SetNumThingsPurchasedThisTurn(int iValue);
+	void ChangeNumThingsPurchasedThisTurn(int iChange);
+#endif
 	// End plot acquisition
 
 	bool isValidBuildingLocation(BuildingTypes eIndex) const;
@@ -1053,6 +1066,9 @@ protected:
 	FAutoVariable<int, CvCity> m_iRazingTurns;
 	FAutoVariable<int, CvCity> m_iCountExtraLuxuries;
 	FAutoVariable<int, CvCity> m_iCheapestPlotInfluence;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	FAutoVariable<int, CvCity> m_iNumThingsPurchasedThisTurn;
+#endif
 	int m_iEspionageModifier;
 
 	OperationSlot m_unitBeingBuiltForOperation;
@@ -1167,7 +1183,9 @@ protected:
 	FAutoVariable<std::vector<bool>, CvCity> m_abBaseYieldRankValid;
 	FAutoVariable<std::vector<int>, CvCity> m_aiYieldRank;
 	FAutoVariable<std::vector<bool>, CvCity> m_abYieldRankValid;
-
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	FAutoVariable<std::vector<int>, CvCity> m_viWonderYieldCache;
+#endif
 	IDInfo m_combatUnit;		// The unit the city is in combat with
 
 	void doGrowth();

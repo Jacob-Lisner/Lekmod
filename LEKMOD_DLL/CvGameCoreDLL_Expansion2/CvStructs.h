@@ -440,5 +440,23 @@ public:
 private:
 	int	m_aDamage[BATTLE_UNIT_COUNT];		//!< The ending damage of the units
 };
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+struct GoldenAgeYieldThreshold
+{
+	GoldenAgeYieldThreshold()
+		: m_eThresholdYield(NO_YIELD)
+		, m_iThresholdAmount(0)
+		, m_eRwdYield(NO_YIELD)
+		, m_iRwdAmount(0)
+	{
+	}
+	YieldTypes m_eThresholdYield;
+	int m_iThresholdAmount;
+	YieldTypes m_eRwdYield;
+	int m_iRwdAmount;
+};
 
+FDataStream& operator<<(FDataStream&, const GoldenAgeYieldThreshold&);
+FDataStream& operator>>(FDataStream&, GoldenAgeYieldThreshold&);
+#endif
 #endif	// CVSTRUCTS_H

@@ -721,4 +721,22 @@ FDataStream& operator>>(FDataStream& loadFrom, MissionData& writeTo)
 	return loadFrom;
 }
 
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+FDataStream& operator>>(FDataStream& kStream, GoldenAgeYieldThreshold& writeTo)
+{
+	kStream >> writeTo.m_eThresholdYield;
+	kStream >> writeTo.m_iThresholdAmount;
+	kStream >> writeTo.m_eRwdYield;
+	kStream >> writeTo.m_iRwdAmount;
+	return kStream;
+}
 
+FDataStream& operator<<(FDataStream& kStream, const GoldenAgeYieldThreshold& readFrom)
+{
+	kStream << readFrom.m_eThresholdYield;
+	kStream << readFrom.m_iThresholdAmount;
+	kStream << readFrom.m_eRwdYield;
+	kStream << readFrom.m_iRwdAmount;
+	return kStream;
+}
+#endif
