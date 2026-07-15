@@ -2861,7 +2861,7 @@ function AssignStartingPlots:PlaceImpactAndRipples(x, y)
 	self:PlaceResourceImpact(x, y, 2, 3) -- Luxury layer, set all plots within this civ start as off limits.
 	self:PlaceResourceImpact(x, y, 3, 3) -- Bonus layer
 	self:PlaceResourceImpact(x, y, 4, 3) -- Fish layer
-	if plot:IsCoastalLand() then
+	if plot:IsCoastalLand(50) then
 		if self._lek_collide_coastals then
 			self:PlaceResourceImpactCoastalMod(x, y, 5, 3, 4) -- MOD: SAPHT 10 range city state coastal
 		else
@@ -9349,7 +9349,7 @@ function AssignStartingPlots:PlaceResourceImpactCoastalMod(x, y, impact_table_nu
 					nextX = currentX + plot_adjustments[1];
 					nextY = currentY + plot_adjustments[2];
 					local plot = Map.GetPlot(nextX, nextY);
-					if plot:IsCoastalLand() then
+					if plot:IsCoastalLand(50) then
 						-- Make sure the plot exists
 						if wrapX == false and (nextX < 0 or nextX >= iW) then -- X is out of bounds.
 							-- Do not add ripple data to this plot.
