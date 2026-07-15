@@ -9348,30 +9348,32 @@ function AssignStartingPlots:PlaceResourceImpactCoastalMod(x, y, impact_table_nu
 					-- Identify the next plot in the ring.
 					nextX = currentX + plot_adjustments[1];
 					nextY = currentY + plot_adjustments[2];
-					local plot = Map.GetPlot(nextX, nextY);
-					if plot:IsCoastalLand(50) then
+					
 						-- Make sure the plot exists
-						if wrapX == false and (nextX < 0 or nextX >= iW) then -- X is out of bounds.
-							-- Do not add ripple data to this plot.
-						elseif wrapY == false and (nextY < 0 or nextY >= iH) then -- Y is out of bounds.
-							-- Do not add ripple data to this plot.
-						else -- Plot is in bounds, process it.
-							-- Handle any world wrap.
-							local realX = nextX;
-							local realY = nextY;
-							if wrapX then
-								realX = realX % iW;
-							end
-							if wrapY then
-								realY = realY % iH;
-							end
-							-- Record ripple data for this plot.
-							local ringPlotIndex = realY * iW + realX + 1;
+					if wrapX == false and (nextX < 0 or nextX >= iW) then -- X is out of bounds.
+						-- Do not add ripple data to this plot.
+					elseif wrapY == false and (nextY < 0 or nextY >= iH) then -- Y is out of bounds.
+						-- Do not add ripple data to this plot.
+					else -- Plot is in bounds, process it.
+						-- Handle any world wrap.
+						local realX = nextX;
+						local realY = nextY;
+						if wrapX then
+							realX = realX % iW;
+						end
+						if wrapY then
+							realY = realY % iH;
+						end
+						-- Record ripple data for this plot.
+						local ringPlotIndex = realY * iW + realX + 1;
+
+						local plot = Map.GetPlot(realX, realY);
+						if plot:IsCoastalLand(50) then
 
 							self.cityStateData[ringPlotIndex] = 1;
 							-- 
 							-- This is the only call that is proper to this modded function
-							self:ExpandCoastalRing(nextX, nextY, 3)
+							self:ExpandCoastalRing(realX, realY, 3)
 						end
 					end
 					currentX, currentY = nextX, nextY;
