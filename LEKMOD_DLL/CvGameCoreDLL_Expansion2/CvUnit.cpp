@@ -8816,6 +8816,11 @@ bool CvUnit::DoSpreadReligion()
 	{
 		if(CanSpreadReligion(plot()))
 		{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+			const PlayerTypes eCityOwner = pCity->getOwner();
+			const bool bMinorCityStateTarget = (eCityOwner >= MAX_MAJOR_CIVS && GET_PLAYER(eCityOwner).isMinorCiv());
+			const bool bMinorHadReligionBefore = bMinorCityStateTarget && (pCity->GetCityReligions()->GetReligiousMajority() != NO_RELIGION);
+#endif
 			int iConversionStrength = GetConversionStrength();
 			CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 			ReligionTypes eReligion = GetReligionData()->GetReligion();
@@ -8905,6 +8910,13 @@ bool CvUnit::DoSpreadReligion()
 					DLLUI->AddPopupText(pCity->getX(), pCity->getY(), text, fDelay);
 				}
 			}
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+			if(bMinorCityStateTarget)
+			{
+				GET_PLAYER(eCityOwner).GetMinorCivAI()->DoPersonalityReligionSpreadInfluence(getOwner(), bMinorHadReligionBefore);
+			}
+#endif
 
 			bool bShow = plot()->isActiveVisible(false);
 			if(bShow)

@@ -42,6 +42,9 @@ class CvResourceInfo;
 class CvFeatureInfo;
 class CvCivilizationInfo;
 class CvMinorCivInfo;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+class CvMinorCivPersonalityInfo;
+#endif
 class CvLeaderHeadInfo;
 class CvSpecialUnitInfo;
 class CvYieldInfo;
@@ -369,6 +372,16 @@ public:
 #endif
 	std::vector<CvMinorCivInfo*>& getMinorCivInfo();
 	CvMinorCivInfo* getMinorCivInfo(MinorCivTypes eMinorCivNum);
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+#ifdef AUI_WARNING_FIXES
+	uint getNumMinorCivPersonalityInfos() const;
+#else
+	int getNumMinorCivPersonalityInfos();
+#endif
+	std::vector<CvMinorCivPersonalityInfo*>& getMinorCivPersonalityInfo();
+	_Ret_maybenull_ CvMinorCivPersonalityInfo* getMinorCivPersonalityInfo(int ePersonality);
+#endif
 
 #ifdef AUI_WARNING_FIXES
 	uint getNumLeaderHeadInfos() const;
@@ -7961,6 +7974,9 @@ protected:
 	int m_iNumPlayableCivilizationInfos;
 	int m_iNumAIPlayableCivilizationInfos;
 	std::vector<CvMinorCivInfo*> m_paMinorCivInfo;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	std::vector<CvMinorCivPersonalityInfo*> m_paMinorCivPersonalityInfo;
+#endif
 	std::vector<CvLeaderHeadInfo*> m_paLeaderHeadInfo;
 	std::vector<CvProcessInfo*> m_paProcessInfo;
 	std::vector<CvVoteInfo*> m_paVoteInfo;

@@ -3019,6 +3019,34 @@ CvMinorCivInfo* CvGlobals::getMinorCivInfo(MinorCivTypes eMinorCivNum)
 		return NULL;
 }
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+#ifdef AUI_WARNING_FIXES
+uint CvGlobals::getNumMinorCivPersonalityInfos() const
+{
+	return m_paMinorCivPersonalityInfo.size();
+}
+#else
+int CvGlobals::getNumMinorCivPersonalityInfos()
+{
+	return (int)m_paMinorCivPersonalityInfo.size();
+}
+#endif
+
+std::vector<CvMinorCivPersonalityInfo*>& CvGlobals::getMinorCivPersonalityInfo()
+{
+	return m_paMinorCivPersonalityInfo;
+}
+
+CvMinorCivPersonalityInfo* CvGlobals::getMinorCivPersonalityInfo(int ePersonality)
+{
+	CvAssert(ePersonality > -1);
+	CvAssert(ePersonality < (int)m_paMinorCivPersonalityInfo.size());
+	if(ePersonality > -1 && ePersonality < (int)m_paMinorCivPersonalityInfo.size())
+		return m_paMinorCivPersonalityInfo[ePersonality];
+	return NULL;
+}
+#endif
+
 #ifdef AUI_WARNING_FIXES
 uint CvGlobals::getNumLeaderHeadInfos() const
 {
@@ -7023,6 +7051,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paLeaderHeadInfo);
 	deleteInfoArray(m_paCivilizationInfo);
 	deleteInfoArray(m_paMinorCivInfo);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	deleteInfoArray(m_paMinorCivPersonalityInfo);
+#endif
 
 	deleteInfoArray(m_paVoteSourceInfo);
 	deleteInfoArray(m_paHandicapInfo);

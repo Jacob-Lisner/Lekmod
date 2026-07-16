@@ -16,6 +16,7 @@ print("Peace Block part 2 loaded");
 include( "IconSupport" );
 include( "InfoTooltipInclude" );
 include( "CityStateStatusHelper" );
+include( "CityStatePersonalityHelper" );
 
 local g_iMinorCivID = -1;
 local g_iMinorCivTeamID = -1;
@@ -236,24 +237,7 @@ function OnDisplay()
 	Controls.TraitLabel:SetToolTipString(strTraitTT);
 	
 	-- Personality
-	local strPersonalityText = "";
-	local strPersonalityTT = "";
-	local iPersonality = pPlayer:GetPersonality();
-	if (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_FRIENDLY) then
-		strPersonalityText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY");
-		strPersonalityTT = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY_TT");
-	elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_NEUTRAL) then
-		strPersonalityText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_NEUTRAL");
-		strPersonalityTT = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_NEUTRAL_TT");
-	elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_HOSTILE) then
-		strPersonalityText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_HOSTILE");
-		strPersonalityTT = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_HOSTILE_TT");
-	elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_IRRATIONAL) then
-		strPersonalityText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_IRRATIONAL");
-		strPersonalityTT = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_PERSONALITY_IRRATIONAL_TT");
-	end
-	
-	strPersonalityText = "[COLOR_POSITIVE_TEXT]" .. strPersonalityText .. "[ENDCOLOR]";
+	local strPersonalityText, strPersonalityTT = GetMinorCivPersonalityDisplayText(pPlayer);
 	
 	Controls.PersonalityInfo:SetText(strPersonalityText);
 	Controls.PersonalityInfo:SetToolTipString(strPersonalityTT);
@@ -435,18 +419,10 @@ function OnDisplay()
 		
 		-- Normal peaceful hello, with info about active quests
 		else
-			local iPersonality = pPlayer:GetPersonality();
-			
 			if (pPlayer:IsProtectedByMajor(iActivePlayer)) then
 				strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_PROTECTED");
-			elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_FRIENDLY) then
-				strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_FRIENDLY");
-			elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_NEUTRAL) then
-				strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_NEUTRAL");
-			elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_HOSTILE) then
-				strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_HOSTILE");
-			elseif (iPersonality == MinorCivPersonalityTypes.MINOR_CIV_PERSONALITY_IRRATIONAL) then
-				strText = Locale.ConvertTextKey("TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_IRRATIONAL");
+			else
+				strText = GetMinorCivPersonalityHelloText(pPlayer);
 			end
 		
 			local strQuestString = "";
@@ -498,8 +474,32 @@ function OnDisplay()
 		
 		Controls.GiveButton:SetHide(false);
 		Controls.TakeButton:SetHide(false);
+
+		if (DoesMinorCivPersonalityBlockGifts(pPlayer)) then
+			bActiveGiveScreen = false;
+			ApplyMinorCivPersonalityBlockedButton(MinorCivPersonalityGiveLabelKey, GetMinorCivPersonalityBlockGiftsTooltip(pPlayer), Controls.GiveLabel, Controls.GiveButton, Controls.GiveAnim);
+		elseif (IsMinorCivMajorBlockedByAlliedWar(pPlayer, iActivePlayer)) then
+			bActiveGiveScreen = false;
+			ApplyMinorCivPersonalityBlockedButton(MinorCivPersonalityGiveLabelKey, GetMinorCivPersonalityAlliedWarBlockGiftsTooltip(pPlayer, iActivePlayer), Controls.GiveLabel, Controls.GiveButton, Controls.GiveAnim);
+		else
+			ClearMinorCivPersonalityBlockedButton(MinorCivPersonalityGiveLabelKey, MinorCivPersonalityGiveTooltipKey, Controls.GiveLabel, Controls.GiveButton, Controls.GiveAnim, OnGiveButtonClicked);
+		end
+
+		if (DoesMinorCivPersonalityBlockTribute(pPlayer)) then
+			bActiveTakeScreen = false;
+			ApplyMinorCivPersonalityBlockedButton(MinorCivPersonalityTakeLabelKey, GetMinorCivPersonalityBlockTributeTooltip(pPlayer), Controls.TakeLabel, Controls.TakeButton, Controls.TakeAnim);
+		else
+			ClearMinorCivPersonalityBlockedButton(MinorCivPersonalityTakeLabelKey, MinorCivPersonalityTakeTooltipKey, Controls.TakeLabel, Controls.TakeButton, Controls.TakeAnim, OnTakeButtonClicked);
+		end
+
 		Controls.PeaceButton:SetHide(true);
 		Controls.WarButton:SetHide(false);
+		local strWarTT = GetMinorCivPersonalityNoWarPenaltyTooltip(pPlayer);
+		if strWarTT ~= nil then
+			Controls.WarButton:SetToolTipString(strWarTT);
+		else
+			Controls.WarButton:SetToolTipString(nil);
+		end
 		
 	-- War
 	else
@@ -600,8 +600,17 @@ function OnDisplay()
 			end
 		end
 	end
+
+	if (DoesMinorCivPersonalityBlockPledgeToProtect(pPlayer) and not bWar and not pPlayer:IsProtectedByMajor(iActivePlayer)) then
+		bShowPledgeButton = true;
+		bEnablePledgeButton = false;
+		strProtectButton = "[COLOR_WARNING_TEXT]" .. Locale.Lookup("TXT_KEY_POP_CSTATE_PLEDGE_TO_PROTECT") .. "[ENDCOLOR]";
+		strProtectTT = GetMinorCivPersonalityBlockPledgeTooltip(pPlayer);
+	end
+
 	Controls.PledgeAnim:SetHide(not bEnablePledgeButton);
 	Controls.PledgeButton:SetHide(not bShowPledgeButton);
+	Controls.PledgeButton:SetDisabled(not bEnablePledgeButton);
 	if (bShowPledgeButton) then
 		Controls.PledgeLabel:SetText(strProtectButton);
 		Controls.PledgeButton:SetToolTipString(strProtectTT);
@@ -661,12 +670,12 @@ function OnDisplay()
 	SetButtonSize(Controls.BuyoutLabel, Controls.BuyoutButton, Controls.BuyoutAnim, Controls.BuyoutButtonHL);
 	
 	-- NEW: stay at the current menu level, update visible buttons 
-	if bWar == false and bActiveGiveScreen == true then
+	if bWar == false and bActiveGiveScreen == true and not DoesMinorCivPersonalityBlockGifts(pPlayer) and not IsMinorCivMajorBlockedByAlliedWar(pPlayer, iActivePlayer) then
 		PopulateGiftChoices()
 		Controls.GiveStack:SetHide(false)
 		Controls.TakeStack:SetHide(true)
 		Controls.ButtonStack:SetHide(true)
-	elseif bWar == false and bActiveTakeScreen == true then
+	elseif bWar == false and bActiveTakeScreen == true and not DoesMinorCivPersonalityBlockTribute(pPlayer) then
 		PopulateTakeChoices()
 		Controls.GiveStack:SetHide(true)
 		Controls.TakeStack:SetHide(false)
@@ -724,6 +733,10 @@ function OnPledgeButtonClicked ()
 	
 	local iActivePlayer = Game.GetActivePlayer();
 	local pPlayer = Players[g_iMinorCivID];
+
+	if (DoesMinorCivPersonalityBlockPledgeToProtect(pPlayer)) then
+		return;
+	end
 	
 	if (pPlayer:CanMajorStartProtection(iActivePlayer)) then
 		Game.DoMinorPledgeProtection(Game.GetActivePlayer(), g_iMinorCivID, true);
@@ -807,6 +820,10 @@ Controls.NoUnitSpawningButton:RegisterCallback( Mouse.eLClick, OnStopStartSpawni
 -- Open Give Submenu
 ----------------------------------------------------------------
 function OnGiveButtonClicked ()
+	if (DoesMinorCivPersonalityBlockGifts(Players[g_iMinorCivID]) or IsMinorCivMajorBlockedByAlliedWar(Players[g_iMinorCivID], Game.GetActivePlayer())) then
+		return;
+	end
+
 	Controls.GiveStack:SetHide(false);
 	Controls.TakeStack:SetHide(true);
 	Controls.ButtonStack:SetHide(true);
@@ -820,6 +837,10 @@ Controls.GiveButton:RegisterCallback( Mouse.eLClick, OnGiveButtonClicked );
 -- Open Take Submenu
 ----------------------------------------------------------------
 function OnTakeButtonClicked ()
+	if (DoesMinorCivPersonalityBlockTribute(Players[g_iMinorCivID])) then
+		return;
+	end
+
 	Controls.GiveStack:SetHide(true);
 	Controls.TakeStack:SetHide(false);
 	Controls.ButtonStack:SetHide(true);

@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -557,6 +557,7 @@ protected:
 	static int lGetMinorCivType(lua_State* L);
 	static int lGetMinorCivTrait(lua_State* L);
 	static int lGetPersonality(lua_State* L);
+	static int lGetMinorCivPersonalityType(lua_State* L);
 	static int lIsMinorCivHasUniqueUnit(lua_State* L);
 	static int lGetMinorCivUniqueUnit(lua_State* L);
 	static int lSetMinorCivUniqueUnit(lua_State* L);
@@ -619,6 +620,9 @@ protected:
 	static int lGetCurrentSpawnEstimate(lua_State* L);
 	static int lGetCurrentScienceFriendshipBonusTimes100(lua_State* L);
 	static int lIsPeaceBlocked(lua_State* L);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	static int lIsMajorBlockedByAlliedWar(lua_State* L);
+#endif
 #ifdef NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW
 	static int lIsInfluenceTooLowForPeace(lua_State* L);
 #endif

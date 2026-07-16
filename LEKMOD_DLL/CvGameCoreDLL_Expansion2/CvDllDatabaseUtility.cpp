@@ -373,6 +373,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 	//Civilizations - must be after buildings and units
 	PrefetchCollection(GC.getCivilizationInfo(), "Civilizations");
 	PrefetchCollection(GC.getMinorCivInfo(), "MinorCivilizations");
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	PrefetchCollection(GC.getMinorCivPersonalityInfo(), "Minor_Civ_Personalities");
+#endif
 	PrefetchCollection(GC.getTraitInfo(), "Traits");
 	PrefetchCollection(GC.getReligionInfo(), "Religions");
 	PrefetchCollection(GC.getBeliefInfo(), "Beliefs");
@@ -615,6 +618,9 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateVectorSize(getNumFeatureInfos);
 	ValidateVectorSize(getNumCivilizationInfos);
 	ValidateVectorSize(getNumMinorCivInfos);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	ValidateVectorSize(getNumMinorCivPersonalityInfos);
+#endif
 	ValidateVectorSize(getNumLeaderHeadInfos);
 	ValidateVectorSize(getNumTraitInfos);
 	ValidateVectorSize(getNumUnitInfos);

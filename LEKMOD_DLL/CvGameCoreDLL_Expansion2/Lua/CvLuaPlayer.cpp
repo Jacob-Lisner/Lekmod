@@ -574,6 +574,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetMinorCivType);
 	Method(GetMinorCivTrait);
 	Method(GetPersonality);
+	Method(GetMinorCivPersonalityType);
 	Method(IsMinorCivHasUniqueUnit);
 	Method(GetMinorCivUniqueUnit);
 	Method(SetMinorCivUniqueUnit);
@@ -636,6 +637,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetCurrentSpawnEstimate);
 	Method(GetCurrentScienceFriendshipBonusTimes100);
 	Method(IsPeaceBlocked);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	Method(IsMajorBlockedByAlliedWar);
+#endif
 #ifdef NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW
 	Method(IsInfluenceTooLowForPeace);
 #endif
@@ -6194,6 +6198,18 @@ int CvLuaPlayer::lGetPersonality(lua_State* L)
 	return 1;
 }
 //------------------------------------------------------------------------------
+int CvLuaPlayer::lGetMinorCivPersonalityType(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	lua_pushstring(L, pkPlayer->GetMinorCivAI()->GetPersonalityTypeString());
+#else
+	lua_pushstring(L, "");
+#endif
+	return 1;
+}
+//------------------------------------------------------------------------------
 int CvLuaPlayer::lIsMinorCivHasUniqueUnit(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
@@ -6342,6 +6358,18 @@ int CvLuaPlayer::lIsPeaceBlocked(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lIsMajorBlockedByAlliedWar(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const PlayerTypes eMajor = (PlayerTypes) lua_tointeger(L, 2);
+
+	const bool bResult = pkPlayer->GetMinorCivAI()->IsMajorBlockedByAlliedWar(eMajor);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 #ifdef NQ_PEACE_BLOCKED_IF_INFLUENCE_TOO_LOW
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lIsInfluenceTooLowForPeace(lua_State* L)

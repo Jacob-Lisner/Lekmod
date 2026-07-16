@@ -37,6 +37,22 @@
 // statics
 CvTeam* CvTeam::m_aTeams = NULL;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+static bool DoesMinorTeamBlockWarDeclarationPenalty(TeamTypes eMinorTeam)
+{
+	for(int iMinorCivLoop = MAX_MAJOR_CIVS; iMinorCivLoop < MAX_CIV_PLAYERS; iMinorCivLoop++)
+	{
+		const PlayerTypes eMinor = (PlayerTypes)iMinorCivLoop;
+		if(GET_PLAYER(eMinor).isAlive() && GET_PLAYER(eMinor).getTeam() == eMinorTeam)
+		{
+			return GET_PLAYER(eMinor).GetMinorCivAI()->IsBlocksWarDeclarationPenalty();
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 void CvTeam::initStatics()
 {
@@ -1494,7 +1510,12 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 									// Major declaring war on Minor
 									if(GET_TEAM(eTeam).isMinorCiv())
 									{
-										GET_PLAYER((PlayerTypes) iMajorCivLoop2).GetDiplomacyAI()->ChangeOtherPlayerNumMinorsAttacked((PlayerTypes) iMajorCivLoop, 1);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+										if(!DoesMinorTeamBlockWarDeclarationPenalty(eTeam))
+#endif
+										{
+											GET_PLAYER((PlayerTypes) iMajorCivLoop2).GetDiplomacyAI()->ChangeOtherPlayerNumMinorsAttacked((PlayerTypes) iMajorCivLoop, 1);
+										}
 									}
 									// Major declaring war on Major
 									else
@@ -1519,7 +1540,14 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 								//antonjs: consider: this statement is no longer valid, since current design allows peace to be made; update the implementation
 								if(!isMinorCiv() && !bDefensivePact)
 								{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+									if(!GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->IsBlocksWarDeclarationPenalty())
+									{
+										ChangeNumMinorCivsAttacked(1);
+									}
+#else
 									ChangeNumMinorCivsAttacked(1);
+#endif
 
 									GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoTeamDeclaredWarOnMe(GetID());
 								}
@@ -1614,6 +1642,14 @@ void CvTeam::DoNowAtWarOrPeace(TeamTypes eTeam, bool bWar)
 
 				if(GET_PLAYER(eMinor).GetMinorCivAI()->IsAllies(ePlayer))
 				{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+					CvMinorCivPersonalityInfo* pkPersonalityInfo = GET_PLAYER(eMinor).GetMinorCivAI()->GetPersonalityInfo();
+					if(pkPersonalityInfo && pkPersonalityInfo->IsNeverAlliedWarSupport())
+					{
+						continue;
+					}
+#endif
+
 					// Don't declare war on self! (just in case)
 					if(GET_PLAYER(eMinor).getTeam() != eTeam)
 					{

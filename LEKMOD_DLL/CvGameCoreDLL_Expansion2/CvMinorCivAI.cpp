@@ -13,6 +13,10 @@
 #include "CvEnumSerialization.h"
 #include "CvNotifications.h"
 #include "CvDiplomacyAI.h"
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+#include "CvFlavorManager.h"
+#include <map>
+#endif
 #include "CvDllInterfaces.h"
 #include "CvDllPlot.h"
 #include "cvStopWatch.h"
@@ -1706,6 +1710,10 @@ void CvMinorCivAI::Reset()
 		m_abPledgeToProtect[iI] = false;
 		m_aiMajorScratchPad[iI] = 0;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		m_abReligionSpreadInfluenceBurstGranted[iI] = false;
+#endif
+
 #ifdef CS_ALLYING_WAR_RESCTRICTION
 		m_aiMajorPriority[iI] = MAX_MAJOR_CIVS;
 #endif
@@ -1840,6 +1848,9 @@ void CvMinorCivAI::Read(FDataStream& kStream)
 	CvAssertMsg(m_QuestsGiven.size() == MAX_MAJOR_CIVS, "Number of entries in minor's quest list does not match MAX_MAJOR_CIVS when read from memory!");
 
 	kStream >> m_bDisableNotifications;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	kStream >> m_abReligionSpreadInfluenceBurstGranted;
+#endif
 #ifdef CS_ALLYING_WAR_RESCTRICTION
 	kStream >> m_aiMajorPriority;
 #endif
@@ -1913,6 +1924,9 @@ void CvMinorCivAI::Write(FDataStream& kStream) const
 	}
 
 	kStream << m_bDisableNotifications;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	kStream << m_abReligionSpreadInfluenceBurstGranted;
+#endif
 #ifdef CS_ALLYING_WAR_RESCTRICTION
 	kStream << m_aiMajorPriority;
 #endif
@@ -1948,9 +1962,77 @@ MinorCivPersonalityTypes CvMinorCivAI::GetPersonality() const
 }
 
 /// Picks a random Personality for this minor
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+void CvMinorCivAI::DoPickPersonality(bool bEraTransformRepick)
+{
+	static std::map<int, int> s_personalityAssignmentCounts;
+
+	if(GC.getGame().getElapsedGameTurns() == 0 && GetPlayer()->GetID() == MAX_MAJOR_CIVS)
+	{
+		s_personalityAssignmentCounts.clear();
+	}
+
+	const int iNumPersonalities = GC.getNumMinorCivPersonalityInfos();
+	if(iNumPersonalities <= 0)
+	{
+		m_ePersonality = MINOR_CIV_PERSONALITY_NEUTRAL;
+		return;
+	}
+
+	int iNumAliveMinors = 0;
+	for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
+	{
+		if(GET_PLAYER((PlayerTypes)iMinorLoop).isAlive() && GET_PLAYER((PlayerTypes)iMinorLoop).isMinorCiv())
+		{
+			iNumAliveMinors++;
+		}
+	}
+
+	const int iPreviousPersonality = (int)m_ePersonality;
+
+	FStaticVector<int, 16, true, c_eCiv5GameplayDLL> veEligiblePersonalities;
+	for(int iPersonalityLoop = 0; iPersonalityLoop < iNumPersonalities; iPersonalityLoop++)
+	{
+		CvMinorCivPersonalityInfo* pkPersonalityInfo = GC.getMinorCivPersonalityInfo(iPersonalityLoop);
+		if(bEraTransformRepick)
+		{
+			if(iPersonalityLoop == iPreviousPersonality)
+			{
+				continue;
+			}
+
+			if(pkPersonalityInfo != NULL && pkPersonalityInfo->GetTransformsAtEra() != NO_ERA)
+			{
+				continue;
+			}
+		}
+
+		if(CanAssignPersonality(pkPersonalityInfo, s_personalityAssignmentCounts, iNumAliveMinors))
+		{
+			veEligiblePersonalities.push_back(iPersonalityLoop);
+		}
+	}
+
+	if(veEligiblePersonalities.size() == 0)
+	{
+		m_ePersonality = MINOR_CIV_PERSONALITY_NEUTRAL;
+		return;
+	}
+
+	const int iRandPick = GC.getGame().getJonRandNum(veEligiblePersonalities.size(), "Minor Civ AI: Picking Personality for this Game (should happen only once per player)");
+	m_ePersonality = (MinorCivPersonalityTypes)veEligiblePersonalities[iRandPick];
+
+	s_personalityAssignmentCounts[(int)m_ePersonality]++;
+
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo)
+	{
+		pkPersonalityInfo->ApplyFlavorChanges(m_pPlayer->GetFlavorManager());
+	}
+}
+#else
 void CvMinorCivAI::DoPickPersonality()
 {
-
 	FlavorTypes eFlavorCityDefense = NO_FLAVOR;
 	FlavorTypes eFlavorDefense = NO_FLAVOR;
 	FlavorTypes eFlavorOffense = NO_FLAVOR;
@@ -1992,6 +2074,301 @@ void CvMinorCivAI::DoPickPersonality()
 		break;
 	}
 }
+#endif
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+CvMinorCivPersonalityInfo* CvMinorCivAI::GetPersonalityInfo() const
+{
+	return GC.getMinorCivPersonalityInfo((int)m_ePersonality);
+}
+
+const char* CvMinorCivAI::GetPersonalityTypeString() const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo == NULL)
+	{
+		return "";
+	}
+
+	return pkPersonalityInfo->GetType();
+}
+
+bool CvMinorCivAI::IsBlocksWarDeclarationPenalty() const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	return (pkPersonalityInfo != NULL && pkPersonalityInfo->IsBlocksWarDeclarationPenalty());
+}
+
+bool CvMinorCivAI::IsNeverAlliedWarSupport() const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	return (pkPersonalityInfo != NULL && pkPersonalityInfo->IsNeverAlliedWarSupport());
+}
+
+bool CvMinorCivAI::IsIgnoreBulliedForGoldQuest() const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	return (pkPersonalityInfo != NULL && pkPersonalityInfo->IsIgnoreBulliedForGoldQuest());
+}
+
+bool CvMinorCivAI::IsMajorBlockedByAlliedWar(PlayerTypes eMajor) const
+{
+	if(eMajor < 0 || eMajor >= MAX_MAJOR_CIVS)
+	{
+		return false;
+	}
+
+	if(!IsNeverAlliedWarSupport())
+	{
+		return false;
+	}
+
+	if(m_pPlayer == NULL)
+	{
+		return false;
+	}
+
+	if(GET_TEAM(GET_PLAYER(eMajor).getTeam()).isAtWar(m_pPlayer->getTeam()))
+	{
+		return false;
+	}
+
+	const PlayerTypes eAlly = GetAlly();
+	if(eAlly == NO_PLAYER || eAlly == eMajor)
+	{
+		return false;
+	}
+
+	if(!GET_PLAYER(eAlly).isAlive())
+	{
+		return false;
+	}
+
+	return GET_TEAM(GET_PLAYER(eMajor).getTeam()).isAtWar(GET_PLAYER(eAlly).getTeam());
+}
+
+bool CvMinorCivAI::IsCoastalMinor() const
+{
+	CvCity* pCapital = m_pPlayer->getCapitalCity();
+	return (pCapital != NULL && pCapital->isCoastal(GC.getLAKE_MAX_AREA_SIZE()));
+}
+
+bool CvMinorCivAI::CanAssignPersonality(const CvMinorCivPersonalityInfo* pkPersonalityInfo, const std::map<int, int>& personalityAssignmentCounts, int iNumAliveMinors) const
+{
+	if(pkPersonalityInfo == NULL || pkPersonalityInfo->IsDisabled())
+	{
+		return false;
+	}
+
+	if(pkPersonalityInfo->GetRequiredMinorCivTrait() != NO_MINOR_CIV_TRAIT_TYPE && GetTrait() != (MinorCivTraitTypes)pkPersonalityInfo->GetRequiredMinorCivTrait())
+	{
+		return false;
+	}
+
+	if(pkPersonalityInfo->GetForbiddenMinorCivTrait() != NO_MINOR_CIV_TRAIT_TYPE && GetTrait() == (MinorCivTraitTypes)pkPersonalityInfo->GetForbiddenMinorCivTrait())
+	{
+		return false;
+	}
+
+	if(pkPersonalityInfo->RequiresCoastal() && !IsCoastalMinor())
+	{
+		return false;
+	}
+
+	if(pkPersonalityInfo->GetMaxGlobalCount() > 0)
+	{
+		int iMaxAllowed = pkPersonalityInfo->GetMaxGlobalCount();
+		if(pkPersonalityInfo->GetMaxGlobalCountDivisor() > 0 && iNumAliveMinors > 0)
+		{
+			iMaxAllowed = (iNumAliveMinors * pkPersonalityInfo->GetMaxGlobalCount() + pkPersonalityInfo->GetMaxGlobalCountDivisor() - 1) / pkPersonalityInfo->GetMaxGlobalCountDivisor();
+		}
+
+		std::map<int, int>::const_iterator it = personalityAssignmentCounts.find(pkPersonalityInfo->GetID());
+		if(it != personalityAssignmentCounts.end() && it->second >= iMaxAllowed)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool CvMinorCivAI::IsQuestBlockedByPersonality(MinorCivQuestTypes eQuest) const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo == NULL || !pkPersonalityInfo->IsBlocksQuests())
+	{
+		return false;
+	}
+
+	if(eQuest == MINOR_CIV_QUEST_KILL_CAMP && GetTurnsSinceThreatenedAnnouncement() >= 0)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+int CvMinorCivAI::GetPersonalityQuestInfluenceModifierPercent(PlayerTypes ePlayer) const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo == NULL)
+	{
+		return 100;
+	}
+
+	if(IsMajorExcludedFromPersonalityBonuses(ePlayer))
+	{
+		return 100;
+	}
+
+	const int iModifier = pkPersonalityInfo->GetQuestInfluenceModifierPercent();
+	return (iModifier > 0) ? iModifier : 100;
+}
+
+bool CvMinorCivAI::IsMajorExcludedFromPersonalityBonuses(PlayerTypes ePlayer) const
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo == NULL || !pkPersonalityInfo->IsStripPersonalityBonusesIfAttackedMinor())
+	{
+		return false;
+	}
+
+	return GET_TEAM(GET_PLAYER(ePlayer).getTeam()).GetNumMinorCivsAttacked() > 0;
+}
+
+bool CvMinorCivAI::DoesMajorHaveOceanCoastalCity(PlayerTypes eMajor) const
+{
+	int iLoop;
+	CvCity* pLoopCity;
+	for(pLoopCity = GET_PLAYER(eMajor).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(eMajor).nextCity(&iLoop))
+	{
+		if(pLoopCity->isCoastal(GC.getLAKE_MAX_AREA_SIZE()))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void CvMinorCivAI::DoPersonalityReligionSpreadInfluence(PlayerTypes eMajor, bool bHadReligionBefore)
+{
+	if(bHadReligionBefore || eMajor < 0 || eMajor >= MAX_MAJOR_CIVS)
+	{
+		return;
+	}
+
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo == NULL || pkPersonalityInfo->GetReligionSpreadInfluenceBurst() <= 0)
+	{
+		return;
+	}
+
+	if(m_abReligionSpreadInfluenceBurstGranted[eMajor])
+	{
+		return;
+	}
+
+	m_abReligionSpreadInfluenceBurstGranted[eMajor] = true;
+	ChangeFriendshipWithMajor(eMajor, pkPersonalityInfo->GetReligionSpreadInfluenceBurst());
+}
+
+void CvMinorCivAI::DoTestPersonalityEraTransform()
+{
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo == NULL || pkPersonalityInfo->GetTransformsAtEra() == NO_ERA)
+	{
+		return;
+	}
+
+	const EraTypes eTransformEra = (EraTypes)pkPersonalityInfo->GetTransformsAtEra();
+	bool bEraReached = false;
+	for(int iMajorLoop = 0; iMajorLoop < MAX_MAJOR_CIVS; iMajorLoop++)
+	{
+		const PlayerTypes eMajor = (PlayerTypes)iMajorLoop;
+		if(GET_PLAYER(eMajor).isAlive() && GET_PLAYER(eMajor).GetCurrentEra() >= eTransformEra)
+		{
+			bEraReached = true;
+			break;
+		}
+	}
+
+	if(bEraReached)
+	{
+		DoPickPersonality(/*bEraTransformRepick*/ true);
+	}
+}
+
+namespace
+{
+UnitTypes GetCompetitiveSpawnNavalUnitType(PlayerTypes ePlayer, bool bIncludeUUs, bool bIncludeRanged)
+{
+	CvWeightedVector<UnitTypes, SAFE_ESTIMATE_NUM_UNITS, true> veUnitRankings;
+
+#ifdef AUI_WARNING_FIXES
+	for(uint iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++)
+#else
+	for(int iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++)
+#endif
+	{
+		const UnitTypes eLoopUnit = (UnitTypes)iUnitLoop;
+		CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eLoopUnit);
+		if(pkUnitInfo == NULL)
+		{
+			continue;
+		}
+
+		if(pkUnitInfo->GetDomainType() != DOMAIN_SEA)
+		{
+			continue;
+		}
+
+		bool bValid = (pkUnitInfo->GetCombat() > 0 || pkUnitInfo->GetRangedCombat() > 0);
+		if(!bValid)
+		{
+			continue;
+		}
+
+		if(!bIncludeRanged && pkUnitInfo->GetRangedCombat() > 0)
+		{
+			continue;
+		}
+
+		if(!GET_PLAYER(ePlayer).canTrain(eLoopUnit, false, false, false, true))
+		{
+			continue;
+		}
+
+		UnitClassTypes eLoopUnitClass = (UnitClassTypes)pkUnitInfo->GetUnitClassType();
+		CvUnitClassInfo* pkUnitClassInfo = GC.getUnitClassInfo(eLoopUnitClass);
+		if(pkUnitClassInfo == NULL)
+		{
+			continue;
+		}
+
+		if(eLoopUnit != pkUnitClassInfo->getDefaultUnitIndex())
+		{
+			if(!bIncludeUUs)
+			{
+				continue;
+			}
+		}
+
+		veUnitRankings.push_back(eLoopUnit, pkUnitInfo->GetPower());
+	}
+
+	if(veUnitRankings.size() == 0)
+	{
+		return NO_UNIT;
+	}
+
+	veUnitRankings.SortItems();
+	RandomNumberDelegate randFn = MakeDelegate(&GC.getGame(), &CvGame::getJonRandNum);
+	return veUnitRankings.ChooseFromTopChoices(GC.getUNIT_SPAWN_NUM_CHOICES(), &randFn, "Choosing competitive naval unit from top choices");
+}
+}
+#endif
 
 /// What is this civ's trait?
 MinorCivTraitTypes CvMinorCivAI::GetTrait() const
@@ -2067,6 +2444,10 @@ void CvMinorCivAI::DoTurn()
 		DoTurnQuests();
 
 		DoUnitSpawnTurn();
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		DoTestPersonalityEraTransform();
+#endif
 
 		DoIntrusion();
 	}
@@ -2181,7 +2562,12 @@ void CvMinorCivAI::DoFirstContactWithMajor(TeamTypes eTeam, bool bSuppressMessag
 	// This guy's a warmonger or at war with our ally, so we DoW him
 	if(IsPeaceBlocked(eTeam))
 	{
-		GET_TEAM(GetPlayer()->getTeam()).declareWar(eTeam);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		if(!IsNeverAlliedWarSupport())
+#endif
+		{
+			GET_TEAM(GetPlayer()->getTeam()).declareWar(eTeam);
+		}
 	}
 	// Normal diplo
 	else
@@ -2207,6 +2593,18 @@ void CvMinorCivAI::DoFirstContactWithMajor(TeamTypes eTeam, bool bSuppressMessag
 				if(GetTrait() == MINOR_CIV_TRAIT_RELIGIOUS)
 					iFaithGift = 0; // GJS - lowered from 4; //antonjs: todo: XML
 			}
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+			CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+			if(pkPersonalityInfo && bFirstMajorCiv)
+			{
+				iGoldGift += pkPersonalityInfo->GetFirstMeetGoldModifier();
+				if(iGoldGift < 0)
+				{
+					iGoldGift = 0;
+				}
+			}
+#endif
 		}
 
 		PlayerTypes ePlayer;
@@ -3516,6 +3914,13 @@ bool CvMinorCivAI::IsEnabledQuest(MinorCivQuestTypes eQuest)
 			return false;
 	}
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	if(IsQuestBlockedByPersonality(eQuest))
+	{
+		return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -3633,9 +4038,15 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 	// KILL ANOTHER CITY STATE
 	else if(eQuest == MINOR_CIV_QUEST_KILL_CITY_STATE)
 	{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+		if(pkPersonalityInfo && pkPersonalityInfo->IsBlocksKillCityStateQuest())
+			return false;
+#else
 		// Friendly City States don't give out this quest
 		if(GetPersonality() == MINOR_CIV_PERSONALITY_FRIENDLY)
 			return false;
+#endif
 
 		PlayerTypes eTargetCityState = GetBestCityStateTarget(ePlayer);
 
@@ -3667,9 +4078,15 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 	// GOLD GIFT
 	else if(eQuest == MINOR_CIV_QUEST_GIVE_GOLD)
 	{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		// Impoverished may ask regardless of bully history
+		if(!IsIgnoreBulliedForGoldQuest() && !IsEverBulliedByAnyMajor())
+			return false;
+#else
 		// We don't need help if we've never been bullied
 		if(!IsEverBulliedByAnyMajor())
 			return false;
+#endif
 
 		// This player must not have bullied us recently
 		if(IsRecentlyBulliedByMajor(ePlayer))
@@ -3971,6 +4388,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 	// ROUTE
 	if(eQuest == MINOR_CIV_QUEST_ROUTE)
 	{
+#ifndef LEKMOD_MINOR_CIV_PERSONALITIES
 		if(ePersonality == MINOR_CIV_PERSONALITY_FRIENDLY)		// Friendly
 		{
 			iCount *= /*200*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_FRIENDLY_ROUTE();
@@ -3981,6 +4399,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount *= /*20*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_HOSTILE_ROUTE();
 			iCount /= 100;
 		}
+#endif
 		if(eTrait == MINOR_CIV_TRAIT_MARITIME)						// Maritime
 		{
 			iCount *= /*120*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MARITIME_ROUTE();
@@ -4036,6 +4455,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount *= /*200*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MILITARISTIC_KILL_CITY_STATE();
 			iCount /= 100;
 		}
+#ifndef LEKMOD_MINOR_CIV_PERSONALITIES
 		if(ePersonality == MINOR_CIV_PERSONALITY_HOSTILE)		// Hostile
 		{
 			iCount *= /*200*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_HOSTILE_KILL_CITY_STATE();
@@ -4046,6 +4466,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount *= /*40*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_NEUTRAL_KILL_CITY_STATE();
 			iCount /= 100;
 		}
+#endif
 	}
 
 	// FIND ANOTHER PLAYER
@@ -4071,11 +4492,13 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount *= /*50*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MILITARISTIC_FIND_NATURAL_WONDER();
 			iCount /= 100;
 		}
+#ifndef LEKMOD_MINOR_CIV_PERSONALITIES
 		if(ePersonality == MINOR_CIV_PERSONALITY_HOSTILE)		// Hostile
 		{
 			iCount *= /*30*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_HOSTILE_FIND_NATURAL_WONDER();
 			iCount /= 100;
 		}
+#endif
 	}
 
 	// GOLD GIFT
@@ -4123,6 +4546,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 	// Bully target City-State
 	else if(eQuest == MINOR_CIV_QUEST_BULLY_CITY_STATE)
 	{
+#ifndef LEKMOD_MINOR_CIV_PERSONALITIES
 		if(ePersonality == MINOR_CIV_PERSONALITY_HOSTILE)
 		{
 			iCount *= 200; //antonjs: todo: XML
@@ -4138,6 +4562,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount *= 30; //antonjs: todo: xml
 			iCount /= 100;
 		}
+#endif
 	}
 
 	// Denounce target Major
@@ -4244,6 +4669,21 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount /= 100;
 		}
 	}
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	{
+		CvMinorCivPersonalityInfo* pkPersonalityInfo = GC.getMinorCivPersonalityInfo((int)ePersonality);
+		if(pkPersonalityInfo)
+		{
+			const int iPersonalityMultiplier = pkPersonalityInfo->GetQuestWeightMultiplier(eQuest);
+			if(iPersonalityMultiplier != 100)
+			{
+				iCount *= iPersonalityMultiplier;
+				iCount /= 100;
+			}
+		}
+	}
+#endif
 
 	return iCount / 10;
 }
@@ -4402,11 +4842,24 @@ void CvMinorCivAI::DoTestSeedGlobalQuestCountdown(bool bForceSeed)
 		iNumTurns += /*40*/ GC.getMINOR_CIV_GLOBAL_QUEST_MIN_TURNS_BETWEEN();
 
 		int iRand = /*25*/ GC.getMINOR_CIV_GLOBAL_QUEST_RAND_TURNS_BETWEEN();
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+		if(pkPersonalityInfo)
+		{
+			const int iMultiplier = pkPersonalityInfo->GetGlobalQuestRandTurnsMultiplier();
+			if(iMultiplier != 100)
+			{
+				iRand *= iMultiplier;
+				iRand /= 100;
+			}
+		}
+#else
 		if(GetPersonality() == MINOR_CIV_PERSONALITY_HOSTILE)
 		{
 			iRand *= /*200*/ GC.getMINOR_CIV_GLOBAL_QUEST_RAND_TURNS_BETWEEN_HOSTILE_MULTIPLIER();
 			iRand /= 100;
 		}
+#endif
 		iNumTurns += GC.getGame().getJonRandNum(iRand, "Random # of turns for Minor Civ global quest counter.");
 	}
 
@@ -4463,11 +4916,24 @@ void CvMinorCivAI::DoTestSeedQuestCountdownForPlayer(PlayerTypes ePlayer, bool b
 		iNumTurns += /*20*/ GC.getMINOR_CIV_PERSONAL_QUEST_MIN_TURNS_BETWEEN();
 
 		int iRand = /*25*/ GC.getMINOR_CIV_PERSONAL_QUEST_RAND_TURNS_BETWEEN();
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+		if(pkPersonalityInfo)
+		{
+			const int iMultiplier = pkPersonalityInfo->GetPersonalQuestRandTurnsMultiplier();
+			if(iMultiplier != 100)
+			{
+				iRand *= iMultiplier;
+				iRand /= 100;
+			}
+		}
+#else
 		if(GetPersonality() == MINOR_CIV_PERSONALITY_HOSTILE)
 		{
 			iRand *= /*200*/ GC.getMINOR_CIV_PERSONAL_QUEST_RAND_TURNS_BETWEEN_HOSTILE_MULTIPLIER();
 			iRand /= 100;
 		}
+#endif
 		iNumTurns += GC.getGame().getJonRandNum(iRand, "Random # of turns for Minor Civ personal quest counter.");
 	}
 
@@ -5137,10 +5603,18 @@ PlayerTypes CvMinorCivAI::GetBestBullyQuestTarget(PlayerTypes eForPlayer)
 	CvAssertMsg(eForPlayer >= 0, "eForPlayer is expected to be non-negative (invalid Index)");
 	CvAssertMsg(eForPlayer < MAX_MAJOR_CIVS, "eForPlayer is expected to be within maximum bounds (invalid Index)");
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(!pkPersonalityInfo || !pkPersonalityInfo->IsHostileOnlyBullyQuestTarget())
+	{
+		return NO_PLAYER;
+	}
+#else
 	if(GetPersonality() != MINOR_CIV_PERSONALITY_HOSTILE)
 	{
 		return NO_PLAYER;
 	}
+#endif
 
 	CvPlayer* pMajor = &GET_PLAYER(eForPlayer);
 	if(!pMajor || !pMajor->isAlive())
@@ -5389,6 +5863,13 @@ bool CvMinorCivAI::IsGoodTimeForNaturalWonderQuest(PlayerTypes ePlayer)
 /// The minor civ has been bullied recently and could use some help?
 bool CvMinorCivAI::IsGoodTimeForGiveGoldQuest()
 {
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	if(IsIgnoreBulliedForGoldQuest())
+	{
+		return true;
+	}
+#endif
+
 	if(IsRecentlyBulliedByAnyMajor())
 	{
 		return true;
@@ -5537,6 +6018,37 @@ int CvMinorCivAI::GetFriendshipChangePerTurnTimes100(PlayerTypes ePlayer)
 #endif
 	}
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo)
+	{
+		if(IsSameReligionAsMajor(ePlayer))
+		{
+			const int iSharedMod = pkPersonalityInfo->GetSharedReligionDecayRecoveryModifierPercent();
+			if(iReligionMod != 0 && iSharedMod != 100)
+			{
+				iReligionMod *= iSharedMod;
+				iReligionMod /= 100;
+			}
+		}
+		else
+		{
+			ReligionTypes eMinorReligion = NO_RELIGION;
+			const ReligionTypes eMajorReligion = GET_PLAYER(ePlayer).GetReligions()->GetReligionInMostCities();
+			CvCity* pCapital = GetPlayer()->getCapitalCity();
+			if(pCapital)
+			{
+				eMinorReligion = pCapital->GetCityReligions()->GetReligiousMajority();
+			}
+
+			if(eMinorReligion != NO_RELIGION && eMajorReligion != NO_RELIGION && eMinorReligion != eMajorReligion)
+			{
+				iReligionMod += pkPersonalityInfo->GetDifferentReligionDecayRecoveryModifierPercent();
+			}
+		}
+	}
+#endif
+
 	// Relation to anchor point?
 	int iBaseFriendship = GetBaseFriendshipWithMajor(ePlayer);
 	int iFriendshipAnchor = GetFriendshipAnchorWithMajor(ePlayer);
@@ -5546,6 +6058,14 @@ int CvMinorCivAI::GetFriendshipChangePerTurnTimes100(PlayerTypes ePlayer)
 	}
 	else if (iBaseFriendship > iFriendshipAnchor)
 	{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		if(pkPersonalityInfo && pkPersonalityInfo->GetFriendshipDropPerTurn() != 0)
+			iChangeThisTurn += pkPersonalityInfo->GetFriendshipDropPerTurn();
+		else if(GET_TEAM(kPlayer.getTeam()).IsMinorCivAggressor())
+			iChangeThisTurn += /*-200*/ GC.getMINOR_FRIENDSHIP_DROP_PER_TURN_AGGRESSOR();
+		else
+			iChangeThisTurn += /*-100*/ GC.getMINOR_FRIENDSHIP_DROP_PER_TURN();
+#else
 		// Hostile Minors have Friendship decay quicker
 		if(GetPersonality() == MINOR_CIV_PERSONALITY_HOSTILE)
 			iChangeThisTurn += /*-150*/ GC.getMINOR_FRIENDSHIP_DROP_PER_TURN_HOSTILE();
@@ -5555,6 +6075,7 @@ int CvMinorCivAI::GetFriendshipChangePerTurnTimes100(PlayerTypes ePlayer)
 		// Normal decay
 		else
 			iChangeThisTurn += /*-100*/ GC.getMINOR_FRIENDSHIP_DROP_PER_TURN();
+#endif
 
 		// Decay modified (Trait, policies, shared religion, etc.)
 		int iDecayMod = 100;
@@ -5566,6 +6087,14 @@ int CvMinorCivAI::GetFriendshipChangePerTurnTimes100(PlayerTypes ePlayer)
 #endif
 		if (iDecayMod < 0)
 			iDecayMod = 0;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		if(pkPersonalityInfo && pkPersonalityInfo->GetFriendshipDecayModifierPercent() != 100 && !IsMajorExcludedFromPersonalityBonuses(ePlayer))
+		{
+			iDecayMod *= pkPersonalityInfo->GetFriendshipDecayModifierPercent();
+			iDecayMod /= 100;
+		}
+#endif
 
 		iChangeThisTurn *= iDecayMod;
 		iChangeThisTurn /= 100;
@@ -5584,6 +6113,14 @@ int CvMinorCivAI::GetFriendshipChangePerTurnTimes100(PlayerTypes ePlayer)
 		
 		if (iRecoveryMod < 0)
 			iRecoveryMod = 0;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		if(pkPersonalityInfo && pkPersonalityInfo->GetFriendshipRecoveryModifierPercent() != 100)
+		{
+			iRecoveryMod *= pkPersonalityInfo->GetFriendshipRecoveryModifierPercent();
+			iRecoveryMod /= 100;
+		}
+#endif
 
 		iChangeThisTurn *= iRecoveryMod;
 		iChangeThisTurn /= 100;
@@ -5694,6 +6231,15 @@ void CvMinorCivAI::ChangeFriendshipWithMajorTimes100(PlayerTypes ePlayer, int iC
 				iChange *= (100 + GET_PLAYER(ePlayer).getMinorQuestFriendshipMod());
 				iChange /= 100;
 			}
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+			const int iPersonalityQuestMod = GetPersonalityQuestInfluenceModifierPercent(ePlayer);
+			if(iPersonalityQuestMod != 100)
+			{
+				iChange *= iPersonalityQuestMod;
+				iChange /= 100;
+			}
+#endif
 		}
 #ifdef AI_CANT_COUP
 		if (GC.getGame().isOption("GAMEOPTION_AI_GIMP_NO_COUP") && !GET_PLAYER(ePlayer).isHuman())
@@ -6907,6 +7453,14 @@ bool CvMinorCivAI::CanMajorProtect(PlayerTypes eMajor)
 	if(iLastPledgeBrokenTurn >= 0 && iLastPledgeBrokenTurn + iGracePeriod > iCurrentTurn)
 		return false;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo != NULL && pkPersonalityInfo->IsBlocksPledgeToProtect())
+	{
+		return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -8044,6 +8598,11 @@ void CvMinorCivAI::DoSpawnUnit(PlayerTypes eMajor)
 
 		// Pick Unit type
 		UnitTypes eUnit = NO_UNIT;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+		const bool bSpawnNavalUnits = (GetPersonalityInfo() != NULL && GetPersonalityInfo()->IsSpawnNavalUnits() && DoesMajorHaveOceanCoastalCity(eMajor));
+#else
+		const bool bSpawnNavalUnits = false;
+#endif
 		if (GetAlly() == eMajor)
 		{	
 			// Should we give our unique unit?
@@ -8070,16 +8629,45 @@ void CvMinorCivAI::DoSpawnUnit(PlayerTypes eMajor)
 			
 			if (bUseUniqueUnit)
 			{
-				eUnit = eUniqueUnit;
+				if(bSpawnNavalUnits)
+				{
+					CvUnitEntry* pkUniqueUnitInfo = GC.getUnitInfo(eUniqueUnit);
+					if(pkUniqueUnitInfo && pkUniqueUnitInfo->GetDomainType() == DOMAIN_SEA)
+					{
+						eUnit = eUniqueUnit;
+					}
+					else
+					{
+						eUnit = GetCompetitiveSpawnNavalUnitType(eMajor, /*bIncludeUUs*/ false, /*bIncludeRanged*/ true);
+					}
+				}
+				else
+				{
+					eUnit = eUniqueUnit;
+				}
+			}
+			else
+			{
+				if(bSpawnNavalUnits)
+				{
+					eUnit = GetCompetitiveSpawnNavalUnitType(eMajor, /*bIncludeUUs*/ false, /*bIncludeRanged*/ true);
+				}
+				else
+				{
+					eUnit = GC.getGame().GetCompetitiveSpawnUnitType(eMajor, /*bIncludeUUs*/ false, /*bIncludeRanged*/true);
+				}
+			}
+		}
+		else
+		{
+			if(bSpawnNavalUnits)
+			{
+				eUnit = GetCompetitiveSpawnNavalUnitType(eMajor, /*bIncludeUUs*/ false, /*bIncludeRanged*/ true);
 			}
 			else
 			{
 				eUnit = GC.getGame().GetCompetitiveSpawnUnitType(eMajor, /*bIncludeUUs*/ false, /*bIncludeRanged*/true);
 			}
-		}
-		else
-		{
-			eUnit = GC.getGame().GetCompetitiveSpawnUnitType(eMajor, /*bIncludeUUs*/ false, /*bIncludeRanged*/true);
 		}
 
 		// Spawn Unit
@@ -8208,6 +8796,16 @@ int CvMinorCivAI::GetSpawnBaseTurns(PlayerTypes ePlayer)
 	}
 
 #endif
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->GetUnitSpawnModifierPercent() != 100)
+	{
+		iNumTurns *= pkPersonalityInfo->GetUnitSpawnModifierPercent();
+		iNumTurns /= 100;
+	}
+#endif
+
 	return iNumTurns / 100;
 	
 }
@@ -8460,6 +9058,18 @@ int CvMinorCivAI::GetBullyGoldAmount(PlayerTypes /*eBullyPlayer*/)
 	int iVisibleDivisor = /*5*/ GC.getMINOR_CIV_GOLD_GIFT_VISIBLE_DIVISOR(); //antonjs: consider: separate XML
 	iGold /= iVisibleDivisor;
 	iGold *= iVisibleDivisor;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->GetTributeGoldModifierPercent() != 100)
+	{
+		iGold *= pkPersonalityInfo->GetTributeGoldModifierPercent();
+		iGold /= 100;
+
+		iGold /= iVisibleDivisor;
+		iGold *= iVisibleDivisor;
+	}
+#endif
 
 	return iGold;
 }
@@ -8725,6 +9335,26 @@ int CvMinorCivAI::CalculateBullyMetric(PlayerTypes eBullyPlayer, bool bForUnit, 
 	}
 	iScore += iTraitScore;
 #endif
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	{
+		CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+		if(pkPersonalityInfo != NULL)
+		{
+			const int iPersonalityScore = pkPersonalityInfo->GetBullyScoreModifier();
+			if(iPersonalityScore > 0)
+			{
+				iScore += iPersonalityScore;
+				if(sTooltipSink)
+				{
+					Localization::String strPositiveFactor = Localization::Lookup("TXT_KEY_POP_CSTATE_BULLY_FACTOR_POSITIVE");
+					strPositiveFactor << iPersonalityScore;
+					strPositiveFactor << pkPersonalityInfo->GetDescription();
+					sFactors += strPositiveFactor.toUTF8();
+				}
+			}
+		}
+	}
+#endif
 	// **************************
 	// Base Reluctance
 	//
@@ -8880,6 +9510,21 @@ int CvMinorCivAI::CalculateBullyMetric(PlayerTypes eBullyPlayer, bool bForUnit, 
 	//
 	// -20 ~ -0
 	// **************************
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo != NULL && pkPersonalityInfo->GetBullyScoreModifier() < 0)
+	{
+		const int iPersonalityScore = pkPersonalityInfo->GetBullyScoreModifier();
+		iScore += iPersonalityScore;
+		if(sTooltipSink)
+		{
+			Localization::String strNegativeFactor = Localization::Lookup("TXT_KEY_POP_CSTATE_BULLY_FACTOR_NEGATIVE");
+			strNegativeFactor << iPersonalityScore;
+			strNegativeFactor << pkPersonalityInfo->GetDescription();
+			sFactors += strNegativeFactor.toUTF8();
+		}
+	}
+#else
 	if(GetPersonality() == MINOR_CIV_PERSONALITY_HOSTILE)
 	{
 		int iHostileScore = -10;
@@ -8892,6 +9537,7 @@ int CvMinorCivAI::CalculateBullyMetric(PlayerTypes eBullyPlayer, bool bForUnit, 
 			sFactors += strNegativeFactor.toUTF8();
 		}
 	}
+#endif
 	if(GetTrait() == MINOR_CIV_TRAIT_MILITARISTIC)
 	{
 		int iMilitaristicScore = -10;
@@ -8923,6 +9569,14 @@ bool CvMinorCivAI::CanMajorBullyGold(PlayerTypes ePlayer)
 	if(!GetPlayer()->isAlive())
 		return false;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo != NULL && pkPersonalityInfo->IsBlocksTribute())
+	{
+		return false;
+	}
+#endif
+
 	int iScore = CalculateBullyMetric(ePlayer, /*bForUnit*/false);
 	return CanMajorBullyGold(ePlayer, iScore);
 }
@@ -8937,6 +9591,14 @@ bool CvMinorCivAI::CanMajorBullyGold(PlayerTypes ePlayer, int iSpecifiedBullyMet
 	// Can't bully us if we're dead!
 	if(!GetPlayer()->isAlive())
 		return false;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo != NULL && pkPersonalityInfo->IsBlocksTribute())
+	{
+		return false;
+	}
+#endif
 
 	return (iSpecifiedBullyMetric >= 0);
 }
@@ -8974,6 +9636,14 @@ bool CvMinorCivAI::CanMajorBullyUnit(PlayerTypes ePlayer)
 	if(!GetPlayer()->isAlive())
 		return false;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo != NULL && pkPersonalityInfo->IsBlocksTribute())
+	{
+		return false;
+	}
+#endif
+
 	int iScore = CalculateBullyMetric(ePlayer, /*bForUnit*/true);
 	return CanMajorBullyUnit(ePlayer, iScore);
 }
@@ -8988,6 +9658,14 @@ bool CvMinorCivAI::CanMajorBullyUnit(PlayerTypes ePlayer, int iSpecifiedBullyMet
 	// Can't bully us if we're dead!
 	if(!GetPlayer()->isAlive())
 		return false;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo != NULL && pkPersonalityInfo->IsBlocksTribute())
+	{
+		return false;
+	}
+#endif
 
 	return (iSpecifiedBullyMetric >= 0);
 }
@@ -9469,6 +10147,19 @@ void CvMinorCivAI::DoUnitGiftFromMajor(PlayerTypes eFromPlayer, CvUnit* pGiftUni
 	CvAssertMsg(eFromPlayer < MAX_MAJOR_CIVS, "eFromPlayer is expected to be within maximum bounds (invalid Index)");
 	if (eFromPlayer < 0 || eFromPlayer >= MAX_MAJOR_CIVS) return;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->IsNoGifts())
+	{
+		return;
+	}
+
+	if(IsMajorBlockedByAlliedWar(eFromPlayer))
+	{
+		return;
+	}
+#endif
+
 	CvAssertMsg(pGiftUnit != NULL, "pGiftUnit is NULL");
 	if (pGiftUnit == NULL) return;
 
@@ -9558,6 +10249,19 @@ void CvMinorCivAI::ChangeNumGoldGifted(PlayerTypes ePlayer, int iChange)
 /// Major Civ gifted some Gold to this Minor
 void CvMinorCivAI::DoGoldGiftFromMajor(PlayerTypes ePlayer, int iGold)
 {
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->IsNoGifts())
+	{
+		return;
+	}
+
+	if(IsMajorBlockedByAlliedWar(ePlayer))
+	{
+		return;
+	}
+#endif
+
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	PlayerTypes iAlly = GetAlly();
 	if (iAlly != NO_PLAYER && iAlly != ePlayer)
@@ -9638,6 +10342,18 @@ int CvMinorCivAI::GetFriendshipFromGoldGift(PlayerTypes eMajor, int iGold)
 	iFriendship /= iVisibleDivisor;
 	iFriendship *= iVisibleDivisor;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->GetGoldGiftInfluenceModifierPercent() != 100)
+	{
+		iFriendship *= pkPersonalityInfo->GetGoldGiftInfluenceModifierPercent();
+		iFriendship /= 100;
+
+		iFriendship /= iVisibleDivisor;
+		iFriendship *= iVisibleDivisor;
+	}
+#endif
+
 	return iFriendship;
 }
 
@@ -9645,6 +10361,19 @@ int CvMinorCivAI::GetFriendshipFromGoldGift(PlayerTypes eMajor, int iGold)
 /// Major Civ gifted some Faith to this Minor
 void CvMinorCivAI::DoFaithGiftFromMajor(PlayerTypes ePlayer, int iFaith)
 {
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->IsNoGifts())
+	{
+		return;
+	}
+
+	if(IsMajorBlockedByAlliedWar(ePlayer))
+	{
+		return;
+	}
+#endif
+
 	if(GET_PLAYER(ePlayer).CanFaithGiftMinors() && GET_PLAYER(ePlayer).GetFaith() >= iFaith)
 	{
 		int iFriendshipChange = GetFriendshipFromFaithGift(ePlayer, iFaith);
@@ -9701,6 +10430,20 @@ bool CvMinorCivAI::CanMajorGiftTileImprovement(PlayerTypes eMajor)
 	CvAssertMsg(eMajor >= 0, "eMajor is expected to be non-negative (invalid Index)");
 	CvAssertMsg(eMajor < MAX_MAJOR_CIVS, "eMajor is expected to be within maximum bounds (invalid Index)");
 	if(eMajor < 0 || eMajor >= MAX_MAJOR_CIVS) return false;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	CvMinorCivPersonalityInfo* pkPersonalityInfo = GetPersonalityInfo();
+	if(pkPersonalityInfo && pkPersonalityInfo->IsNoGifts())
+	{
+		return false;
+	}
+
+	if(IsMajorBlockedByAlliedWar(eMajor))
+	{
+		return false;
+	}
+#endif
+
 	CvPlayer* pPlayer = &GET_PLAYER(eMajor);
 	if(pPlayer == NULL)
 	{
@@ -9917,6 +10660,12 @@ bool CvMinorCivAI::IsPeaceBlocked(TeamTypes eTeam) const
 	if(IsPermanentWar(eTeam))
 		return true;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	// Pacifistic city-states do not treat ally wars as peace-blocked; they remain neutral
+	if(IsNeverAlliedWarSupport())
+		return false;
+#endif
+
 	// Allies with someone at war with this guy?
 	PlayerTypes eMajor;
 	for(int iMajorLoop = 0; iMajorLoop < MAX_MAJOR_CIVS; iMajorLoop++)
@@ -9968,6 +10717,14 @@ void CvMinorCivAI::DoTeamDeclaredWarOnMe(TeamTypes eEnemyTeam)
 		
 		SetFriendshipWithMajor(eEnemyMajorLoop, GC.getMINOR_FRIENDSHIP_AT_WAR());
 	}
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	if(IsBlocksWarDeclarationPenalty())
+	{
+		GC.GetEngineUserInterface()->setDirty(GameData_DIRTY_BIT, true);
+		return;
+	}
+#endif
 
 	//antonjs: todo: xml, rename xml to indicate it is for WaryOf, not Permanent War
 	// Minor Civ Warmonger
@@ -10779,6 +11536,411 @@ void CvMinorCivAI::RecalculateMajorPriority()
 			}
 		}
 	} while (ePriorityPlayer != GetPriorityPlayer());
+}
+#endif
+
+//======================================================================================================
+//					CvMinorCivPersonalityInfo
+//======================================================================================================
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+namespace
+{
+MinorCivQuestTypes MinorCivPersonalityQuestTypeFromString(const char* szQuestType)
+{
+	struct QuestTypePair
+	{
+		const char* m_szType;
+		MinorCivQuestTypes m_eQuest;
+	};
+
+	static const QuestTypePair kQuestTypes[] =
+	{
+		{ "MINOR_CIV_QUEST_ROUTE", MINOR_CIV_QUEST_ROUTE },
+		{ "MINOR_CIV_QUEST_KILL_CAMP", MINOR_CIV_QUEST_KILL_CAMP },
+		{ "MINOR_CIV_QUEST_CONNECT_RESOURCE", MINOR_CIV_QUEST_CONNECT_RESOURCE },
+		{ "MINOR_CIV_QUEST_CONSTRUCT_WONDER", MINOR_CIV_QUEST_CONSTRUCT_WONDER },
+		{ "MINOR_CIV_QUEST_GREAT_PERSON", MINOR_CIV_QUEST_GREAT_PERSON },
+		{ "MINOR_CIV_QUEST_KILL_CITY_STATE", MINOR_CIV_QUEST_KILL_CITY_STATE },
+		{ "MINOR_CIV_QUEST_FIND_PLAYER", MINOR_CIV_QUEST_FIND_PLAYER },
+		{ "MINOR_CIV_QUEST_FIND_NATURAL_WONDER", MINOR_CIV_QUEST_FIND_NATURAL_WONDER },
+		{ "MINOR_CIV_QUEST_GIVE_GOLD", MINOR_CIV_QUEST_GIVE_GOLD },
+		{ "MINOR_CIV_QUEST_PLEDGE_TO_PROTECT", MINOR_CIV_QUEST_PLEDGE_TO_PROTECT },
+		{ "MINOR_CIV_QUEST_CONTEST_CULTURE", MINOR_CIV_QUEST_CONTEST_CULTURE },
+		{ "MINOR_CIV_QUEST_CONTEST_FAITH", MINOR_CIV_QUEST_CONTEST_FAITH },
+		{ "MINOR_CIV_QUEST_CONTEST_TECHS", MINOR_CIV_QUEST_CONTEST_TECHS },
+		{ "MINOR_CIV_QUEST_INVEST", MINOR_CIV_QUEST_INVEST },
+		{ "MINOR_CIV_QUEST_BULLY_CITY_STATE", MINOR_CIV_QUEST_BULLY_CITY_STATE },
+		{ "MINOR_CIV_QUEST_DENOUNCE_MAJOR", MINOR_CIV_QUEST_DENOUNCE_MAJOR },
+		{ "MINOR_CIV_QUEST_SPREAD_RELIGION", MINOR_CIV_QUEST_SPREAD_RELIGION },
+		{ "MINOR_CIV_QUEST_TRADE_ROUTE", MINOR_CIV_QUEST_TRADE_ROUTE },
+	};
+
+	if(szQuestType == NULL)
+		return NO_MINOR_CIV_QUEST_TYPE;
+
+	for(uint i = 0; i < sizeof(kQuestTypes) / sizeof(kQuestTypes[0]); i++)
+	{
+		if(_stricmp(szQuestType, kQuestTypes[i].m_szType) == 0)
+			return kQuestTypes[i].m_eQuest;
+	}
+
+	return NO_MINOR_CIV_QUEST_TYPE;
+}
+}
+
+CvMinorCivPersonalityInfo::CvMinorCivPersonalityInfo() :
+	m_iFriendshipDropPerTurn(0),
+	m_iGlobalQuestRandTurnsMultiplier(100),
+	m_iPersonalQuestRandTurnsMultiplier(100),
+	m_iBullyScoreModifier(0),
+	m_bBlocksKillCityStateQuest(false),
+	m_bHostileOnlyBullyQuestTarget(false),
+	m_iAIGiftWeightModifier(0),
+	m_bDisabled(false),
+	m_iFriendshipDecayModifierPercent(100),
+	m_iFriendshipRecoveryModifierPercent(100),
+	m_iSharedReligionDecayRecoveryModifierPercent(100),
+	m_iDifferentReligionDecayRecoveryModifierPercent(0),
+	m_iQuestInfluenceModifierPercent(100),
+	m_bStripPersonalityBonusesIfAttackedMinor(false),
+	m_iFirstMeetGoldModifier(0),
+	m_iTradeRouteGoldModifierPercent(100),
+	m_iGoldGiftInfluenceModifierPercent(100),
+	m_iTributeGoldModifierPercent(100),
+	m_bNoGifts(false),
+	m_bBlocksPledgeToProtect(false),
+	m_bBlocksTribute(false),
+	m_bBlocksQuests(false),
+	m_bBlocksWarDeclarationPenalty(false),
+	m_bNeverAlliedWarSupport(false),
+	m_iUnitSpawnModifierPercent(100),
+	m_bSpawnNavalUnits(false),
+	m_iRequiredMinorCivTrait(NO_MINOR_CIV_TRAIT_TYPE),
+	m_iForbiddenMinorCivTrait(NO_MINOR_CIV_TRAIT_TYPE),
+	m_bRequiresCoastal(false),
+	m_iMaxGlobalCount(0),
+	m_iMaxGlobalCountDivisor(0),
+	m_iTransformsAtEra(NO_ERA),
+	m_iReligionSpreadInfluenceBurst(0),
+	m_bIgnoreBulliedForGoldQuest(false),
+	m_piQuestWeightMultipliers(NULL)
+{
+}
+
+CvMinorCivPersonalityInfo::~CvMinorCivPersonalityInfo()
+{
+	SAFE_DELETE_ARRAY(m_piQuestWeightMultipliers);
+}
+
+int CvMinorCivPersonalityInfo::GetFriendshipDropPerTurn() const
+{
+	return m_iFriendshipDropPerTurn;
+}
+
+int CvMinorCivPersonalityInfo::GetGlobalQuestRandTurnsMultiplier() const
+{
+	return m_iGlobalQuestRandTurnsMultiplier;
+}
+
+int CvMinorCivPersonalityInfo::GetPersonalQuestRandTurnsMultiplier() const
+{
+	return m_iPersonalQuestRandTurnsMultiplier;
+}
+
+int CvMinorCivPersonalityInfo::GetBullyScoreModifier() const
+{
+	return m_iBullyScoreModifier;
+}
+
+bool CvMinorCivPersonalityInfo::IsBlocksKillCityStateQuest() const
+{
+	return m_bBlocksKillCityStateQuest;
+}
+
+bool CvMinorCivPersonalityInfo::IsHostileOnlyBullyQuestTarget() const
+{
+	return m_bHostileOnlyBullyQuestTarget;
+}
+
+int CvMinorCivPersonalityInfo::GetAIGiftWeightModifier() const
+{
+	return m_iAIGiftWeightModifier;
+}
+
+bool CvMinorCivPersonalityInfo::IsDisabled() const
+{
+	return m_bDisabled;
+}
+
+int CvMinorCivPersonalityInfo::GetFriendshipDecayModifierPercent() const
+{
+	return m_iFriendshipDecayModifierPercent;
+}
+
+int CvMinorCivPersonalityInfo::GetFriendshipRecoveryModifierPercent() const
+{
+	return m_iFriendshipRecoveryModifierPercent;
+}
+
+int CvMinorCivPersonalityInfo::GetSharedReligionDecayRecoveryModifierPercent() const
+{
+	return m_iSharedReligionDecayRecoveryModifierPercent;
+}
+
+int CvMinorCivPersonalityInfo::GetDifferentReligionDecayRecoveryModifierPercent() const
+{
+	return m_iDifferentReligionDecayRecoveryModifierPercent;
+}
+
+int CvMinorCivPersonalityInfo::GetQuestInfluenceModifierPercent() const
+{
+	return m_iQuestInfluenceModifierPercent;
+}
+
+bool CvMinorCivPersonalityInfo::IsStripPersonalityBonusesIfAttackedMinor() const
+{
+	return m_bStripPersonalityBonusesIfAttackedMinor;
+}
+
+int CvMinorCivPersonalityInfo::GetFirstMeetGoldModifier() const
+{
+	return m_iFirstMeetGoldModifier;
+}
+
+int CvMinorCivPersonalityInfo::GetTradeRouteGoldModifierPercent() const
+{
+	return m_iTradeRouteGoldModifierPercent;
+}
+
+int CvMinorCivPersonalityInfo::GetGoldGiftInfluenceModifierPercent() const
+{
+	return m_iGoldGiftInfluenceModifierPercent;
+}
+
+int CvMinorCivPersonalityInfo::GetTributeGoldModifierPercent() const
+{
+	return m_iTributeGoldModifierPercent;
+}
+
+bool CvMinorCivPersonalityInfo::IsNoGifts() const
+{
+	return m_bNoGifts;
+}
+
+bool CvMinorCivPersonalityInfo::IsBlocksPledgeToProtect() const
+{
+	return m_bBlocksPledgeToProtect;
+}
+
+bool CvMinorCivPersonalityInfo::IsBlocksTribute() const
+{
+	return m_bBlocksTribute;
+}
+
+bool CvMinorCivPersonalityInfo::IsBlocksQuests() const
+{
+	return m_bBlocksQuests;
+}
+
+bool CvMinorCivPersonalityInfo::IsBlocksWarDeclarationPenalty() const
+{
+	return m_bBlocksWarDeclarationPenalty;
+}
+
+bool CvMinorCivPersonalityInfo::IsNeverAlliedWarSupport() const
+{
+	return m_bNeverAlliedWarSupport;
+}
+
+int CvMinorCivPersonalityInfo::GetUnitSpawnModifierPercent() const
+{
+	return m_iUnitSpawnModifierPercent;
+}
+
+bool CvMinorCivPersonalityInfo::IsSpawnNavalUnits() const
+{
+	return m_bSpawnNavalUnits;
+}
+
+int CvMinorCivPersonalityInfo::GetRequiredMinorCivTrait() const
+{
+	return m_iRequiredMinorCivTrait;
+}
+
+int CvMinorCivPersonalityInfo::GetForbiddenMinorCivTrait() const
+{
+	return m_iForbiddenMinorCivTrait;
+}
+
+bool CvMinorCivPersonalityInfo::RequiresCoastal() const
+{
+	return m_bRequiresCoastal;
+}
+
+int CvMinorCivPersonalityInfo::GetMaxGlobalCount() const
+{
+	return m_iMaxGlobalCount;
+}
+
+int CvMinorCivPersonalityInfo::GetMaxGlobalCountDivisor() const
+{
+	return m_iMaxGlobalCountDivisor;
+}
+
+int CvMinorCivPersonalityInfo::GetTransformsAtEra() const
+{
+	return m_iTransformsAtEra;
+}
+
+int CvMinorCivPersonalityInfo::GetReligionSpreadInfluenceBurst() const
+{
+	return m_iReligionSpreadInfluenceBurst;
+}
+
+bool CvMinorCivPersonalityInfo::IsIgnoreBulliedForGoldQuest() const
+{
+	return m_bIgnoreBulliedForGoldQuest;
+}
+
+int CvMinorCivPersonalityInfo::GetQuestWeightMultiplier(MinorCivQuestTypes eQuest) const
+{
+	if(m_piQuestWeightMultipliers == NULL || eQuest < 0 || eQuest >= NUM_MINOR_CIV_QUEST_TYPES)
+		return 100;
+
+	return m_piQuestWeightMultipliers[eQuest];
+}
+
+void CvMinorCivPersonalityInfo::ApplyFlavorChanges(CvFlavorManager* pFlavorManager) const
+{
+	if(pFlavorManager == NULL || m_vFlavorChanges.empty())
+		return;
+
+	int* pFlavors = pFlavorManager->GetAllPersonalityFlavors();
+	for(std::vector<std::pair<FlavorTypes, int> >::const_iterator it = m_vFlavorChanges.begin(); it != m_vFlavorChanges.end(); ++it)
+	{
+		const FlavorTypes eFlavor = it->first;
+		const int iChange = it->second;
+		if(eFlavor != NO_FLAVOR && eFlavor < GC.getNumFlavorTypes())
+		{
+			pFlavors[eFlavor] = pFlavorManager->GetAdjustedValue(pFlavors[eFlavor], iChange, 0, 10);
+		}
+	}
+
+	pFlavorManager->ResetToBasePersonality();
+}
+
+bool CvMinorCivPersonalityInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility)
+{
+	if(!CvBaseInfo::CacheResults(kResults, kUtility))
+		return false;
+
+	m_iFriendshipDropPerTurn = kResults.GetInt("FriendshipDropPerTurn");
+	m_iGlobalQuestRandTurnsMultiplier = kResults.GetInt("GlobalQuestRandTurnsMultiplier");
+	m_iPersonalQuestRandTurnsMultiplier = kResults.GetInt("PersonalQuestRandTurnsMultiplier");
+	m_iBullyScoreModifier = kResults.GetInt("BullyScoreModifier");
+	m_bBlocksKillCityStateQuest = kResults.GetBool("BlocksKillCityStateQuest");
+	m_bHostileOnlyBullyQuestTarget = kResults.GetBool("HostileOnlyBullyQuestTarget");
+	m_iAIGiftWeightModifier = kResults.GetInt("AIGiftWeightModifier");
+	m_bDisabled = kResults.GetBool("Disabled");
+
+	m_iFriendshipDecayModifierPercent = kResults.GetInt("FriendshipDecayModifierPercent");
+	m_iFriendshipRecoveryModifierPercent = kResults.GetInt("FriendshipRecoveryModifierPercent");
+	m_iSharedReligionDecayRecoveryModifierPercent = kResults.GetInt("SharedReligionDecayRecoveryModifierPercent");
+	m_iDifferentReligionDecayRecoveryModifierPercent = kResults.GetInt("DifferentReligionDecayRecoveryModifierPercent");
+	m_iQuestInfluenceModifierPercent = kResults.GetInt("QuestInfluenceModifierPercent");
+	m_bStripPersonalityBonusesIfAttackedMinor = kResults.GetBool("StripPersonalityBonusesIfAttackedMinor");
+	m_iFirstMeetGoldModifier = kResults.GetInt("FirstMeetGoldModifier");
+	m_iTradeRouteGoldModifierPercent = kResults.GetInt("TradeRouteGoldModifierPercent");
+	m_iGoldGiftInfluenceModifierPercent = kResults.GetInt("GoldGiftInfluenceModifierPercent");
+	m_iTributeGoldModifierPercent = kResults.GetInt("TributeGoldModifierPercent");
+	m_bNoGifts = kResults.GetBool("NoGifts");
+	m_bBlocksPledgeToProtect = kResults.GetBool("BlocksPledgeToProtect");
+	m_bBlocksTribute = kResults.GetBool("BlocksTribute");
+	m_bBlocksQuests = kResults.GetBool("BlocksQuests");
+	m_bBlocksWarDeclarationPenalty = kResults.GetBool("BlocksWarDeclarationPenalty");
+	m_bNeverAlliedWarSupport = kResults.GetBool("NeverAlliedWarSupport");
+	m_iUnitSpawnModifierPercent = kResults.GetInt("UnitSpawnModifierPercent");
+	m_bSpawnNavalUnits = kResults.GetBool("SpawnNavalUnits");
+	m_iRequiredMinorCivTrait = GC.getInfoTypeForString(kResults.GetText("RequiredMinorCivTrait"), true);
+	m_iForbiddenMinorCivTrait = GC.getInfoTypeForString(kResults.GetText("ForbiddenMinorCivTrait"), true);
+	m_bRequiresCoastal = kResults.GetBool("RequiresCoastal");
+	m_iMaxGlobalCount = kResults.GetInt("MaxGlobalCount");
+	m_iMaxGlobalCountDivisor = kResults.GetInt("MaxGlobalCountDivisor");
+	m_iTransformsAtEra = GC.getInfoTypeForString(kResults.GetText("TransformsAtEra"), true);
+	m_iReligionSpreadInfluenceBurst = kResults.GetInt("ReligionSpreadInfluenceBurst");
+	m_bIgnoreBulliedForGoldQuest = kResults.GetBool("IgnoreBulliedForGoldQuest");
+
+	if(m_iFriendshipDecayModifierPercent == 0)
+		m_iFriendshipDecayModifierPercent = 100;
+	if(m_iFriendshipRecoveryModifierPercent == 0)
+		m_iFriendshipRecoveryModifierPercent = 100;
+	if(m_iSharedReligionDecayRecoveryModifierPercent == 0)
+		m_iSharedReligionDecayRecoveryModifierPercent = 100;
+	if(m_iQuestInfluenceModifierPercent == 0)
+		m_iQuestInfluenceModifierPercent = 100;
+	if(m_iTradeRouteGoldModifierPercent == 0)
+		m_iTradeRouteGoldModifierPercent = 100;
+	if(m_iGoldGiftInfluenceModifierPercent == 0)
+		m_iGoldGiftInfluenceModifierPercent = 100;
+	if(m_iTributeGoldModifierPercent == 0)
+		m_iTributeGoldModifierPercent = 100;
+	if(m_iUnitSpawnModifierPercent == 0)
+		m_iUnitSpawnModifierPercent = 100;
+
+	SAFE_DELETE_ARRAY(m_piQuestWeightMultipliers);
+	m_piQuestWeightMultipliers = FNEW(int[NUM_MINOR_CIV_QUEST_TYPES], c_eCiv5GameplayDLL, 0);
+	for(int iQuestLoop = 0; iQuestLoop < NUM_MINOR_CIV_QUEST_TYPES; iQuestLoop++)
+	{
+		m_piQuestWeightMultipliers[iQuestLoop] = 100;
+	}
+
+	const char* szType = GetType();
+	{
+		std::string strKey = "Minor_Civ_Personality - QuestWeights";
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if(pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey, "select QuestType, WeightMultiplier from Minor_Civ_Personality_QuestWeights where PersonalityType = ?");
+		}
+
+		pResults->Bind(1, szType, -1, false);
+
+		while(pResults->Step())
+		{
+			const MinorCivQuestTypes eQuest = MinorCivPersonalityQuestTypeFromString(pResults->GetText(0));
+			if(eQuest != NO_MINOR_CIV_QUEST_TYPE)
+			{
+				m_piQuestWeightMultipliers[eQuest] = pResults->GetInt(1);
+			}
+		}
+
+		pResults->Reset();
+	}
+
+	m_vFlavorChanges.clear();
+	{
+		std::string strKey = "Minor_Civ_Personality - Flavors";
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if(pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey, "select FlavorType, Flavor from Minor_Civ_Personality_Flavors where PersonalityType = ?");
+		}
+
+		pResults->Bind(1, szType, -1, false);
+
+		while(pResults->Step())
+		{
+			const FlavorTypes eFlavor = (FlavorTypes)GC.getInfoTypeForString(pResults->GetText(0), true);
+			if(eFlavor != NO_FLAVOR)
+			{
+				m_vFlavorChanges.push_back(std::make_pair(eFlavor, pResults->GetInt(1)));
+			}
+		}
+
+		pResults->Reset();
+	}
+
+	return true;
 }
 #endif
 

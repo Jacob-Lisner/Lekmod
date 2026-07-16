@@ -5755,10 +5755,18 @@ void CvEspionageAI::BuildMinorCityList(EspionageCityList& aMinorCityList)
 					}
 
 					// If the minor is hostile, then reduce the weighting
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+					CvMinorCivPersonalityInfo* pkPersonalityInfo = pMinorCivAI->GetPersonalityInfo();
+					if(pkPersonalityInfo && pkPersonalityInfo->GetAIGiftWeightModifier() != 0)
+					{
+						iValue += pkPersonalityInfo->GetAIGiftWeightModifier();
+					}
+#else
 					if(pMinorCivAI->GetPersonality() == MINOR_CIV_PERSONALITY_HOSTILE)
 					{
 						iValue += /*-20*/ GC.getMC_GIFT_WEIGHT_HOSTILE();
 					}
+#endif
 
 					// The closer we are the better
 					if(m_pPlayer->GetProximityToPlayer(eTargetPlayer) == PLAYER_PROXIMITY_NEIGHBORS)

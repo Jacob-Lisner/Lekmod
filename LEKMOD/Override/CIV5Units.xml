@@ -9,6 +9,291 @@
 
 
 <GameData>
+	<!-- Personalities New Tables  -->
+	<Table name="Minor_Civ_Personalities">
+		<Column name="ID" type="integer" primarykey="true" autoincrement="true"/>
+		<Column name="Type" type="text" notnull="true" unique="true"/>
+		<Column name="Description" type="text" reference="Language_en_US(Tag)"/>
+		<Column name="Help" type="text" reference="Language_en_US(Tag)"/>
+		<Column name="FriendshipDropPerTurn" type="integer" default="0"/>
+		<Column name="GlobalQuestRandTurnsMultiplier" type="integer" default="100"/>
+		<Column name="PersonalQuestRandTurnsMultiplier" type="integer" default="100"/>
+		<Column name="BullyScoreModifier" type="integer" default="0"/>
+		<Column name="BlocksKillCityStateQuest" type="boolean" default="false"/>
+		<Column name="HostileOnlyBullyQuestTarget" type="boolean" default="false"/>
+		<Column name="AIGiftWeightModifier" type="integer" default="0"/>
+		<Column name="Disabled" type="boolean" default="false"/>
+		<Column name="FriendshipDecayModifierPercent" type="integer" default="100"/>
+		<Column name="FriendshipRecoveryModifierPercent" type="integer" default="100"/>
+		<Column name="SharedReligionDecayRecoveryModifierPercent" type="integer" default="100"/>
+		<Column name="DifferentReligionDecayRecoveryModifierPercent" type="integer" default="0"/>
+		<Column name="QuestInfluenceModifierPercent" type="integer" default="100"/>
+		<Column name="StripPersonalityBonusesIfAttackedMinor" type="boolean" default="false"/>
+		<Column name="FirstMeetGoldModifier" type="integer" default="0"/>
+		<Column name="TradeRouteGoldModifierPercent" type="integer" default="100"/>
+		<Column name="GoldGiftInfluenceModifierPercent" type="integer" default="100"/>
+		<Column name="TributeGoldModifierPercent" type="integer" default="100"/>
+		<Column name="NoGifts" type="boolean" default="false"/>
+		<Column name="BlocksPledgeToProtect" type="boolean" default="false"/>
+		<Column name="BlocksTribute" type="boolean" default="false"/>
+		<Column name="BlocksQuests" type="boolean" default="false"/>
+		<Column name="BlocksWarDeclarationPenalty" type="boolean" default="false"/>
+		<Column name="NeverAlliedWarSupport" type="boolean" default="false"/>
+		<Column name="UnitSpawnModifierPercent" type="integer" default="100"/>
+		<Column name="SpawnNavalUnits" type="boolean" default="false"/>
+		<Column name="RequiredMinorCivTrait" type="text" reference="MinorCivTraits(Type)" default="NULL"/>
+		<Column name="ForbiddenMinorCivTrait" type="text" reference="MinorCivTraits(Type)" default="NULL"/>
+		<Column name="RequiresCoastal" type="boolean" default="false"/>
+		<Column name="MaxGlobalCount" type="integer" default="0"/>
+		<Column name="MaxGlobalCountDivisor" type="integer" default="0"/>
+		<Column name="TransformsAtEra" type="text" reference="Eras(Type)" default="NULL"/>
+		<Column name="ReligionSpreadInfluenceBurst" type="integer" default="0"/>
+		<Column name="IgnoreBulliedForGoldQuest" type="boolean" default="false"/>
+	</Table>
+	
+	<!-- ============================================================ -->
+	
+	<!-- ============================================================ -->
+	<Minor_Civ_Personalities>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_FRIENDLY</Type>
+			<Description>TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY</Description>
+			<Help>TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY_TT</Help>
+			<FriendshipDecayModifierPercent>75</FriendshipDecayModifierPercent>
+			<QuestInfluenceModifierPercent>125</QuestInfluenceModifierPercent>
+			<StripPersonalityBonusesIfAttackedMinor>true</StripPersonalityBonusesIfAttackedMinor>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_NEUTRAL</Type>
+			<Description>TXT_KEY_CITY_STATE_PERSONALITY_NEUTRAL</Description>
+			<Help>TXT_KEY_CITY_STATE_PERSONALITY_NEUTRAL_TT</Help>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_HOSTILE</Type>
+			<Description>TXT_KEY_CITY_STATE_PERSONALITY_HOSTILE</Description>
+			<Help>TXT_KEY_CITY_STATE_PERSONALITY_HOSTILE_TT</Help>
+			<FriendshipDropPerTurn>-150</FriendshipDropPerTurn>
+			<GlobalQuestRandTurnsMultiplier>200</GlobalQuestRandTurnsMultiplier>
+			<BullyScoreModifier>-10</BullyScoreModifier>
+			<HostileOnlyBullyQuestTarget>true</HostileOnlyBullyQuestTarget>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_IRRATIONAL</Type>
+			<Description>TXT_KEY_CITY_STATE_PERSONALITY_IRRATIONAL</Description>
+			<Help>TXT_KEY_CITY_STATE_PERSONALITY_IRRATIONAL_TT</Help>
+			<Disabled>true</Disabled>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_WEALTHY</Type>
+			<Description>TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY</Description>
+			<Help>TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY_HELP</Help>
+			<FirstMeetGoldModifier>15</FirstMeetGoldModifier>
+			<TradeRouteGoldModifierPercent>133</TradeRouteGoldModifierPercent>
+			<GoldGiftInfluenceModifierPercent>75</GoldGiftInfluenceModifierPercent>
+			<BullyScoreModifier>10</BullyScoreModifier>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_IMPOVERISHED</Type>
+			<Description>TXT_KEY_MINOR_CIV_PERSONALITY_IMPOVERISHED</Description>
+			<Help>TXT_KEY_MINOR_CIV_PERSONALITY_IMPOVERISHED_HELP</Help>
+			<FirstMeetGoldModifier>-15</FirstMeetGoldModifier>
+			<GoldGiftInfluenceModifierPercent>125</GoldGiftInfluenceModifierPercent>
+			<IgnoreBulliedForGoldQuest>true</IgnoreBulliedForGoldQuest>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</Type>
+			<Description>TXT_KEY_MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</Description>
+			<Help>TXT_KEY_MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC_HELP</Help>
+			<RequiredMinorCivTrait>MINOR_CIV_TRAIT_MILITARISTIC</RequiredMinorCivTrait>
+			<RequiresCoastal>true</RequiresCoastal>
+			<SpawnNavalUnits>true</SpawnNavalUnits>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_THEOCRATIC</Type>
+			<Description>TXT_KEY_MINOR_CIV_PERSONALITY_THEOCRATIC</Description>
+			<Help>TXT_KEY_MINOR_CIV_PERSONALITY_THEOCRATIC_HELP</Help>
+			<SharedReligionDecayRecoveryModifierPercent>200</SharedReligionDecayRecoveryModifierPercent>
+			<DifferentReligionDecayRecoveryModifierPercent>-50</DifferentReligionDecayRecoveryModifierPercent>
+			<ReligionSpreadInfluenceBurst>20</ReligionSpreadInfluenceBurst>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_PACIFISTIC</Type>
+			<Description>TXT_KEY_MINOR_CIV_PERSONALITY_PACIFISTIC</Description>
+			<Help>TXT_KEY_MINOR_CIV_PERSONALITY_PACIFISTIC_HELP</Help>
+			<ForbiddenMinorCivTrait>MINOR_CIV_TRAIT_MILITARISTIC</ForbiddenMinorCivTrait>
+			<NeverAlliedWarSupport>true</NeverAlliedWarSupport>
+			<TributeGoldModifierPercent>120</TributeGoldModifierPercent>
+		</Row>
+		<Row>
+			<Type>MINOR_CIV_PERSONALITY_ISOLATIONIST</Type>
+			<Description>TXT_KEY_MINOR_CIV_PERSONALITY_ISOLATIONIST</Description>
+			<Help>TXT_KEY_MINOR_CIV_PERSONALITY_ISOLATIONIST_HELP</Help>
+			<BlocksQuests>true</BlocksQuests>
+			<NoGifts>true</NoGifts>
+			<BlocksPledgeToProtect>true</BlocksPledgeToProtect>
+			<BlocksWarDeclarationPenalty>true</BlocksWarDeclarationPenalty>
+			<MaxGlobalCount>2</MaxGlobalCount>
+			<MaxGlobalCountDivisor>12</MaxGlobalCountDivisor>
+			<TransformsAtEra>ERA_MODERN</TransformsAtEra>
+		</Row>
+	</Minor_Civ_Personalities>
+
+	<Table name="Minor_Civ_Personality_QuestWeights">
+		<Column name="ID" type="integer" primarykey="true" autoincrement="true"/>
+		<Column name="PersonalityType" type="text" notnull="true" reference="Minor_Civ_Personalities(Type)"/>
+		<Column name="QuestType" type="text" notnull="true"/>
+		<Column name="WeightMultiplier" type="integer" default="100"/>
+	</Table>
+	
+	<Minor_Civ_Personality_QuestWeights>
+		<!-- Friendly -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_FRIENDLY</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_ROUTE</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_FRIENDLY</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_BULLY_CITY_STATE</QuestType>
+			<WeightMultiplier>30</WeightMultiplier>
+		</Row>
+		<!-- Hostile -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_ROUTE</QuestType>
+			<WeightMultiplier>20</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_KILL_CITY_STATE</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_FIND_NATURAL_WONDER</QuestType>
+			<WeightMultiplier>30</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_BULLY_CITY_STATE</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<!-- Neutral -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_NEUTRAL</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_KILL_CITY_STATE</QuestType>
+			<WeightMultiplier>40</WeightMultiplier>
+		</Row>
+		<!-- Irrational-->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_IRRATIONAL</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_BULLY_CITY_STATE</QuestType>
+			<WeightMultiplier>150</WeightMultiplier>
+		</Row>
+		<!-- Wealthy -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_WEALTHY</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_INVEST</QuestType>
+			<WeightMultiplier>150</WeightMultiplier>
+		</Row>
+		<!-- Impoverished -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_IMPOVERISHED</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_GIVE_GOLD</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<!-- Pirate Republic -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_KILL_CAMP</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_BULLY_CITY_STATE</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_DENOUNCE_MAJOR</QuestType>
+			<WeightMultiplier>150</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_KILL_CITY_STATE</QuestType>
+			<WeightMultiplier>150</WeightMultiplier>
+		</Row>
+		<!-- Theocratic -->
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_THEOCRATIC</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_SPREAD_RELIGION</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_THEOCRATIC</PersonalityType>
+			<QuestType>MINOR_CIV_QUEST_CONTEST_FAITH</QuestType>
+			<WeightMultiplier>200</WeightMultiplier>
+		</Row>
+	</Minor_Civ_Personality_QuestWeights>
+	<Table name="Minor_Civ_Personality_Flavors">
+		<Column name="ID" type="integer" primarykey="true" autoincrement="true"/>
+		<Column name="PersonalityType" type="text" notnull="true" reference="Minor_Civ_Personalities(Type)"/>
+		<Column name="FlavorType" type="text" notnull="true" reference="Flavors(Type)"/>
+		<Column name="Flavor" type="integer" default="0"/>
+	</Table>
+	<Minor_Civ_Personality_Flavors>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_FRIENDLY</PersonalityType>
+			<FlavorType>FLAVOR_CITY_DEFENSE</FlavorType>
+			<Flavor>-2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_FRIENDLY</PersonalityType>
+			<FlavorType>FLAVOR_DEFENSE</FlavorType>
+			<Flavor>-2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_FRIENDLY</PersonalityType>
+			<FlavorType>FLAVOR_OFFENSE</FlavorType>
+			<Flavor>-2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<FlavorType>FLAVOR_CITY_DEFENSE</FlavorType>
+			<Flavor>2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<FlavorType>FLAVOR_DEFENSE</FlavorType>
+			<Flavor>2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_HOSTILE</PersonalityType>
+			<FlavorType>FLAVOR_OFFENSE</FlavorType>
+			<Flavor>2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</PersonalityType>
+			<FlavorType>FLAVOR_OFFENSE</FlavorType>
+			<Flavor>2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC</PersonalityType>
+			<FlavorType>FLAVOR_NAVAL</FlavorType>
+			<Flavor>2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PACIFISTIC</PersonalityType>
+			<FlavorType>FLAVOR_OFFENSE</FlavorType>
+			<Flavor>-2</Flavor>
+		</Row>
+		<Row>
+			<PersonalityType>MINOR_CIV_PERSONALITY_PACIFISTIC</PersonalityType>
+			<FlavorType>FLAVOR_DEFENSE</FlavorType>
+			<Flavor>-2</Flavor>
+		</Row>
+	</Minor_Civ_Personality_Flavors>
+
 	<Table name="WorldWonderYieldChanges">
 		<Column name="TraitType" type="text" reference="Traits(Type)" />
 		<Column name="BeliefType" type="text" reference="Beliefs(Type)" />

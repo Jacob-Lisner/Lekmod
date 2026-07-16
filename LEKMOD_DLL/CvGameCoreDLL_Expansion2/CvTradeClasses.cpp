@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -17,6 +17,9 @@
 #include "CvNotifications.h"
 #include "cvStopWatch.h"
 #include "CvCityManager.h"
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+#include "CvMinorCivAI.h"
+#endif
 
 #include "LintFree.h"
 
@@ -2911,6 +2914,19 @@ int CvPlayerTrade::GetTradeConnectionValueTimes100 (const TradeConnection& kTrad
 
 					iValue *= iModifier;
 					iValue /= 100;
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+					if(GET_PLAYER(kTradeConnection.m_eDestOwner).isMinorCiv())
+					{
+						CvMinorCivPersonalityInfo* pkPersonalityInfo = GET_PLAYER(kTradeConnection.m_eDestOwner).GetMinorCivAI()->GetPersonalityInfo();
+						if(pkPersonalityInfo && pkPersonalityInfo->GetTradeRouteGoldModifierPercent() != 100)
+						{
+							iValue *= pkPersonalityInfo->GetTradeRouteGoldModifierPercent();
+							iValue /= 100;
+						}
+					}
+#endif
+
 					iValue = max(100, iValue);
 				}
 				break;

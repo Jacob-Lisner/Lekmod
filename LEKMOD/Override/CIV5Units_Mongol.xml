@@ -34,6 +34,82 @@
 		</Row>
 		<!-- END VERSION -->
 
+
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY">
+			<Text>Wealthy</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Wealthy[ENDCOLOR] City-States are prosperous and generous to new friends, but less swayed by gold gifts. Trade routes to them yield more gold, and it is easier to demand tribute from.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_IMPOVERISHED">
+			<Text>Impoverished</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_IMPOVERISHED_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Impoverished[ENDCOLOR] City-States struggle financially. They give less gold on first contact, but respond more strongly to gold gifts and may ask for gold even when they have not been bullied.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC">
+			<Text>Pirate Republic</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Pirate Republic[ENDCOLOR] City-States are coastal militaristic enclaves ruled by privateers. They favor aggressive quests and may gift naval units to allies with ocean access.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_THEOCRATIC">
+			<Text>Theocratic</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_THEOCRATIC_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Theocratic[ENDCOLOR] City-States let religion dominate their diplomacy. Shared faith strengthens influence ties; different faiths weaken them. The first player to spread a religion here receives a burst of influence.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PACIFISTIC">
+			<Text>Pacifistic</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PACIFISTIC_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Pacifistic[ENDCOLOR] City-States avoid war and military buildup. They never join allies in war, but refuse gifts from civilizations at war with their ally. They pay more when bullied for gold.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_ISOLATIONIST">
+			<Text>Isolationist</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_ISOLATIONIST_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Isolationist[ENDCOLOR] City-States keep to themselves. They offer no quests and accept no gifts. Declaring war on an Isolationist City-State does not anger other City-States or forfeit Friendly City-State bonuses. Once any civilization reaches the Modern Era, they adopt a new random personality.</Text>
+		</Row>
+		<!-- Updated Friendly tooltip (design doc changes) -->
+		<Replace Tag="TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY_TT">
+			<Text>Influence with a befriended [COLOR_POSITIVE_TEXT]Friendly[ENDCOLOR] City-State decays more slowly, and completing quests grants +25% more influence. These bonuses are lost if you have ever declared war on a City-State (except Isolationist City-States).</Text>
+		</Replace>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_BLOCK_GIFTS_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State does not accept gifts from foreign powers.[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_BLOCK_PLEDGE_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State refuses pledges of protection.[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_BLOCK_TRIBUTE_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State cannot be intimidated into paying tribute.[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_NO_WAR_PENALTY_TT">
+			<Text>Declaring war on this {1_CityStatePersonality} City-State will not anger other City-States or forfeit Friendly City-State bonuses.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_ALLIED_WAR_BLOCK_GIFTS_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State refuses gifts from civilizations at war with their ally, {2_AllyName}.[ENDCOLOR]</Text>
+		</Row>
+		<!-- Diplomatic greetings for new personalities -->
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_WEALTHY">
+			<Text>Welcome, friend. Our coffers are full — perhaps we can do business together?</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_IMPOVERISHED">
+			<Text>We haven't much to spare, but we are glad to see a friendly face.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_PIRATE_REPUBLIC">
+			<Text>Arr! State your business before we decide whether ye walk the plank.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_THEOCRATIC">
+			<Text>The faithful welcome you. May the divine guide our dealings.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_PACIFISTIC">
+			<Text>We prefer peace, but we are glad you come in friendship rather than war.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_ISOLATIONIST">
+			<Text>We do not seek outsiders, but you may state your purpose.</Text>
+		</Row>
+
 		<Row Tag="TXT_KEY_DIPLO_ITEM_PLAYER_ALREADY_OWNS_ONE_LINE">
 			<Text>
 				[COLOR_WARNING_TEXT]Both players already own this item![ENDCOLOR]
@@ -38395,7 +38471,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY_TT"> 
 			<Text>
-				A befriended [COLOR_POSITIVE_TEXT]Friendly[ENDCOLOR] City-State will usually make requests that require some peaceful action, like building a Wonder or constructing a Road to them.
+				Influence with a befriended [COLOR_POSITIVE_TEXT]Friendly[ENDCOLOR] City-State decays more slowly, and completing quests grants +25% more influence. These bonuses are lost if you have ever declared war on a city-state.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_CITY_STATE_PERSONALITY_HOSTILE"> 

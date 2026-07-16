@@ -6,6 +6,9 @@ set euifolder=UI_bc1_xits
 IF EXIST "UI_bc1" (
   set euifolder=UI_bc1
 )
+IF EXIST "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" (
+  copy /y "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" "%patchfolder%\CityStatePersonalityHelper.lua.bak" > nul
+)
 DEL /q "%patchfolder%\Lua\UI\"
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\AncientRuins\GoodyHutPopup.lua.ignore" "%patchfolder%\Lua\UI\GoodyHutPopup.lua" > nul
@@ -214,6 +217,11 @@ IF NOT EXIST "%euifolder%\TopPanel\TopPanel.lua" (
 ) ELSE (
   copy /y "%patchfolder%\Lua\tmp\eui\TopPanel.lua.ignore" "%patchfolder%\Lua\UI\TopPanel.lua" > nul
   copy /y "%patchfolder%\Lua\tmp\eui\TopPanel.xml.ignore" "%patchfolder%\Lua\UI\TopPanel.xml" > nul
+)
+REM --------------------------------------------------------------------------------------------------
+IF EXIST "%patchfolder%\CityStatePersonalityHelper.lua.bak" (
+  copy /y "%patchfolder%\CityStatePersonalityHelper.lua.bak" "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" > nul
+  del "%patchfolder%\CityStatePersonalityHelper.lua.bak"
 )
 REM --------------------------------------------------------------------------------------------------
 EXIT

@@ -1146,6 +1146,8 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define LEKMOD_RELOCATE_PROMOTION_PREREQ_ORS
 // Changes made to CS quests
 #define LEKMOD_CITYSTATE_QUEST_CHANGES
+// Data-driven city-state personalities loaded from Minor_Civ_Personalities tables
+#define LEKMOD_MINOR_CIV_PERSONALITIES
 // Alters the Parameters for the Merchant of Venice buyout
 #define LEKMOD_MERCHANT_BUYOUT_NOT_NOANNEXING
 // Unlinks Repair for Improvements time and Route build time.

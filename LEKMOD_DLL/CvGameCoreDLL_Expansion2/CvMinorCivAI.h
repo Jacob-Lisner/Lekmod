@@ -146,6 +146,10 @@ FDataStream& operator<<(FDataStream&, const CvMinorCivQuest&);
 
 
 class CvPlayer;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+class CvMinorCivPersonalityInfo;
+class CvFlavorManager;
+#endif
 
 typedef FStaticVector< CvMinorCivQuest, SAFE_ESTIMATE_NUM_QUESTS_PER_PLAYER, false, c_eCiv5GameplayDLL > QuestListForPlayer; // will grow size if needed
 typedef FStaticVector< QuestListForPlayer, MAX_MAJOR_CIVS, false, c_eCiv5GameplayDLL > QuestListForAllPlayers;
@@ -180,7 +184,15 @@ public:
 	MinorCivTypes GetMinorCivType() const;
 
 	MinorCivPersonalityTypes GetPersonality() const;
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	void DoPickPersonality(bool bEraTransformRepick = false);
+	CvMinorCivPersonalityInfo* GetPersonalityInfo() const;
+	const char* GetPersonalityTypeString() const;
+	bool IsBlocksWarDeclarationPenalty() const;
+	bool IsCoastalMinor() const;
+#else
 	void DoPickPersonality();
+#endif
 
 	MinorCivTraitTypes GetTrait() const;
 
@@ -589,6 +601,19 @@ public:
 	void RecalculateMajorPriority();
 #endif
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	void DoTestPersonalityEraTransform();
+	bool CanAssignPersonality(const CvMinorCivPersonalityInfo* pkPersonalityInfo, const std::map<int, int>& personalityAssignmentCounts, int iNumAliveMinors) const;
+	bool IsQuestBlockedByPersonality(MinorCivQuestTypes eQuest) const;
+	bool IsMajorExcludedFromPersonalityBonuses(PlayerTypes ePlayer) const;
+	int GetPersonalityQuestInfluenceModifierPercent(PlayerTypes ePlayer) const;
+	bool IsNeverAlliedWarSupport() const;
+	bool IsIgnoreBulliedForGoldQuest() const;
+	bool IsMajorBlockedByAlliedWar(PlayerTypes eMajor) const;
+	bool DoesMajorHaveOceanCoastalCity(PlayerTypes eMajor) const;
+	void DoPersonalityReligionSpreadInfluence(PlayerTypes eMajor, bool bHadReligionBefore);
+#endif
+
 private:
 	CvPlayer* m_pPlayer;
 	MinorCivTypes m_minorCivType;
@@ -638,10 +663,111 @@ private:
 	int m_aiMajorScratchPad[MAX_MAJOR_CIVS];
 	bool m_bDisableNotifications;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	bool m_abReligionSpreadInfluenceBurstGranted[MAX_MAJOR_CIVS];
+#endif
+
 #ifdef CS_ALLYING_WAR_RESCTRICTION
 	int m_aiMajorPriority[MAX_MAJOR_CIVS];
 #endif
 };
+
+
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  class :	CvMinorCivPersonalityInfo
+//
+//  DESC:		Data-driven city-state personality definitions loaded from
+//				Minor_Civ_Personalities and related child tables.
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CvMinorCivPersonalityInfo : public CvBaseInfo
+{
+public:
+	CvMinorCivPersonalityInfo();
+	virtual ~CvMinorCivPersonalityInfo();
+
+	int GetFriendshipDropPerTurn() const;
+	int GetGlobalQuestRandTurnsMultiplier() const;
+	int GetPersonalQuestRandTurnsMultiplier() const;
+	int GetBullyScoreModifier() const;
+	bool IsBlocksKillCityStateQuest() const;
+	bool IsHostileOnlyBullyQuestTarget() const;
+	int GetAIGiftWeightModifier() const;
+	bool IsDisabled() const;
+
+	int GetFriendshipDecayModifierPercent() const;
+	int GetFriendshipRecoveryModifierPercent() const;
+	int GetSharedReligionDecayRecoveryModifierPercent() const;
+	int GetDifferentReligionDecayRecoveryModifierPercent() const;
+	int GetQuestInfluenceModifierPercent() const;
+	bool IsStripPersonalityBonusesIfAttackedMinor() const;
+	int GetFirstMeetGoldModifier() const;
+	int GetTradeRouteGoldModifierPercent() const;
+	int GetGoldGiftInfluenceModifierPercent() const;
+	int GetTributeGoldModifierPercent() const;
+	bool IsNoGifts() const;
+	bool IsBlocksPledgeToProtect() const;
+	bool IsBlocksTribute() const;
+	bool IsBlocksQuests() const;
+	bool IsBlocksWarDeclarationPenalty() const;
+	bool IsNeverAlliedWarSupport() const;
+	int GetUnitSpawnModifierPercent() const;
+	bool IsSpawnNavalUnits() const;
+	int GetRequiredMinorCivTrait() const;
+	int GetForbiddenMinorCivTrait() const;
+	bool RequiresCoastal() const;
+	int GetMaxGlobalCount() const;
+	int GetMaxGlobalCountDivisor() const;
+	int GetTransformsAtEra() const;
+	int GetReligionSpreadInfluenceBurst() const;
+	bool IsIgnoreBulliedForGoldQuest() const;
+
+	int GetQuestWeightMultiplier(MinorCivQuestTypes eQuest) const;
+	void ApplyFlavorChanges(CvFlavorManager* pFlavorManager) const;
+
+	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
+
+protected:
+	int m_iFriendshipDropPerTurn;
+	int m_iGlobalQuestRandTurnsMultiplier;
+	int m_iPersonalQuestRandTurnsMultiplier;
+	int m_iBullyScoreModifier;
+	bool m_bBlocksKillCityStateQuest;
+	bool m_bHostileOnlyBullyQuestTarget;
+	int m_iAIGiftWeightModifier;
+	bool m_bDisabled;
+
+	int m_iFriendshipDecayModifierPercent;
+	int m_iFriendshipRecoveryModifierPercent;
+	int m_iSharedReligionDecayRecoveryModifierPercent;
+	int m_iDifferentReligionDecayRecoveryModifierPercent;
+	int m_iQuestInfluenceModifierPercent;
+	bool m_bStripPersonalityBonusesIfAttackedMinor;
+	int m_iFirstMeetGoldModifier;
+	int m_iTradeRouteGoldModifierPercent;
+	int m_iGoldGiftInfluenceModifierPercent;
+	int m_iTributeGoldModifierPercent;
+	bool m_bNoGifts;
+	bool m_bBlocksPledgeToProtect;
+	bool m_bBlocksTribute;
+	bool m_bBlocksQuests;
+	bool m_bBlocksWarDeclarationPenalty;
+	bool m_bNeverAlliedWarSupport;
+	int m_iUnitSpawnModifierPercent;
+	bool m_bSpawnNavalUnits;
+	int m_iRequiredMinorCivTrait;
+	int m_iForbiddenMinorCivTrait;
+	bool m_bRequiresCoastal;
+	int m_iMaxGlobalCount;
+	int m_iMaxGlobalCountDivisor;
+	int m_iTransformsAtEra;
+	int m_iReligionSpreadInfluenceBurst;
+	bool m_bIgnoreBulliedForGoldQuest;
+
+	int* m_piQuestWeightMultipliers;
+	std::vector<std::pair<FlavorTypes, int> > m_vFlavorChanges;
+};
+#endif
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
