@@ -1,0 +1,48 @@
+name: Discord Notifications
+
+on:
+  push:
+  pull_request:
+    types: [opened, reopened, closed, synchronize]
+  workflow_dispatch:
+
+jobs:
+  notify-push:
+    name: Notify push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: "Lekmod"
+          embed-title: "Push to ${{ github.ref_name }}"
+          embed-url: ${{ github.event.head_commit.url }}
+          embed-description: |
+            **${{ github.event.head_commit.message }}**
+
+            **Author:** ${{ github.event.head_commit.author.name }} (@${{ github.actor }})
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.event.head_commit.url }})
+          embed-color: "3447003"
+
+  notify-pull-request:
+    name: Notify pull request
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: "Lekmod"
+          embed-title: "${{ github.event.action == 'closed' && (github.event.pull_request.merged && 'PR merged' || 'PR closed') || github.event.action == 'synchronize' && 'PR updated' || 'PR opened' }}: ${{ github.event.pull_request.title }}"
+          embed-url: ${{ github.event.pull_request.html_url }}
+          embed-description: |
+            **Author:** @${{ github.event.pull_request.user.login }}
+            **Base -> Head:** `${{ github.event.pull_request.base.ref }}` <- `${{ github.event.pull_request.head.ref }}`
+            **PR:** #${{ github.event.pull_request.number }}
+
+            ${{ github.event.pull_request.body }}
+          embed-color: "${{ github.event.action == 'closed' && (github.event.pull_request.merged && '3066993' || '15158332') || '10181046' }}"
