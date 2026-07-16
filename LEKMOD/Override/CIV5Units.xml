@@ -292,7 +292,6 @@
 			<FlavorType>FLAVOR_DEFENSE</FlavorType>
 			<Flavor>-2</Flavor>
 		</Row>
-		
 	</Minor_Civ_Personality_Flavors>
 
 	<Table name="WorldWonderYieldChanges">
