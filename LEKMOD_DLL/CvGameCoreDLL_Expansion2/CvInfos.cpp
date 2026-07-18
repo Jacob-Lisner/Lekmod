@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -4432,6 +4432,106 @@ bool CvRouteInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 
 	return true;
 }
+#if defined(TRADE_REFACTOR)
+//======================================================================================================
+//					CvTradeConnectionInfo
+//======================================================================================================
+CvTradeConnectionInfo::CvTradeConnectionInfo() :
+	m_piBaseDestinationValue(NULL),
+	m_piBaseOriginValue(NULL),
+	m_ppiiEraOriginBonus(NULL),
+	m_ppiiEraDestinationBonus(NULL),
+	m_ppiiDomainYieldModifier(NULL)
+{
+}
+CvTradeConnectionInfo::~CvTradeConnectionInfo()
+{
+	SAFE_DELETE_ARRAY(m_piBaseDestinationValue);
+	SAFE_DELETE_ARRAY(m_piBaseOriginValue);
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiiDomainYieldModifier);
+}
+//------------------------------------------------------------------------------
+bool CvTradeConnectionInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility)
+{
+	if (!CvBaseInfo::CacheResults(kResults, kUtility))
+		return false;
+
+	const char* szTradeConnectionType = GetType();
+	{
+		kUtility.InitializeArray(m_piBaseDestinationValue, "Yields");
+		kUtility.InitializeArray(m_piBaseOriginValue, "Yields");
+		std::string key = "TradeConnections_Yields";
+		Database::Results* pResults = kUtility.GetResults(key);
+		if (pResults == NULL)
+		{
+			const char* query = 
+				"SELECT Yields.ID as YieldID, OriginBaseValue, DestinationBaseValue "
+				"FROM TradeConnections_Yields "
+				"INNER JOIN Yields ON Yields.Type = TradeConnections_Yields.YieldType "
+				"WHERE TradeConnectionType = ? ";
+			pResults = kUtility.PrepareResults(key, query);
+		}
+		pResults->Bind(1, szTradeConnectionType);
+		while (pResults->Step())
+		{
+			int iYieldID = pResults->GetInt(0);
+			m_piBaseOriginValue[iYieldID] = pResults->GetInt(1);
+			m_piBaseDestinationValue[iYieldID] = pResults->GetInt(2);
+		}
+		pResults->Reset();
+	}
+	{
+		kUtility.Initialize2DArray(m_ppiiEraOriginBonus, "Eras", "Yields");
+		kUtility.Initialize2DArray(m_ppiiEraDestinationBonus, "Eras", "Yields");
+		std::string key = "TradeConnections_BaseYieldEraBonus";
+		Database::Results* pResults = kUtility.GetResults(key);
+		if (pResults == NULL)
+		{
+			const char* query = 
+			"SELECT Eras.ID as EraID, Yields.ID as YieldID, OriginBonus, DestinationBonus "
+			"FROM TradeConnections_BaseYieldEraBonus "
+			"INNER JOIN Eras ON Eras.Type = TradeConnections_BaseYieldEraBonus.EraType "
+			"INNER JOIN Yields ON Yields.Type = TradeConnections_BaseYieldEraBonus.YieldType "
+			"WHERE TradeConnectionType = ? ";
+			pResults = kUtility.PrepareResults(key, query);
+		}
+		pResults->Bind(1, szTradeConnectionType);
+		while (pResults->Step())
+		{
+			int iEraID = pResults->GetInt(0);
+			int iYieldID = pResults->GetInt(1);
+			m_ppiiEraOriginBonus[iEraID][iYieldID] = pResults->GetInt(2);
+			m_ppiiEraDestinationBonus[iEraID][iYieldID] = pResults->GetInt(3);
+		}
+		pResults->Reset();
+	}
+	{
+		kUtility.Initialize2DArray(m_ppiiDomainYieldModifier, "Domains", "Yields");
+		std::string key = "TradeConnections_DomainYieldModifiers";
+		Database::Results* pResults = kUtility.GetResults(key);
+		if (pResults == NULL)
+		{
+			const char* query = 
+			"SELECT Domains.ID as DomainID, Yields.ID as YieldID, Modifier "
+			"FROM TradeConnections_DomainYieldModifiers "
+			"INNER JOIN Domains ON Domains.Type = TradeConnections_DomainYieldModifiers.DomainType "
+			"INNER JOIN Yields ON Yields.Type = TradeConnections_DomainYieldModifiers.YieldType "
+			"WHERE TradeConnectionType = ? ";
+			pResults = kUtility.PrepareResults(key, query);
+		}
+		pResults->Bind(1, szTradeConnectionType);
+		while (pResults->Step())
+		{
+			int iDomainID = pResults->GetInt(0);
+			int iYieldID = pResults->GetInt(1);
+			m_ppiiDomainYieldModifier[iDomainID][iYieldID] = pResults->GetInt(2);
+		}
+		pResults->Reset();
+	}
+
+	return true;
+}
+#endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 //======================================================================================================
 //					CvGreatWorkClassInfo
@@ -4546,6 +4646,10 @@ CvResourceInfo::CvResourceInfo() :
 	m_piResourceQuantityTypes(NULL),
 	m_piFlavor(NULL),
 	m_piImprovementChange(NULL),
+#if defined(TRADE_REFACTOR)
+	m_paiTradeConnectionResourceLandYieldBonus(NULL),
+	m_paiTradeConnectionResourceSeaYieldBonus(NULL),
+#endif
 	m_pbTerrain(NULL),
 	m_pbFeature(NULL),
 	m_pbFeatureTerrain(NULL)
@@ -4562,6 +4666,10 @@ CvResourceInfo::~CvResourceInfo()
 	SAFE_DELETE_ARRAY(m_piResourceQuantityTypes);
 	SAFE_DELETE_ARRAY(m_piFlavor);
 	SAFE_DELETE_ARRAY(m_piImprovementChange);
+#if defined(TRADE_REFACTOR)
+	CvDatabaseUtility::SafeDelete2DArray(m_paiTradeConnectionResourceLandYieldBonus);
+	CvDatabaseUtility::SafeDelete2DArray(m_paiTradeConnectionResourceSeaYieldBonus);
+#endif
 	SAFE_DELETE_ARRAY(m_pbTerrain);
 	SAFE_DELETE_ARRAY(m_pbFeature);
 	SAFE_DELETE_ARRAY(m_pbFeatureTerrain);	// free memory - MT
@@ -4943,6 +5051,20 @@ int CvResourceInfo::getImprovementChange(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_piImprovementChange ? m_piImprovementChange[i] : -1;
 }
+#if defined(TRADE_REFACTOR)
+int CvResourceInfo::getTradeConnectionResourceLandYieldBonusTimes100(int i, int j) const
+{
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_paiTradeConnectionResourceLandYieldBonus ? m_paiTradeConnectionResourceLandYieldBonus[i][j] : 0;
+}
+int CvResourceInfo::getTradeConnectionResourceSeaYieldBonusTimes100(int i, int j) const
+{
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_paiTradeConnectionResourceSeaYieldBonus ? m_paiTradeConnectionResourceSeaYieldBonus[i][j] : 0;
+}
+#endif
 //------------------------------------------------------------------------------
 bool CvResourceInfo::isTerrain(int i) const
 {
@@ -5059,7 +5181,38 @@ bool CvResourceInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility
 	kUtility.PopulateArrayByExistence(m_pbTerrain, "Terrains", "Resource_TerrainBooleans", "TerrainType", "ResourceType", szResourceType);
 	kUtility.PopulateArrayByExistence(m_pbFeature, "Features", "Resource_FeatureBooleans", "FeatureType", "ResourceType", szResourceType);
 	kUtility.PopulateArrayByExistence(m_pbFeatureTerrain, "Terrains", "Resource_FeatureTerrainBooleans", "TerrainType", "ResourceType", szResourceType);
-
+#if defined(TRADE_REFACTOR)
+	{
+		kUtility.Initialize2DArray(m_paiTradeConnectionResourceLandYieldBonus, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_paiTradeConnectionResourceSeaYieldBonus, "TradeConnections", "Yields");
+		std::string sqlKey = "Resource_TradeConnectionYieldBonus";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL = 
+				"SELECT TradeConnections.ID as TradeConnectionID, Domains.ID as DomainID, Yields.ID AS YieldID, YieldTimes100 "
+				"FROM Resource_TradeConnectionYieldBonus "
+				"INNER JOIN TradeConnections ON TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"WHERE ResourceType = ?";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+		pResults->Bind(1, szResourceType);
+		while (pResults->Step())
+		{
+			const int iTradeConnection = pResults->GetInt(0);
+			const int iDomain = pResults->GetInt(1);
+			const int iYield = pResults->GetInt(2);
+			const int iYieldTimes100 = pResults->GetInt(3);
+			if (iDomain == DOMAIN_LAND)
+				m_paiTradeConnectionResourceLandYieldBonus[iTradeConnection][iYield] = iYieldTimes100;
+			else if (iDomain == DOMAIN_SEA)
+				m_paiTradeConnectionResourceSeaYieldBonus[iTradeConnection][iYield] = iYieldTimes100;
+		}
+		pResults->Reset();
+	}
+#endif
 	//Resource_QuantityTypes
 	{
 		const int iNumQuantityTypes = GC.getNUM_RESOURCE_QUANTITY_TYPES();

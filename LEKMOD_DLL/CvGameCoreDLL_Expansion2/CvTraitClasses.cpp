@@ -85,7 +85,6 @@ CvTraitEntry::CvTraitEntry() :
 	m_iInternationalRouteGrowthModifier(0),
 	m_iLocalHappinessPerCity(0),
 	m_iGlobalHappinessPerCity(0),
-	m_iInternalTradeRouteYieldModifier(0),
 	m_iUnhappinessModifierForPuppetedCities(0),
 	m_iFaithCostModifier(0),
 	m_iIdeologyPressureUnhappinessModifier(0),
@@ -100,7 +99,6 @@ CvTraitEntry::CvTraitEntry() :
 	m_bReligionEnhanceReformation(false),
 
 	m_iSelfReligiousPressureModifier(0),
-	m_iLandTradeRouteYieldBonus(0),
 #endif
 
 	//EAP: Natural wonder faith for the finder
@@ -219,8 +217,19 @@ CvTraitEntry::CvTraitEntry() :
 	m_paiYieldChangeStrategicResources(NULL),
 	m_paiYieldChangeLuxuryResources(NULL), // NQMP GJS - New Netherlands UA
 	m_paiYieldChangeNaturalWonder(NULL),
+#if !defined(TRADE_REFACTOR)
 	m_paiYieldChangePerTradePartner(NULL),
 	m_paiYieldChangeIncomingTradeRoute(NULL),
+#else
+	m_paiTradePartnerYieldFlatBonusPerEra(NULL),
+	m_ppiTradeConnectionLandYieldChange(NULL),
+	m_ppiTradeConnectionSeaYieldChange(NULL),
+	m_ppiYieldChangePerTradePartnerByDomain(NULL),
+	m_ppiIncomingTradeConnectionLandYieldChange(NULL),
+	m_ppiIncomingTradeConnectionSeaYieldChange(NULL),
+	m_ppiTradeConnectionLandYieldModifier(NULL),
+	m_ppiTradeConnectionSeaYieldModifier(NULL),
+#endif
 	m_paiYieldModifier(NULL),
 	m_piStrategicResourceQuantityModifier(NULL),
 	m_piResourceQuantityModifiers(NULL),
@@ -655,11 +664,6 @@ int CvTraitEntry::GetGlobalHappinessPerCity() const
 {
 	return m_iGlobalHappinessPerCity;
 }
-/// Accessor:: does this trait give a bonus to internal trade route yield?
-int CvTraitEntry::GetInternalTradeRouteYieldModifier() const
-{
-	return m_iInternalTradeRouteYieldModifier;
-}
 /// Accessor:: does this trait give a bonus to unhappiness from puppeted cities?
 int CvTraitEntry::GetUnhappinessModifierForPuppetedCities() const
 {
@@ -696,11 +700,6 @@ bool CvTraitEntry::IsReligionEnhanceReformation() const
 int CvTraitEntry::GetSelfReligiousPressureModifier() const
 {
 	return m_iSelfReligiousPressureModifier;
-}
-/// Accessor:: does this trait give a land trade route yield bonus?
-int CvTraitEntry::GetLandTradeRouteYieldBonus() const
-{
-	return m_iLandTradeRouteYieldBonus;
 }
 #endif
 ///////////////////
@@ -1163,6 +1162,7 @@ int CvTraitEntry::GetYieldFromKills(int i) const
 	return m_paiYieldFromKills ? m_paiYieldFromKills[i] : -1;
 }
 #endif
+#if !defined(TRADE_REFACTOR)
 /// Accessor:: Extra yield from trade partners
 int CvTraitEntry::GetYieldChangePerTradePartner(int i) const
 {
@@ -1174,7 +1174,78 @@ int CvTraitEntry::GetYieldChangeIncomingTradeRoute(int i) const
 {
 	return m_paiYieldChangeIncomingTradeRoute ? m_paiYieldChangeIncomingTradeRoute[i] : -1;
 }
-
+#else
+/// Accessor::Extra eYield per Era from Unique trade partners
+int CvTraitEntry::GetTradePartnerYieldFlatBonusPerEra(int i) const
+{
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_paiTradePartnerYieldFlatBonusPerEra ? m_paiTradePartnerYieldFlatBonusPerEra[i] : 0;
+}
+/// Accessor:: Extra eYield from land trade routes of eTradeConnection type
+int CvTraitEntry::GetTradeConnectionLandYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionLandYieldChange ? m_ppiTradeConnectionLandYieldChange[i][j] : 0;
+}
+/// Accessor:: Extra eYield from sea trade routes of eTradeConnection type
+int CvTraitEntry::GetTradeConnectionSeaYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionSeaYieldChange ? m_ppiTradeConnectionSeaYieldChange[i][j] : 0;
+}
+/// Accessor:: Extra eYield from Unique trade partners of eDomain type
+int CvTraitEntry::GetYieldChangePerTradePartnerByDomain(int i, int j) const
+{
+	CvAssertMsg(i < GC.getNumUnitDomainInfos, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiYieldChangePerTradePartnerByDomain ? m_ppiYieldChangePerTradePartnerByDomain[i][j] : 0;
+}
+/// Accessor:: Extra eYield from incoming land trade routes of eTradeConnection type
+int CvTraitEntry::GetIncomingTradeConnectionLandYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiIncomingTradeConnectionLandYieldChange ? m_ppiIncomingTradeConnectionLandYieldChange[i][j] : 0;
+}
+/// Accessor:: Extra eYield from incoming sea trade routes of eTradeConnection type
+int CvTraitEntry::GetIncomingTradeConnectionSeaYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiIncomingTradeConnectionSeaYieldChange ? m_ppiIncomingTradeConnectionSeaYieldChange[i][j] : 0;
+}
+/// Accessor:: Modifier to yield from land trade routes of eTradeConnection type
+int CvTraitEntry::GetTradeConnectionLandYieldModifier(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionLandYieldModifier ? m_ppiTradeConnectionLandYieldModifier[i][j] : 0;
+}
+/// Accessor:: Modifier to yield from sea trade routes of eTradeConnection type
+int CvTraitEntry::GetTradeConnectionSeaYieldModifier(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionSeaYieldModifier ? m_ppiTradeConnectionSeaYieldModifier[i][j] : 0;
+}
+#endif
 /// Accessor:: Modifier to yield
 int CvTraitEntry::GetYieldModifier(int i) const
 {
@@ -1665,7 +1736,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_iInternationalRouteGrowthModifier		= kResults.GetInt("InternationalRouteGrowthModifier");
 	m_iLocalHappinessPerCity				= kResults.GetInt("LocalHappinessPerCity");
 	m_iGlobalHappinessPerCity				= kResults.GetInt("GlobalHappinessPerCity");
-	m_iInternalTradeRouteYieldModifier		= kResults.GetInt("InternalTradeRouteYieldModifier");
 	m_iUnhappinessModifierForPuppetedCities = kResults.GetInt("UnhappinessModifierForPuppetedCities");
 	m_iExtraPopulation						= kResults.GetInt("ExtraPopulation");
 	m_iFaithCostModifier					= kResults.GetInt("FaithCostModifier");
@@ -1680,7 +1750,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation			= kResults.GetBool("ReligionEnhanceReformation");
 	m_iSelfReligiousPressureModifier		= kResults.GetInt("SelfReligiousPressureModifier");
-	m_iLandTradeRouteYieldBonus				= kResults.GetInt("LandTradeRouteYieldBonus");
 #endif
 	//EAP: Faith for the Natural wonder findor
 	m_iNaturalWonderFirstFinderFaith         = kResults.GetInt("NaturalWonderFirstFinderFaith");
@@ -1826,10 +1895,134 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	kUtility.SetYields(m_paiYieldFromKills, "Trait_YieldFromKills", "TraitType", szTraitType);
 #endif
 	kUtility.SetYields(m_paiYieldChangeNaturalWonder, "Trait_YieldChangesNaturalWonder", "TraitType", szTraitType);
+	kUtility.SetYields(m_paiYieldModifier, "Trait_YieldModifiers", "TraitType", szTraitType);
+	kUtility.SetYields(m_paiYieldModifier, "Trait_YieldModifiers", "TraitType", szTraitType);
+#if !defined(TRADE_REFACTOR)
 	kUtility.SetYields(m_paiYieldChangePerTradePartner, "Trait_YieldChangesPerTradePartner", "TraitType", szTraitType);
 	kUtility.SetYields(m_paiYieldChangeIncomingTradeRoute, "Trait_YieldChangesIncomingTradeRoute", "TraitType", szTraitType);
-	kUtility.SetYields(m_paiYieldModifier, "Trait_YieldModifiers", "TraitType", szTraitType);
-
+#else
+	// Trade Connection Yield Changes
+	{
+		kUtility.Initialize2DArray(m_ppiTradeConnectionLandYieldChange, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiTradeConnectionSeaYieldChange, "TradeConnections", "Yields");
+		std::string strKey("Trait_TradeConnectionYieldChange");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szQuery =
+				"SELECT TradeConnections.ID AS TradeConnectionID, Domains.ID as DomainID, Yields.ID AS YieldID, YieldTimes100 "
+				"FROM Trait_TradeConnectionYieldChange "
+				"INNER JOIN TradeConnections ON TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szQuery);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int TradeConnectionID = pResults->GetInt(0);
+			const int DomainID = pResults->GetInt(1);
+			const int YieldID = pResults->GetInt(2);
+			const int YieldTimes100 = pResults->GetInt(3);
+			if (DomainID == DOMAIN_LAND)
+				m_ppiTradeConnectionLandYieldChange[TradeConnectionID][YieldID] = YieldTimes100;
+			else if (DomainID == DOMAIN_SEA)
+				m_ppiTradeConnectionSeaYieldChange[TradeConnectionID][YieldID] = YieldTimes100;
+		}
+		pResults->Reset();
+	}
+	// Yield Changes Per Trade Partner
+	{
+		kUtility.Initialize2DArray(m_ppiYieldChangePerTradePartnerByDomain, "Domains", "Yields");
+		kUtility.InitializeArray(m_paiTradePartnerYieldFlatBonusPerEra, "Yields");
+		std::string strKey("Trait_YieldChangesPerTradePartner");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szQuery =
+				"SELECT Domains.ID AS DomainID, Yields.ID AS YieldID, YieldTimes100, EraIncreaseTimes100 "
+				"FROM Trait_YieldChangesPerTradePartner "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szQuery);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int DomainID = pResults->GetInt(0);
+			const int YieldID = pResults->GetInt(1);
+			const int YieldTimes100 = pResults->GetInt(2);
+			const int EraIncreaseTimes100 = pResults->GetInt(3);
+			m_ppiYieldChangePerTradePartnerByDomain[DomainID][YieldID] = YieldTimes100;
+			m_paiTradePartnerYieldFlatBonusPerEra[YieldID] = EraIncreaseTimes100;
+		}
+		pResults->Reset();
+	}
+	// Incoming Trade Connection Yield Changes
+	{
+		kUtility.Initialize2DArray(m_ppiIncomingTradeConnectionLandYieldChange, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiIncomingTradeConnectionSeaYieldChange, "TradeConnections", "Yields");
+		std::string strKey("Trait_IncomingTradeConnectionYieldChange");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szQuery =
+				"SELECT TradeConnections.ID AS TradeConnectionID, Domains.ID as DomainID, Yields.ID AS YieldID, YieldTimes100 "
+				"FROM Trait_IncomingTradeConnectionYieldChange "
+				"INNER JOIN TradeConnections ON TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szQuery);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int TradeConnectionID = pResults->GetInt(0);
+			const int DomainID = pResults->GetInt(1);
+			const int YieldID = pResults->GetInt(2);
+			const int YieldTimes100 = pResults->GetInt(3);
+			if (DomainID == DOMAIN_LAND)
+				m_ppiIncomingTradeConnectionLandYieldChange[TradeConnectionID][YieldID] = YieldTimes100;
+			else if (DomainID == DOMAIN_SEA)
+				m_ppiIncomingTradeConnectionSeaYieldChange[TradeConnectionID][YieldID] = YieldTimes100;
+		}
+		pResults->Reset();
+	}
+	// Trade Connection Yield Modifiers
+	{
+		kUtility.Initialize2DArray(m_ppiTradeConnectionLandYieldModifier, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiTradeConnectionSeaYieldModifier, "TradeConnections", "Yields");
+		std::string strKey("Trait_TradeConnectionYieldModifier");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szQuery =
+				"SELECT TradeConnections.ID AS TradeConnectionID, Domains.ID as DomainID, Yields.ID AS YieldID, YieldModifier "
+				"FROM Trait_TradeConnectionYieldModifier "
+				"INNER JOIN TradeConnections ON TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(strKey, szQuery);
+		}
+		pResults->Bind(1, szTraitType);
+		while (pResults->Step())
+		{
+			const int TradeConnectionID = pResults->GetInt(0);
+			const int DomainID = pResults->GetInt(1);
+			const int YieldID = pResults->GetInt(2);
+			const int YieldModifier = pResults->GetInt(3);
+			if (DomainID == DOMAIN_LAND)
+				m_ppiTradeConnectionLandYieldModifier[TradeConnectionID][YieldID] = YieldModifier;
+			else if (DomainID == DOMAIN_SEA)
+				m_ppiTradeConnectionSeaYieldModifier[TradeConnectionID][YieldID] = YieldModifier;
+		}
+		pResults->Reset();
+	}
+#endif
 	const int iNumTerrains = GC.getNumTerrainInfos();
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 	kUtility.SetYields(m_piCapitalYieldChange, "Trait_CapitalYieldChange", "TraitType", szTraitType);
@@ -3072,7 +3265,6 @@ void CvPlayerTraits::InitPlayerTraits()
 			m_iInternationalRouteGrowthModifier += trait->GetInternationalRouteGrowthModifier();
 			m_iLocalHappinessPerCity += trait->GetLocalHappinessPerCity();
 			m_iGlobalHappinessPerCity += trait->GetGlobalHappinessPerCity();
-			m_iInternalTradeRouteYieldModifier += trait->GetInternalTradeRouteYieldModifier();
 			m_iUnhappinessModifierForPuppetedCities += trait->GetUnhappinessModifierForPuppetedCities();
 			m_iExtraPopulation += trait->GetExtraPopulation();
 			m_iFaithCostModifier += trait->GetFaithCostModifier();
@@ -3087,7 +3279,6 @@ void CvPlayerTraits::InitPlayerTraits()
 #if defined(LEKMOD_v34)
 			m_bReligionEnhanceReformation = trait->IsReligionEnhanceReformation();
 			m_iSelfReligiousPressureModifier += trait->GetSelfReligiousPressureModifier();
-			m_iLandTradeRouteYieldBonus += trait->GetLandTradeRouteYieldBonus();
 #endif
 			//EAP: Natural wonder faith for the finder
 			m_iNaturalWonderFirstFinderFaith += trait->GetNaturalWonderFirstFinderFaith();
@@ -3227,8 +3418,70 @@ void CvPlayerTraits::InitPlayerTraits()
 				m_iYieldChangeStrategicResources[iYield] = trait->GetYieldChangeStrategicResources(iYield);
 				m_iYieldChangeLuxuryResources[iYield] = trait->GetYieldChangeLuxuryResources(iYield); // NQMP GJS - New Netherlands UA
 				m_iYieldChangeNaturalWonder[iYield] = trait->GetYieldChangeNaturalWonder(iYield);
+#if !defined(TRADE_REFACTOR)
 				m_iYieldChangePerTradePartner[iYield] = trait->GetYieldChangePerTradePartner(iYield);
 				m_iYieldChangeIncomingTradeRoute[iYield] = trait->GetYieldChangeIncomingTradeRoute(iYield);
+#else
+				m_iTradePartnerYieldFlatBonusPerEra[iYield] = trait->GetTradePartnerYieldFlatBonusPerEra(iYield);
+				for (int iDomain = 0; iDomain < NUM_DOMAIN_TYPES; iDomain++)
+				{
+					int iChange = trait->GetYieldChangePerTradePartnerByDomain((DomainTypes)iDomain, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiYieldChangePerTradePartnerByDomain[iDomain];
+						yields[iYield] = (m_ppaaiYieldChangePerTradePartnerByDomain[iDomain][iYield] + iChange);
+						m_ppaaiYieldChangePerTradePartnerByDomain[iDomain] = yields;
+					}
+				}
+				for (int iConnectionLoop = 0; iConnectionLoop < NUM_TRADE_CONNECTION_TYPES; iConnectionLoop++)
+				{
+					// Trade Connection Yield Change
+					int iChange = trait->GetTradeConnectionLandYieldChange((TradeConnectionType)iConnectionLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiTradeConnectionLandYieldChange[iConnectionLoop];
+						yields[iYield] = (m_ppaaiTradeConnectionLandYieldChange[iConnectionLoop][iYield] + iChange);
+						m_ppaaiTradeConnectionLandYieldChange[iConnectionLoop] = yields;
+					}
+					iChange = trait->GetTradeConnectionSeaYieldChange((TradeConnectionType)iConnectionLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiTradeConnectionSeaYieldChange[iConnectionLoop];
+						yields[iYield] = (m_ppaaiTradeConnectionSeaYieldChange[iConnectionLoop][iYield] + iChange);
+						m_ppaaiTradeConnectionSeaYieldChange[iConnectionLoop] = yields;
+					}
+					// Incoming TradeConnection Yield Change
+					iChange = trait->GetIncomingTradeConnectionLandYieldChange((TradeConnectionType)iConnectionLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiIncomingTradeConnectionLandYieldChange[iConnectionLoop];
+						yields[iYield] = (m_ppaaiIncomingTradeConnectionLandYieldChange[iConnectionLoop][iYield] + iChange);
+						m_ppaaiIncomingTradeConnectionLandYieldChange[iConnectionLoop] = yields;
+					}
+					iChange = trait->GetIncomingTradeConnectionSeaYieldChange((TradeConnectionType)iConnectionLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiIncomingTradeConnectionSeaYieldChange[iConnectionLoop];
+						yields[iYield] = (m_ppaaiIncomingTradeConnectionSeaYieldChange[iConnectionLoop][iYield] + iChange);
+						m_ppaaiIncomingTradeConnectionSeaYieldChange[iConnectionLoop] = yields;
+					}
+					// Yield Modifiers
+					iChange = trait->GetTradeConnectionLandYieldModifier((TradeConnectionType)iConnectionLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiTradeConnectionLandYieldModifier[iConnectionLoop];
+						yields[iYield] = (m_ppaaiTradeConnectionLandYieldModifier[iConnectionLoop][iYield] + iChange);
+						m_ppaaiTradeConnectionLandYieldModifier[iConnectionLoop] = yields;
+					}
+					iChange = trait->GetTradeConnectionSeaYieldModifier((TradeConnectionType)iConnectionLoop, (YieldTypes)iYield);
+					if (iChange > 0)
+					{
+						Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiTradeConnectionSeaYieldModifier[iConnectionLoop];
+						yields[iYield] = (m_ppaaiTradeConnectionSeaYieldModifier[iConnectionLoop][iYield] + iChange);
+						m_ppaaiTradeConnectionSeaYieldModifier[iConnectionLoop] = yields;
+					}
+				}
+#endif
 				m_iYieldRateModifier[iYield] = trait->GetYieldModifier(iYield);
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::InitPlayerTraits, Arrays
 				m_iYieldFromKills[iYield] = trait->GetYieldFromKills(iYield);
@@ -3596,6 +3849,15 @@ void CvPlayerTraits::Uninit()
 	m_ppaaiFreshWaterImprovementYieldChange.clear();
 	m_ppaaiNonFreshWaterImprovementYieldChange.clear();
 #endif
+#if defined(TRADE_REFACTOR)
+	m_ppaaiYieldChangePerTradePartnerByDomain.clear();
+	m_ppaaiTradeConnectionLandYieldChange.clear();
+	m_ppaaiTradeConnectionSeaYieldChange.clear();
+	m_ppaaiIncomingTradeConnectionLandYieldChange.clear();
+	m_ppaaiIncomingTradeConnectionSeaYieldChange.clear();
+	m_ppaaiTradeConnectionLandYieldModifier.clear();
+	m_ppaaiTradeConnectionSeaYieldModifier.clear();
+#endif
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 	m_ppaaiCapitalEraYieldChange.clear();
 	m_ppaaiCapitalTechYieldChange.clear();
@@ -3686,7 +3948,6 @@ void CvPlayerTraits::Reset()
 	m_iInternationalRouteGrowthModifier = 0;
 	m_iLocalHappinessPerCity = 0;
 	m_iGlobalHappinessPerCity = 0;
-	m_iInternalTradeRouteYieldModifier = 0;
 	m_iUnhappinessModifierForPuppetedCities = 0;
 	m_iExtraPopulation = 0;
 	m_iFaithCostModifier = 0; 
@@ -3701,7 +3962,6 @@ void CvPlayerTraits::Reset()
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation = false;
 	m_iSelfReligiousPressureModifier = 0;
-	m_iLandTradeRouteYieldBonus = 0;
 #endif
 	//EAP: Natural wonder faith for the finder
 	m_iNaturalWonderFirstFinderFaith = 0;
@@ -3825,6 +4085,22 @@ void CvPlayerTraits::Reset()
 	m_ppaaiGreatWorkClassYieldChange.clear();
 	m_ppaaiGreatWorkClassYieldChange.resize(GC.getNumGreatWorkClassInfos());
 #endif
+#if defined(TRADE_REFACTOR)
+	m_ppaaiTradeConnectionLandYieldChange.clear();
+	m_ppaaiTradeConnectionLandYieldChange.resize(NUM_TRADE_CONNECTION_TYPES);
+	m_ppaaiTradeConnectionSeaYieldChange.clear();
+	m_ppaaiTradeConnectionSeaYieldChange.resize(NUM_TRADE_CONNECTION_TYPES);
+	m_ppaaiYieldChangePerTradePartnerByDomain.clear();
+	m_ppaaiYieldChangePerTradePartnerByDomain.resize(NUM_DOMAIN_TYPES);
+	m_ppaaiIncomingTradeConnectionLandYieldChange.clear();
+	m_ppaaiIncomingTradeConnectionLandYieldChange.resize(NUM_TRADE_CONNECTION_TYPES);
+	m_ppaaiIncomingTradeConnectionSeaYieldChange.clear();
+	m_ppaaiIncomingTradeConnectionSeaYieldChange.resize(NUM_TRADE_CONNECTION_TYPES);
+	m_ppaaiTradeConnectionLandYieldModifier.clear();
+	m_ppaaiTradeConnectionLandYieldModifier.resize(NUM_TRADE_CONNECTION_TYPES);
+	m_ppaaiTradeConnectionSeaYieldModifier.clear();
+	m_ppaaiTradeConnectionSeaYieldModifier.resize(NUM_TRADE_CONNECTION_TYPES);
+#endif
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 	m_ppaaiCapitalEraYieldChange.clear();
 	m_ppaaiCapitalEraYieldChange.resize(GC.getNumEraInfos());
@@ -3849,8 +4125,25 @@ void CvPlayerTraits::Reset()
 		m_iYieldChangeStrategicResources[iYield] = 0;
 		m_iYieldChangeLuxuryResources[iYield] = 0; // NQMP GJS - New Netherlands UA
 		m_iYieldChangeNaturalWonder[iYield] = 0;
+#if !defined(TRADE_REFACTOR)
 		m_iYieldChangePerTradePartner[iYield] = 0;
 		m_iYieldChangeIncomingTradeRoute[iYield] = 0;
+#else
+		m_iTradePartnerYieldFlatBonusPerEra[iYield] = 0;
+		for (uint iDomain = 0; iDomain < NUM_DOMAIN_TYPES; iDomain++)
+		{
+			m_ppaaiYieldChangePerTradePartnerByDomain[iDomain] = yield;
+		}
+		for (uint iConnection = 0; iConnection < NUM_TRADE_CONNECTION_TYPES; iConnection++)
+		{
+			m_ppaaiTradeConnectionLandYieldChange[iConnection] = yield;
+			m_ppaaiTradeConnectionSeaYieldChange[iConnection] = yield;
+			m_ppaaiIncomingTradeConnectionLandYieldChange[iConnection] = yield;
+			m_ppaaiIncomingTradeConnectionSeaYieldChange[iConnection] = yield;
+			m_ppaaiTradeConnectionLandYieldModifier[iConnection] = yield;
+			m_ppaaiTradeConnectionSeaYieldModifier[iConnection] = yield;
+		}
+#endif
 		m_iYieldRateModifier[iYield] = 0;
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::Reset, Arrays
 		m_iYieldFromKills[iYield] = 0;
@@ -4607,6 +4900,51 @@ int CvPlayerTraits::GetYieldPerPopulationForeignReligion(YieldTypes eYieldType)
 	return rtnValue;
 }
 #endif
+#if defined(TRADE_REFACTOR)
+int CvPlayerTraits::GetTradeConnectionLandYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	CvAssertMsg(eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid eTradeConnection parameter in call to CvPlayerTraits::GetTradeConnectionLandYieldChange()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetTradeConnectionLandYieldChange()");
+
+	return eTradeConnection != NO_TECH ? m_ppaaiTradeConnectionLandYieldChange[(int)eTradeConnection][(int)eYield] : 0;
+}
+int CvPlayerTraits::GetTradeConnectionSeaYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	CvAssertMsg(eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid eTradeConnection parameter in call to CvPlayerTraits::GetTradeConnectionSeaYieldChange()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetTradeConnectionSeaYieldChange()");
+	return eTradeConnection != NO_TECH ? m_ppaaiTradeConnectionSeaYieldChange[(int)eTradeConnection][(int)eYield] : 0;
+}
+int CvPlayerTraits::GetYieldChangePerTradePartnerByDomain(DomainTypes eDomain, YieldTypes eYield) const
+{
+	CvAssertMsg(eDomain < NUM_DOMAIN_TYPES, "Invalid eDomain parameter in call to CvPlayerTraits::GetYieldChangePerTradePartnerByDomain()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetYieldChangePerTradePartnerByDomain()");
+	return eDomain != NO_DOMAIN ? m_ppaaiYieldChangePerTradePartnerByDomain[(int)eDomain][(int)eYield] : 0;
+}
+int CvPlayerTraits::GetIncomingTradeConnectionLandYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	CvAssertMsg(eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid eTradeConnection parameter in call to CvPlayerTraits::GetIncomingTradeConnectionLandYieldChange()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetIncomingTradeConnectionLandYieldChange()");
+	return eTradeConnection != NO_TECH ? m_ppaaiIncomingTradeConnectionLandYieldChange[(int)eTradeConnection][(int)eYield] : 0;
+}
+int CvPlayerTraits::GetIncomingTradeConnectionSeaYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	CvAssertMsg(eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid eTradeConnection parameter in call to CvPlayerTraits::GetIncomingTradeConnectionSeaYieldChange()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetIncomingTradeConnectionSeaYieldChange()");
+	return eTradeConnection != NO_TECH ? m_ppaaiIncomingTradeConnectionSeaYieldChange[(int)eTradeConnection][(int)eYield] : 0;
+}
+int CvPlayerTraits::GetTradeConnectionLandYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	CvAssertMsg(eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid eTradeConnection parameter in call to CvPlayerTraits::GetTradeConnectionLandYieldModifier()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetTradeConnectionLandYieldModifier()");
+	return eTradeConnection != NO_TECH ? m_ppaaiTradeConnectionLandYieldModifier[(int)eTradeConnection][(int)eYield] : 0;
+}
+int CvPlayerTraits::GetTradeConnectionSeaYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	CvAssertMsg(eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid eTradeConnection parameter in call to CvPlayerTraits::GetTradeConnectionSeaYieldModifier()");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetTradeConnectionSeaYieldModifier()");
+	return eTradeConnection != NO_TECH ? m_ppaaiTradeConnectionSeaYieldModifier[(int)eTradeConnection][(int)eYield] : 0;
+}
+#endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 int CvPlayerTraits::GetGreatWorkClassYieldChange(GreatWorkClass eGreatWorkClass, YieldTypes eYieldType)
 {
@@ -5345,7 +5683,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	kStream >> m_iInternationalRouteGrowthModifier;
 	kStream >> m_iLocalHappinessPerCity;
 	kStream >> m_iGlobalHappinessPerCity;
-	kStream >> m_iInternalTradeRouteYieldModifier;
 	kStream >> m_iUnhappinessModifierForPuppetedCities;
 	kStream >> m_iExtraPopulation;
 	kStream >> m_iFaithCostModifier;
@@ -5360,7 +5697,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #if defined(LEKMOD_v34)
 	kStream >> m_bReligionEnhanceReformation;
 	kStream >> m_iSelfReligiousPressureModifier;
-	kStream >> m_iLandTradeRouteYieldBonus;
 #endif
 
 	//EAP: Natural wonder faith for the finder:
@@ -5620,6 +5956,7 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	ArrayWrapper<int> kRouteMovementChangeWrapper(NUM_ROUTE_TYPES, m_iRouteMovementChange);
 	kStream >> kRouteMovementChangeWrapper;
 #endif
+#if !defined(TRADE_REFACTOR)
 	if (uiVersion >= 7)
 	{
 		ArrayWrapper<int> kYieldChangePerTradePartnerWrapper(NUM_YIELD_TYPES, m_iYieldChangePerTradePartner);
@@ -5636,7 +5973,17 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 			m_iYieldChangeIncomingTradeRoute[iYield] = 0;
 		}
 	}
-
+#else
+	ArrayWrapper<int> kTradePartnerYieldFlatBonusPerEraWrapper(NUM_YIELD_TYPES, m_iTradePartnerYieldFlatBonusPerEra);
+	kStream >> kTradePartnerYieldFlatBonusPerEraWrapper;
+	kStream >> m_ppaaiTradeConnectionLandYieldChange;
+	kStream >> m_ppaaiTradeConnectionSeaYieldChange;
+	kStream >> m_ppaaiYieldChangePerTradePartnerByDomain;
+	kStream >> m_ppaaiIncomingTradeConnectionLandYieldChange;
+	kStream >> m_ppaaiIncomingTradeConnectionSeaYieldChange;
+	kStream >> m_ppaaiTradeConnectionLandYieldModifier;
+	kStream >> m_ppaaiTradeConnectionSeaYieldModifier;
+#endif
 	CvAssert(GC.getNumTerrainInfos() == NUM_TERRAIN_TYPES);	// If this is not true, m_iStrategicResourceQuantityModifier must be resized dynamically
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, &m_iStrategicResourceQuantityModifier[0], GC.getNumTerrainInfos());
 
@@ -5872,7 +6219,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_iInternationalRouteGrowthModifier;
 	kStream << m_iLocalHappinessPerCity;
 	kStream << m_iGlobalHappinessPerCity;
-	kStream << m_iInternalTradeRouteYieldModifier;
 	kStream << m_iUnhappinessModifierForPuppetedCities;
 	kStream << m_iExtraPopulation;
 	kStream << m_iFaithCostModifier;
@@ -5887,7 +6233,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 #if defined(LEKMOD_v34)
 	kStream << m_bReligionEnhanceReformation;
 	kStream << m_iSelfReligiousPressureModifier;
-	kStream << m_iLandTradeRouteYieldBonus;
 #endif
 	//EAP: Natural wonder faith for the finder
 	
@@ -5994,8 +6339,19 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iGoldenAgeYieldModifier);
 	kStream << ArrayWrapper<int>(NUM_ROUTE_TYPES, m_iRouteMovementChange);
 #endif
+#if !defined(TRADE_REFACTOR)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldChangePerTradePartner);
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldChangeIncomingTradeRoute);
+#else
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iTradePartnerYieldFlatBonusPerEra);
+	kStream << m_ppaaiTradeConnectionLandYieldChange;
+	kStream << m_ppaaiTradeConnectionSeaYieldChange;
+	kStream << m_ppaaiYieldChangePerTradePartnerByDomain;
+	kStream << m_ppaaiIncomingTradeConnectionLandYieldChange;
+	kStream << m_ppaaiIncomingTradeConnectionSeaYieldChange;
+	kStream << m_ppaaiTradeConnectionLandYieldModifier;
+	kStream << m_ppaaiTradeConnectionSeaYieldModifier;
+#endif
 	CvInfosSerializationHelper::WriteHashedDataArray<TerrainTypes>(kStream, &m_iStrategicResourceQuantityModifier[0], GC.getNumTerrainInfos());
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes>(kStream, m_aiResourceQuantityModifier);
 #if defined(TRAITIFY)

@@ -22143,8 +22143,13 @@ int CvPlayer::getYieldFromMinorCivsTimes100(YieldTypes eYield) const
 }
 int CvPlayer::getYieldFromTraitsTimes100(YieldTypes eYield) const
 {
-	// in TRADE_REFACTOR
-	return 0;
+	int iYield = GetPlayerTraits()->GetYieldChangePerTradePartnerByDomain(DOMAIN_LAND, eYield); // This is set to LAND, since the SEA one is for display purposes.
+	if (iYield > 0)
+	{
+		iYield += GetPlayerTraits()->GetTradePartnerYieldFlatBonusPerEra(eYield) * GetCurrentEra();
+		iYield *= GetTrade()->GetNumDifferentTradingPartners();
+	}
+	return iYield;
 }
 int CvPlayer::getYieldFromReligionTimes100(YieldTypes eYield, int iPrevTotal) const
 {

@@ -1234,6 +1234,8 @@ romania and brazil traits are double counted
 #define LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD
 // First Time buying in a city with faith or gold is discounted.
 #define LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT
+// Refactor and Expand Trade Routes.
+#define TRADE_REFACTOR
 
 #define BEE
 /*

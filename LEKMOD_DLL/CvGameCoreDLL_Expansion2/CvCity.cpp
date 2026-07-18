@@ -305,6 +305,14 @@ CvCity::CvCity() :
 	, m_strName("")
 	, m_orderQueue()
 	, m_yieldChanges( NUM_YIELD_TYPES )
+#if defined(TRADE_REFACTOR)
+	, m_aaiTradeConnectionOriginLandYieldChange(0)
+	, m_aaiTradeConnectionOriginSeaYieldChange(0)
+	, m_aaiTradeConnectionDestinationLandYieldChange(0)
+	, m_aaiTradeConnectionDestinationSeaYieldChange(0)
+	, m_aaiIncomingTradeConnectionLandYieldChange(0)
+	, m_aaiIncomingTradeConnectionSeaYieldChange(0)
+#endif
 	, m_aaiBuildingSpecialistUpgradeProgresses(0)
 	, m_ppaiResourceYieldChange(0)
 	, m_ppaiFeatureYieldChange(0)
@@ -1005,7 +1013,41 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 void CvCity::uninit()
 {
 	VALIDATE_OBJECT
-
+#if defined(TRADE_REFACTOR)
+		for (int i = 0; i < NUM_TRADE_CONNECTION_TYPES; i++)
+		{
+			if (m_aaiTradeConnectionOriginLandYieldChange)
+			{
+				SAFE_DELETE_ARRAY(m_aaiTradeConnectionOriginLandYieldChange[i]);
+			}
+			if (m_aaiTradeConnectionOriginSeaYieldChange)
+			{
+				SAFE_DELETE_ARRAY(m_aaiTradeConnectionOriginSeaYieldChange[i]);
+			}
+			if (m_aaiTradeConnectionDestinationLandYieldChange)
+			{
+				SAFE_DELETE_ARRAY(m_aaiTradeConnectionDestinationLandYieldChange[i]);
+			}
+			if (m_aaiTradeConnectionDestinationSeaYieldChange)
+			{
+				SAFE_DELETE_ARRAY(m_aaiTradeConnectionDestinationSeaYieldChange[i]);
+			}
+			if (m_aaiIncomingTradeConnectionLandYieldChange)
+			{
+				SAFE_DELETE_ARRAY(m_aaiIncomingTradeConnectionLandYieldChange[i]);
+			}
+			if (m_aaiIncomingTradeConnectionSeaYieldChange)
+			{
+				SAFE_DELETE_ARRAY(m_aaiIncomingTradeConnectionSeaYieldChange[i]);
+			}
+		}
+		SAFE_DELETE_ARRAY(m_aaiTradeConnectionOriginLandYieldChange);
+		SAFE_DELETE_ARRAY(m_aaiTradeConnectionOriginSeaYieldChange);
+		SAFE_DELETE_ARRAY(m_aaiTradeConnectionDestinationLandYieldChange);
+		SAFE_DELETE_ARRAY(m_aaiTradeConnectionDestinationSeaYieldChange);
+		SAFE_DELETE_ARRAY(m_aaiIncomingTradeConnectionLandYieldChange);
+		SAFE_DELETE_ARRAY(m_aaiIncomingTradeConnectionSeaYieldChange);
+#endif
 	if(m_aaiBuildingSpecialistUpgradeProgresses)
 	{
 #ifdef AUI_WARNING_FIXES
@@ -1414,7 +1456,38 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 		}
 
 		int iJ;
-
+#if defined(TRADE_REFACTOR)
+		CvAssertMsg(m_aaiTradeConnectionOriginLandYieldChange == NULL, "about to leak memory, CvCity::m_aaiTradeConnectionOriginLandYieldChange");
+		m_aaiTradeConnectionOriginLandYieldChange = FNEW(int* [NUM_TRADE_CONNECTION_TYPES], c_eCiv5GameplayDLL, 0);
+		CvAssertMsg(m_aaiTradeConnectionOriginSeaYieldChange == NULL, "about to leak memory, CvCity::m_aaiTradeConnectionOriginSeaYieldChange");
+		m_aaiTradeConnectionOriginSeaYieldChange = FNEW(int* [NUM_TRADE_CONNECTION_TYPES], c_eCiv5GameplayDLL, 0);
+		CvAssertMsg(m_aaiTradeConnectionDestinationLandYieldChange == NULL, "about to leak memory, CvCity::m_aaiTradeConnectionDestinationLandYieldChange");
+		m_aaiTradeConnectionDestinationLandYieldChange = FNEW(int* [NUM_TRADE_CONNECTION_TYPES], c_eCiv5GameplayDLL, 0);
+		CvAssertMsg(m_aaiTradeConnectionDestinationSeaYieldChange == NULL, "about to leak memory, CvCity::m_aaiTradeConnectionDestinationSeaYieldChange");
+		m_aaiTradeConnectionDestinationSeaYieldChange = FNEW(int* [NUM_TRADE_CONNECTION_TYPES], c_eCiv5GameplayDLL, 0);
+		CvAssertMsg(m_aaiIncomingTradeConnectionLandYieldChange == NULL, "about to leak memory, CvCity::m_aaiIncomingTradeConnectionLandYieldChange");
+		m_aaiIncomingTradeConnectionLandYieldChange = FNEW(int* [NUM_TRADE_CONNECTION_TYPES], c_eCiv5GameplayDLL, 0);
+		CvAssertMsg(m_aaiIncomingTradeConnectionSeaYieldChange == NULL, "about to leak memory, CvCity::m_aaiIncomingTradeConnectionSeaYieldChange");
+		m_aaiIncomingTradeConnectionSeaYieldChange = FNEW(int* [NUM_TRADE_CONNECTION_TYPES], c_eCiv5GameplayDLL, 0);
+		for (iI = 0; iI < NUM_TRADE_CONNECTION_TYPES; iI++)
+		{
+			m_aaiTradeConnectionOriginLandYieldChange[iI] = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+			m_aaiTradeConnectionOriginSeaYieldChange[iI] = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+			m_aaiTradeConnectionDestinationLandYieldChange[iI] = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+			m_aaiTradeConnectionDestinationSeaYieldChange[iI] = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+			m_aaiIncomingTradeConnectionLandYieldChange[iI] = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+			m_aaiIncomingTradeConnectionSeaYieldChange[iI] = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+			for (iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
+			{
+				m_aaiTradeConnectionOriginLandYieldChange[iI][iJ] = 0;
+				m_aaiTradeConnectionOriginSeaYieldChange[iI][iJ] = 0;
+				m_aaiTradeConnectionDestinationLandYieldChange[iI][iJ] = 0;
+				m_aaiTradeConnectionDestinationSeaYieldChange[iI][iJ] = 0;
+				m_aaiIncomingTradeConnectionLandYieldChange[iI][iJ] = 0;
+				m_aaiIncomingTradeConnectionSeaYieldChange[iI][iJ] = 0;
+			}
+		}
+#endif
 #ifdef AUI_WARNING_FIXES
 		uint iNumBuildingInfos = GC.getNumBuildingInfos();
 #else
@@ -3810,6 +3883,80 @@ void CvCity::ChangeResourceClassExtraYield(ResourceClassTypes eClass, YieldTypes
 		}
 
 		updateYield();
+	}
+}
+#endif
+#if defined(TRADE_REFACTOR)
+int CvCity::GetTradeConnectionOriginLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	return eTradeConnection != NO_TRADE_CONNECTION ? m_aaiTradeConnectionOriginLandYieldChange[eTradeConnection][eYield] : 0;
+}
+int CvCity::GetTradeConnectionOriginSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	return eTradeConnection != NO_TRADE_CONNECTION ? m_aaiTradeConnectionOriginSeaYieldChange[eTradeConnection][eYield] : 0;
+}
+void CvCity::ChangeTradeConnectionOriginExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange)
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	if (iChange != 0)
+	{
+		bSea ? m_aaiTradeConnectionOriginSeaYieldChange[eTradeConnection][eYield] += iChange : m_aaiTradeConnectionOriginLandYieldChange[eTradeConnection][eYield] += iChange;
+	}
+}
+int CvCity::GetTradeConnectionDestLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	return eTradeConnection != NO_TRADE_CONNECTION ? m_aaiTradeConnectionDestinationLandYieldChange[eTradeConnection][eYield] : 0;
+}
+int CvCity::GetTradeConnectionDestSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	return eTradeConnection != NO_TRADE_CONNECTION ? m_aaiTradeConnectionDestinationSeaYieldChange[eTradeConnection][eYield] : 0;
+}
+void CvCity::ChangeTradeConnectionDestExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange)
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	if (iChange != 0)
+	{
+		bSea ? m_aaiTradeConnectionDestinationSeaYieldChange[eTradeConnection][eYield] += iChange : m_aaiTradeConnectionDestinationLandYieldChange[eTradeConnection][eYield] += iChange;
+	}
+}
+int CvCity::GetIncomingTradeConnectionLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	return eTradeConnection != NO_TRADE_CONNECTION ? m_aaiIncomingTradeConnectionLandYieldChange[eTradeConnection][eYield] : 0;
+}
+int CvCity::GetIncomingTradeConnectionSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	return eTradeConnection != NO_TRADE_CONNECTION ? m_aaiIncomingTradeConnectionSeaYieldChange[eTradeConnection][eYield] : 0;
+}
+void CvCity::ChangeIncomingTradeConnectionExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange)
+{
+	VALIDATE_OBJECT;
+	CvAssertMsg(eTradeConnection >= 0 && eTradeConnection < NUM_TRADE_CONNECTION_TYPES, "Invalid trade connection type.");
+	CvAssertMsg(eYield >= 0 && eYield < NUM_YIELD_TYPES, "Invalid yield index.");
+	if (iChange != 0)
+	{
+		bSea ? m_aaiIncomingTradeConnectionSeaYieldChange[eTradeConnection][eYield] += iChange : m_aaiIncomingTradeConnectionLandYieldChange[eTradeConnection][eYield] += iChange;
 	}
 }
 #endif
@@ -8208,6 +8355,29 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 				ChangeResourceClassExtraYield(((ResourceClassTypes)iJ), eYield, (GC.getBuildingInfo(eBuilding)->GetResourceClassYieldChange(iJ, eYield) * iChange));
 			}
 #endif
+#if defined(TRADE_REFACTOR)
+			for (int iJ = 0; iJ < NUM_TRADE_CONNECTION_TYPES; iJ++)
+			{
+				TradeConnectionType eTradeConnection = (TradeConnectionType)iJ;
+				// Legacy Stuff
+				if (eTradeConnection == TRADE_CONNECTION_INTERNATIONAL && eYield == YIELD_GOLD)
+				{
+					ChangeTradeConnectionOriginExtraYield(eTradeConnection, eYield, false /*bSea*/, ((GC.getBuildingInfo(eBuilding)->GetTradeRouteLandGoldBonus()) * iChange));
+					ChangeTradeConnectionOriginExtraYield(eTradeConnection, eYield, true /*bSea*/, ((GC.getBuildingInfo(eBuilding)->GetTradeRouteSeaGoldBonus()) * iChange));
+					ChangeIncomingTradeConnectionExtraYield(eTradeConnection, eYield, false /*bSea*/, ((GC.getBuildingInfo(eBuilding)->GetTradeRouteTargetBonus() * 100) * iChange)); // Not Times100 in XML
+					ChangeTradeConnectionDestExtraYield(eTradeConnection, eYield, false /*bSea*/, ((GC.getBuildingInfo(eBuilding)->GetTradeRouteRecipientBonus() * 100) * iChange)); // Not Times100 in XML
+					ChangeIncomingTradeConnectionExtraYield(eTradeConnection, eYield, true /*bSea*/, ((GC.getBuildingInfo(eBuilding)->GetTradeRouteTargetBonus() * 100) * iChange)); // Not Times100 in XML
+					ChangeTradeConnectionDestExtraYield(eTradeConnection, eYield, true /*bSea*/, ((GC.getBuildingInfo(eBuilding)->GetTradeRouteRecipientBonus() * 100) * iChange)); // Not Times100 in XML
+				}
+				// New Stuff
+				ChangeTradeConnectionOriginExtraYield(eTradeConnection, eYield, false /*bSea*/, (GC.getBuildingInfo(eBuilding)->GetTradeConnectionOriginLandYieldChange(iJ, eYield) * iChange));
+				ChangeTradeConnectionOriginExtraYield(eTradeConnection, eYield, true /*bSea*/, (GC.getBuildingInfo(eBuilding)->GetTradeConnectionOriginSeaYieldChange(iJ, eYield) * iChange));
+				ChangeTradeConnectionDestExtraYield(eTradeConnection, eYield, false /*bSea*/, (GC.getBuildingInfo(eBuilding)->GetTradeConnectionDestinationLandYieldChange(iJ, eYield) * iChange));
+				ChangeTradeConnectionDestExtraYield(eTradeConnection, eYield, true /*bSea*/, (GC.getBuildingInfo(eBuilding)->GetTradeConnectionDestinationSeaYieldChange(iJ, eYield) * iChange));
+				ChangeIncomingTradeConnectionExtraYield(eTradeConnection, eYield, false /*bSea*/, (GC.getBuildingInfo(eBuilding)->GetIncomingTradeConnectionLandYieldChange(iJ, eYield) * iChange));
+				ChangeIncomingTradeConnectionExtraYield(eTradeConnection, eYield, true /*bSea*/, (GC.getBuildingInfo(eBuilding)->GetIncomingTradeConnectionSeaYieldChange(iJ, eYield) * iChange));
+			}
+#endif
 			//for(int iJ = 0; iJ < GC.getNumResourceInfos(); iJ++)
 			//{
 			//	ChangeResourceExtraYield(((ResourceTypes)iJ), eYield, (GC.getBuildingInfo(eBuilding)->GetResourceYieldChangeGlobal(iJ, eYield) * iChange));
@@ -10000,7 +10170,7 @@ int CvCity::getJONSCulturePerTurnTimes100() const
 	iCulture /= 100;
 #endif
 #else
-		iCulture = getYieldRateTimes100(YIELD_CULTURE, false /*bIgnoreTrade*/);
+	iCulture = getYieldRateTimes100(YIELD_CULTURE, false /*bIgnoreTrade*/);
 #endif
 	return iCulture;
 }
@@ -13065,38 +13235,13 @@ int CvCity::GetTradeYieldModifier(YieldTypes eIndex, CvString* toolTipSink) cons
 	{
 		if (iReturnValue != 0)
 		{
-			switch (eIndex)
+			CvYieldInfo* pkYieldInfo = GC.getYieldInfo(eIndex);
+			if (pkYieldInfo)
 			{
-			case YIELD_FOOD:
+				CvString strBuffer;
+				strBuffer = GetLocalizedText("TXT_KEY_CITY_TRADE_YIELD", iReturnValue / 100.0f, pkYieldInfo->getIconString());
 				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_FOOD_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-			case YIELD_PRODUCTION:
-				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_PRODUCTION_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-			case YIELD_GOLD:
-				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_GOLD_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-			case YIELD_SCIENCE:
-				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_SCIENCE_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-			case YIELD_CULTURE:
-				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_CULTURE_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-			case YIELD_FAITH:
-				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_FAITH_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-#if defined(LEKMOD_v34) // Golden Age Points as a Yield does not exist without v34
-			case YIELD_GOLDEN_AGE_POINTS:
-				*toolTipSink += "[NEWLINE][BULLET]";
-				*toolTipSink += GetLocalizedText("TXT_KEY_GOLDEN_AGE_POINTS_FROM_TRADE_ROUTES", iReturnValue / 100.0f);
-				break;
-#endif
+				*toolTipSink += strBuffer;
 			}
 		}
 	}
@@ -13871,7 +14016,7 @@ void CvCity::updateStrengthValue()
 }
 
 //	--------------------------------------------------------------------------------
-int CvCity::getStrengthValue(bool bForRangeStrike) const
+int CvCity::getStrengthValue(bool bForRangeStrike, CvString* tooltipSink) const
 {
 	VALIDATE_OBJECT
 	// Strike strikes are weaker

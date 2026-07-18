@@ -149,6 +149,12 @@ CvBeliefEntry::CvBeliefEntry() :
 	m_piResourceHappiness(NULL),
 	m_piYieldChangeAnySpecialist(NULL),
 	m_piYieldChangeTradeRoute(NULL),
+#if defined(TRADE_REFACTOR)
+	m_ppiTradeConnectionOriginLandYieldChange(NULL),
+	m_ppiTradeConnectionOriginSeaYieldChange(NULL),
+	m_ppiIncomingTradeConnectionLandYieldChange(NULL),
+	m_ppiIncomingTradeConnectionSeaYieldChange(NULL),
+#endif
 	m_piYieldChangeNaturalWonder(NULL),
 	m_piYieldChangeWorldWonder(NULL),
 	m_piYieldModifierNaturalWonder(NULL),
@@ -761,7 +767,42 @@ int CvBeliefEntry::GetYieldChangeTradeRoute(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_piYieldChangeTradeRoute ? m_piYieldChangeTradeRoute[i] : -1;
 }
-
+#if defined(TRADE_REFACTOR)
+// Yield for SENDER if creating a Trade Route from a city with this belief
+int CvBeliefEntry::GetTradeConnectionOriginLandYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionOriginLandYieldChange ? m_ppiTradeConnectionOriginLandYieldChange[i][j] : 0;
+}
+int CvBeliefEntry::GetTradeConnectionOriginSeaYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionOriginSeaYieldChange ? m_ppiTradeConnectionOriginSeaYieldChange[i][j] : 0;
+}
+// Yield for the SENDER if they send a Trade Route to a city with this belief, if international, else to RECEIVER city.
+int CvBeliefEntry::GetIncomingTradeConnectionLandYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiIncomingTradeConnectionLandYieldChange ? m_ppiIncomingTradeConnectionLandYieldChange[i][j] : 0;
+}
+int CvBeliefEntry::GetIncomingTradeConnectionSeaYieldChange(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiIncomingTradeConnectionSeaYieldChange ? m_ppiIncomingTradeConnectionSeaYieldChange[i][j] : 0;
+}
+#endif
 /// Yield boost from a natural wonder
 int CvBeliefEntry::GetYieldChangeNaturalWonder(int i) const
 {
@@ -928,7 +969,67 @@ bool CvBeliefEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	kUtility.PopulateArrayByValue(m_piResourceQuantityModifiers, "Resources", "Belief_ResourceQuantityModifiers", "ResourceType", "BeliefType", szBeliefType, "ResourceQuantityModifier");
 	kUtility.PopulateArrayByValue(m_paiBuildingClassHappiness, "BuildingClasses", "Belief_BuildingClassHappiness", "BuildingClassType", "BeliefType", szBeliefType, "Happiness");
 	kUtility.PopulateArrayByValue(m_paiBuildingClassTourism, "BuildingClasses", "Belief_BuildingClassTourism", "BuildingClassType", "BeliefType", szBeliefType, "Tourism");
-#if !defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+#if defined(TRADE_REFACTOR)
+	{
+		kUtility.Initialize2DArray(m_ppiTradeConnectionOriginLandYieldChange, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiTradeConnectionOriginSeaYieldChange, "TradeConnections", "Yields");
+		std::string strKey("Belief_TradeConnectionOriginYieldChanges");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey, 
+				"SELECT TradeConnections.ID as TradeConnectionsID, Domains.ID as DomainID, Yields.ID as YieldID, YieldTimes100 "
+				"FROM Belief_TradeConnectionOriginYieldChanges "
+				"INNER JOIN TradeConnections on TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains on Domains.Type = DomainType "
+				"INNER JOIN Yields on Yields.Type = YieldType "
+				"WHERE BeliefType = ? ");
+		}
+		pResults->Bind(1, szBeliefType);
+		while (pResults->Step())
+		{
+			const int TradeConnectionsID = pResults->GetInt(0);
+			const int domainID = pResults->GetInt(1);
+			const int YieldID = pResults->GetInt(2);
+			const int yieldTimes100 = pResults->GetInt(3);
+			if (DOMAIN_LAND == domainID)
+				m_ppiTradeConnectionOriginLandYieldChange[TradeConnectionsID][YieldID] = yieldTimes100;
+			else if (DOMAIN_SEA == domainID)
+				m_ppiTradeConnectionOriginSeaYieldChange[TradeConnectionsID][YieldID] = yieldTimes100;
+		}
+		pResults->Reset();
+	}
+	{
+		kUtility.Initialize2DArray(m_ppiIncomingTradeConnectionLandYieldChange, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiIncomingTradeConnectionSeaYieldChange, "TradeConnections", "Yields");
+		std::string strKey("Belief_IncomingTradeConnectionYieldChanges");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey,
+				"SELECT TradeConnections.ID as TradeConnectionsID, Domains.ID as DomainID, Yields.ID as YieldID, YieldTimes100 "
+				"FROM Belief_IncomingTradeConnectionYieldChanges "
+				"INNER JOIN TradeConnections on TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains on Domains.Type = DomainType "
+				"INNER JOIN Yields on Yields.Type = YieldType "
+				"WHERE BeliefType = ? ");
+		}
+		pResults->Bind(1, szBeliefType);
+		while (pResults->Step())
+		{
+			const int TradeConnectionsID = pResults->GetInt(0);
+			const int domainID = pResults->GetInt(1);
+			const int YieldID = pResults->GetInt(2);
+			const int yieldTimes100 = pResults->GetInt(3);
+			if (DOMAIN_LAND == domainID)
+				m_ppiIncomingTradeConnectionLandYieldChange[TradeConnectionsID][YieldID] = yieldTimes100;
+			else if (DOMAIN_SEA == domainID)
+				m_ppiIncomingTradeConnectionSeaYieldChange[TradeConnectionsID][YieldID] = yieldTimes100;
+		}
+		pResults->Reset();
+	}
+#endif
+	#if !defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
 	kUtility.PopulateArrayByValue(m_paiYieldChangePerXForeignFollowers, "Yields", "Belief_YieldChangePerXForeignFollowers", "YieldType", "BeliefType", szBeliefType, "ForeignFollowers");
 #else
 	//Gold had an Integer value, so cram it into the table.
@@ -2104,7 +2205,70 @@ int CvReligionBeliefs::GetYieldChangeTradeRoute(YieldTypes eYieldType) const
 
 	return rtnValue;
 }
+#if defined(TRADE_REFACTOR)
+// Yield for SENDER if creating a Trade Route from a city with this belief
+int CvReligionBeliefs::GetTradeConnectionOriginLandYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const
+{
+	CvBeliefXMLEntries* pBeliefs = GC.GetGameBeliefs();
+	int rtnValue = 0;
 
+	for (int i = 0; i < pBeliefs->GetNumBeliefs(); i++)
+	{
+		if (HasBelief((BeliefTypes)i))
+		{
+			rtnValue += pBeliefs->GetEntry(i)->GetTradeConnectionOriginLandYieldChange(eConnection, eYield);
+		}
+	}
+
+	return rtnValue;
+}
+int CvReligionBeliefs::GetTradeConnectionOriginSeaYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const
+{
+	CvBeliefXMLEntries* pBeliefs = GC.GetGameBeliefs();
+	int rtnValue = 0;
+
+	for (int i = 0; i < pBeliefs->GetNumBeliefs(); i++)
+	{
+		if (HasBelief((BeliefTypes)i))
+		{
+			rtnValue += pBeliefs->GetEntry(i)->GetTradeConnectionOriginSeaYieldChange(eConnection, eYield);
+		}
+	}
+
+	return rtnValue;
+}
+// Yield for the SENDER if they send a Trade Route to a city with this belief, if international, else to RECEIVER city.
+int CvReligionBeliefs::GetIncomingTradeConnectionLandYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const
+{
+	CvBeliefXMLEntries* pBeliefs = GC.GetGameBeliefs();
+	int rtnValue = 0;
+
+	for (int i = 0; i < pBeliefs->GetNumBeliefs(); i++)
+	{
+		if (HasBelief((BeliefTypes)i))
+		{
+			rtnValue += pBeliefs->GetEntry(i)->GetIncomingTradeConnectionLandYieldChange(eConnection, eYield);
+		}
+	}
+
+	return rtnValue;
+}
+int CvReligionBeliefs::GetIncomingTradeConnectionSeaYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const
+{
+	CvBeliefXMLEntries* pBeliefs = GC.GetGameBeliefs();
+	int rtnValue = 0;
+
+	for (int i = 0; i < pBeliefs->GetNumBeliefs(); i++)
+	{
+		if (HasBelief((BeliefTypes)i))
+		{
+			rtnValue += pBeliefs->GetEntry(i)->GetIncomingTradeConnectionSeaYieldChange(eConnection, eYield);
+		}
+	}
+
+	return rtnValue;
+}
+#endif
 /// Get yield change from beliefs for a natural wonder
 int CvReligionBeliefs::GetYieldChangeNaturalWonder(YieldTypes eYieldType) const
 {

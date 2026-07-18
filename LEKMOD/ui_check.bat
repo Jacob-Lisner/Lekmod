@@ -199,8 +199,6 @@ copy /y "%patchfolder%\Lua\tmp\ui\InGame.lua.ignore" "%patchfolder%\Lua\UI\InGam
 copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.lua.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.xml.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.xml" > nul
 REM --------------------------------------------------------------------------------------------------
-copy /y "%patchfolder%\Lua\tmp\ui\mountain.lua.ignore" "%patchfolder%\Lua\UI\mountain.lua" > nul
-REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\prophetreplace.lua.ignore" "%patchfolder%\Lua\UI\prophetreplace.lua" > nul
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\Improvements\YieldIconManager.lua" (
@@ -216,4 +214,13 @@ IF NOT EXIST "%euifolder%\TopPanel\TopPanel.lua" (
   copy /y "%patchfolder%\Lua\tmp\eui\TopPanel.xml.ignore" "%patchfolder%\Lua\UI\TopPanel.xml" > nul
 )
 REM --------------------------------------------------------------------------------------------------
+IF NOT EXIST "%euifolder%\Improvements\SocialPolicyPopup.lua" (
+  copy /y "%patchfolder%\Lua\tmp\ui\ToolTips\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
+) ELSE (
+  copy /y "%patchfolder%\Lua\tmp\eui\Improvements\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
+)
+copy /y "%patchfolder%\Lua\tmp\ui\Popups\ChooseInternationalTradeRoutePopup.lua.ignore" "%patchfolder%\Lua\UI\ChooseInternationalTradeRoutePopup.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\Popups\TradeRouteOverview.lua.ignore" "%patchfolder%\Lua\UI\TradeRouteOverview.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\ToolTips\TradeRouteHelpers.lua.ignore" "%patchfolder%\Lua\UI\TradeRouteHelpers.lua" > nul
+
 EXIT

@@ -154,7 +154,17 @@ public:
 #if defined(MISC_CHANGES) // CvCity resource class yield changes
 	void ChangeResourceClassExtraYield(ResourceClassTypes eResourceClass, YieldTypes eYield, int iChange);
 #endif
-
+#if defined(TRADE_REFACTOR) // :)) Trade Connection extra yields
+	int GetTradeConnectionOriginLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionOriginSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	void ChangeTradeConnectionOriginExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange);
+	int GetTradeConnectionDestLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionDestSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	void ChangeTradeConnectionDestExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange);
+	int GetIncomingTradeConnectionLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetIncomingTradeConnectionSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	void ChangeIncomingTradeConnectionExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange);
+#endif
 	int GetFeatureExtraYield(FeatureTypes eFeature, YieldTypes eYield) const;
 	void ChangeFeatureExtraYield(FeatureTypes eFeature, YieldTypes eYield, int iChange);
 
@@ -804,7 +814,17 @@ public:
 	int GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const;
 #endif
 	void updateStrengthValue();
-	int getStrengthValue(bool bForRangeStrike = false) const;
+	int getStrengthValue(bool bForRangeStrike = false, CvString* toolTipSink = NULL) const;
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	int getBaseStrengthValue() const;
+	void SetBaseStrengthValue(int iValue);
+	int getStrengthFromBuildings() const;
+	void SetStrengthFromBuildings(int iValue);
+	int getStrengthFromTechnology() const;
+	void SetStrengthFromTechnology(int iValue);
+	int getStrengthFromGarrison() const;
+	void SetStrengthFromGarrison(int iValue);
+#endif
 	int GetPower() const;
 
 	int getDamage() const;
@@ -980,6 +1000,8 @@ public:
 	void			setCombatUnit(CvUnit* pUnit, bool bAttacking = false);
 	void			clearCombat();
 	bool			isFighting() const;
+	int				getMaxXPValue() const;
+	bool			canEarnGlobalXP() const;
 	///
 	bool HasBuilding(BuildingTypes iBuildingType) const;
 	bool HasBuildingClass(BuildingClassTypes iBuildingClassType) const;
@@ -1160,7 +1182,14 @@ protected:
 	mutable FFastSmallFixedList< OrderData, 25, true, c_eCiv5GameplayDLL > m_orderQueue;
 
 	vector<SCityExtraYields> m_yieldChanges; //[NUM_YIELD_TYPES]
-
+#if defined(TRADE_REFACTOR)
+	int** m_aaiTradeConnectionOriginLandYieldChange;
+	int** m_aaiTradeConnectionOriginSeaYieldChange;
+	int** m_aaiTradeConnectionDestinationLandYieldChange;
+	int** m_aaiTradeConnectionDestinationSeaYieldChange;
+	int** m_aaiIncomingTradeConnectionLandYieldChange;
+	int** m_aaiIncomingTradeConnectionSeaYieldChange;
+#endif
 	int** m_aaiBuildingSpecialistUpgradeProgresses;
 	int** m_ppaiResourceYieldChange;
 	int** m_ppaiFeatureYieldChange;
