@@ -34,6 +34,20 @@
 		</Row>
 		<!-- END VERSION -->
 
+
+		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC">
+			<Text>[ICON_GREAT_MUSICIAN] ScrambleForAfricaMusic</Text>
+		</Replace>
+		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC_SCRAMBLE">
+			<Text>[ICON_GREAT_MUSICIAN] ScrambleForAfricaMusic</Text>
+		</Replace>
+		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC_EXP2">
+			<Text>[ICON_GREAT_MUSICIAN] Terra Nova</Text>
+		</Replace>
+		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC_TT">
+			<Text>Click to change menu music.</Text>
+		</Replace>
+
 		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY">
 			<Text>Wealthy</Text>
 		</Row>

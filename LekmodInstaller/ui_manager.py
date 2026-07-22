@@ -193,6 +193,8 @@ class UIManager:
             "CultureOverview/CultureOverview.xml",
             "FrontEnd/EULA.lua",
             "FrontEnd/FrontEnd.lua",  # Main menu!
+            "FrontEnd/MainMenu.lua",
+            "FrontEnd/MainMenu.xml",
             "GPList/GPList.lua",
             "GPList/GPList.xml",
             "LeaderHead/SimpleDiploTrade.lua",

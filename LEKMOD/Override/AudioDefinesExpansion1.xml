@@ -8,6 +8,11 @@
 			<Filename>ScrambleForAfricaMusic</Filename>
 			<LoadType>STREAMED</LoadType>
 		</SoundData>
+		<SoundData>
+			<SoundID>SND_MUSIC_MAIN_MENU_LEK_EXP2</SoundID>
+			<Filename>OpeningMenu_Exp2</Filename>
+			<LoadType>STREAMED</LoadType>
+		</SoundData>
 		<!-- Civilization Music -->
 		<SoundData>
 			<SoundID>SND_LEADER_MUSIC_VENEZ_PEACE</SoundID>

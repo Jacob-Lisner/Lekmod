@@ -71,6 +71,8 @@ IF NOT EXIST "%euifolder%\EconomicGeneralInfo.lua" (
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\EULA.lua.ignore" "%patchfolder%\Lua\UI\EULA.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\FrontEnd.lua.ignore" "%patchfolder%\Lua\UI\FrontEnd.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\MainMenu.lua.ignore" "%patchfolder%\Lua\UI\MainMenu.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\MainMenu.xml.ignore" "%patchfolder%\Lua\UI\MainMenu.xml" > nul
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\GameSetup\SelectCivilization.lua" (
   copy /y "%patchfolder%\Lua\tmp\ui\GameSetup\SelectCivilization.lua.ignore" "%patchfolder%\Lua\UI\SelectCivilization.lua" > nul
