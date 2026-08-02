@@ -3250,8 +3250,10 @@ void CvCityBuildings::Read(FDataStream& kStream)
 
 	kStream >> m_bSoldBuildingThisTurn;
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	BuildingArrayHelpers::Read(kStream, m_paiSameLandMassYieldChange);
-	BuildingArrayHelpers::Read(kStream, m_paiDifferentLandMassYieldChange);
+	ArrayWrapper<int> kSameLandMassYieldChangeWrapper(NUM_YIELD_TYPES, m_paiSameLandMassYieldChange);
+	kStream >> kSameLandMassYieldChangeWrapper;
+	ArrayWrapper<int> kDifferentLandMassYieldChangeWrapper(NUM_YIELD_TYPES, m_paiDifferentLandMassYieldChange);
+	kStream >> kDifferentLandMassYieldChangeWrapper;
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	kStream >> m_aaiCityGreatWorkClassYieldChange;
@@ -3305,8 +3307,8 @@ void CvCityBuildings::Write(FDataStream& kStream)
 #pragma warning ( pop )
 #endif//_MSC_VER
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
-	BuildingArrayHelpers::Write(kStream, m_paiSameLandMassYieldChange, iNumBuildings);
-	BuildingArrayHelpers::Write(kStream, m_paiDifferentLandMassYieldChange, iNumBuildings);
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_paiSameLandMassYieldChange);
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_paiDifferentLandMassYieldChange);
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	kStream << m_aaiCityGreatWorkClassYieldChange;

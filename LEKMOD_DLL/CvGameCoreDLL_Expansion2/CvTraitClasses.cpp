@@ -6122,8 +6122,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	kStream >> m_ppaaiCityTechYieldChange;
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
-	ArrayWrapper<int> kGreatWorkYieldChangeWrapper(NUM_YIELD_TYPES, m_iWorldWonderYieldChange);
-	kStream >> kGreatWorkYieldChangeWrapper;
 	kStream >> m_ppaaiGreatWorkClassYieldChange;
 #endif
 	if (uiVersion >= 11)

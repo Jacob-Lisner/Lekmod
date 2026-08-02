@@ -29348,6 +29348,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiNumResourceTotal);
 #ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiMinorStrategicResourceFromBuildings);
+#else
+	std::vector<int> vDiscardMinorStrategicFromBuildings;
+	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, vDiscardMinorStrategicFromBuildings);
 #endif
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceGiftedToMinors);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceExport);

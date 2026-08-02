@@ -12652,8 +12652,11 @@ int CvCity::getYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const
 	{
 		CvAssertMsg(eIndex != YIELD_PRODUCTION, "GAMEPLAY: should not be trying to convert Production into Production via process.");
 
-		int iProcessYield = getYieldRateTimes100(YIELD_PRODUCTION, false) * getProductionToYieldModifier(eIndex) / 100;
-		iModifiedYield += iProcessYield;
+		if (eIndex != YIELD_PRODUCTION)
+		{
+			int iProcessYield = getYieldRateTimes100(YIELD_PRODUCTION, false) * getProductionToYieldModifier(eIndex) / 100;
+			iModifiedYield += iProcessYield;
+		}
 	}
 	if (!bIgnoreTrade)
 	{
