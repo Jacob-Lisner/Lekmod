@@ -453,6 +453,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(UpdateStrengthValue);
 	Method(GetStrengthValue);
+	Method(GetCityCombatModifierList);
 
 	Method(GetDamage);
 	Method(SetDamage);
@@ -3653,36 +3654,25 @@ int CvLuaCity::lIsFreePromotion(lua_State* L)
 //int getSpecialistFreeExperience();
 int CvLuaCity::lGetSpecialistFreeExperience(lua_State* L)
 {
-#ifdef DEL_RANGED_COUNTERATTACKS
-	return BasicLuaMethod(L, &CvCity::getSpecialistFreeExperience);
-#else
 	CvCity* pkCity = GetInstance(L);
 	const int iResult = pkCity->getSpecialistFreeExperience();
 
 	lua_pushinteger(L, iResult);
 	return 1;
-#endif
 }
 //------------------------------------------------------------------------------
 //void updateStrengthValue();
 int CvLuaCity::lUpdateStrengthValue(lua_State* L)
 {
-#ifdef DEL_RANGED_COUNTERATTACKS
-	return BasicLuaMethod(L, &CvCity::updateStrengthValue);
-#else
 	CvCity* pkCity = GetInstance(L);
 	pkCity->updateStrengthValue();
 
 	return 1;
-#endif
 }
 //------------------------------------------------------------------------------
 //int getStrengthValue();
 int CvLuaCity::lGetStrengthValue(lua_State* L)
 {
-#ifdef DEL_RANGED_COUNTERATTACKS
-	return BasicLuaMethod(L, &CvCity::getStrengthValue);
-#else
 	CvCity* pkCity = GetInstance(L);
 #ifdef CORRECT_ATTACK_CITY_STRENGTH
 	const bool bForRangeStrike = lua_toboolean(L, 2);
@@ -3693,21 +3683,51 @@ int CvLuaCity::lGetStrengthValue(lua_State* L)
 
 	lua_pushinteger(L, iResult);
 	return 1;
-#endif
+}
+int CvLuaCity::lGetCityCombatModifierList(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	const bool bForRangeStrike = lua_toboolean(L, 2);
+
+	CvCombatModifierList kList;
+	pkCity->getStrengthValue(bForRangeStrike, &kList);
+
+	const std::vector<CvCombatModifierEntry>& kEntries = kList.m_kEntries;
+
+	lua_createtable(L, static_cast<int>(kEntries.size()), 0);
+
+	for (size_t i = 0; i < kEntries.size(); ++i)
+	{
+		const CvCombatModifierEntry& kEntry = kEntries[i];
+
+		lua_createtable(L, 0, 4);
+
+		lua_pushstring(L, kEntry.m_strText.c_str());
+		lua_setfield(L, -2, "Text");
+
+		lua_pushinteger(L, kEntry.m_iModifier);
+		lua_setfield(L, -2, "Value");
+
+		lua_pushboolean(L, kEntry.m_bPercent);
+		lua_setfield(L, -2, "IsPercent");
+
+		lua_pushboolean(L, kEntry.m_bMiscellaneous);
+		lua_setfield(L, -2, "IsMiscellaneous");
+
+		lua_rawseti(L, -2, static_cast<int>(i) + 1);
+	}
+
+	return 1;
 }
 //------------------------------------------------------------------------------
 //int getDamage();
 int CvLuaCity::lGetDamage(lua_State* L)
 {
-#ifdef DEL_RANGED_COUNTERATTACKS
-	return BasicLuaMethod(L, &CvCity::getDamage);
-#else
 	CvCity* pkCity = GetInstance(L);
 	const int iResult = pkCity->getDamage();
 
 	lua_pushinteger(L, iResult);
 	return 1;
-#endif
 }
 //------------------------------------------------------------------------------
 //void setDamage(int iValue);
@@ -3725,15 +3745,11 @@ int CvLuaCity::lChangeDamage(lua_State* L)
 //int GetMaxHitPoints();
 int CvLuaCity::lGetMaxHitPoints(lua_State* L)
 {
-#ifdef DEL_RANGED_COUNTERATTACKS
-	return BasicLuaMethod(L, &CvCity::GetMaxHitPoints);
-#else
 	CvCity* pkCity = GetInstance(L);
 	const int iResult = pkCity->GetMaxHitPoints();
 
 	lua_pushinteger(L, iResult);
 	return 1;
-#endif
 }
 //------------------------------------------------------------------------------
 //bool CanRangeStrike()

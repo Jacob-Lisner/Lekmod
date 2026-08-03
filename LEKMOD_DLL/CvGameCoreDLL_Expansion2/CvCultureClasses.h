@@ -32,6 +32,9 @@ public:
 	int m_iTurnFounded;
 	EraTypes m_eEra;
 	PlayerTypes m_ePlayer;
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	std::vector<int> m_viYield;
+#endif
 };
 
 FDataStream& operator>>(FDataStream&, CvGreatWork&);
@@ -59,11 +62,7 @@ public:
 
 	// Great Works
 	int CreateGreatWork(GreatWorkType eType, GreatWorkClass eClassType, PlayerTypes ePlayer, EraTypes eEra, CvString szCreator);
-#ifdef AUI_WARNING_FIXES
-	uint GetNumGreatWorks() const
-#else
 	int GetNumGreatWorks() const
-#endif
 	{
 		return m_CurrentGreatWorks.size();
 	}
@@ -134,21 +133,13 @@ class CvGreatWorkInMyEmpire
 {
 public:
 	CvGreatWorkInMyEmpire();
-#ifdef AUI_WARNING_FIXES
-	CvGreatWorkInMyEmpire(int iIndex, int iCityID, BuildingTypes eBuilding, uint iSlot, PlayerTypes ePlayer, EraTypes eEra);
-#else
 	CvGreatWorkInMyEmpire(int iIndex, int iCityID, BuildingTypes eBuilding, int iSlot, PlayerTypes ePlayer, EraTypes eEra);
-#endif
 
 	// Public data
 	int m_iGreatWorkIndex;
 	int m_iCityID;
 	BuildingTypes m_eBuilding;
-#ifdef AUI_WARNING_FIXES
-	uint m_iSlot;
-#else
 	int m_iSlot;
-#endif
 	PlayerTypes m_ePlayer;
 	EraTypes m_eEra;
 };
@@ -185,40 +176,20 @@ public:
 
 	// Great Work routines
 	bool HasAvailableGreatWorkSlot(GreatWorkSlotType eGreatWorkSlot);
-#ifdef AUI_WARNING_FIXES
-	uint GetNumAvailableGreatWorkSlots(GreatWorkSlotType eGreatWorkSlot) const;
-	CvCity *GetClosestAvailableGreatWorkSlot(int iX, int iY, GreatWorkSlotType eGreatWorkSlot, BuildingClassTypes *eBuildingClass, uint *iSlot) const;
-	uint GetNumGreatWorks() const;
-	uint GetNumGreatWorkSlots() const;
-	uint GetNumGreatWorkSlots(GreatWorkSlotType eGreatWorkSlot) const;
-#else
 	int GetNumAvailableGreatWorkSlots(GreatWorkSlotType eGreatWorkSlot) const;
 	CvCity *GetClosestAvailableGreatWorkSlot(int iX, int iY, GreatWorkSlotType eGreatWorkSlot, BuildingClassTypes *eBuildingClass, int *iSlot) const;
 	int GetNumGreatWorks() const;
 	int GetNumGreatWorkSlots() const;
 	int GetNumGreatWorkSlots(GreatWorkSlotType eGreatWorkSlot) const;
-#endif
 	bool ControlsGreatWork (int iIndex);
-#ifdef AUI_WARNING_FIXES
-	bool GetGreatWorkLocation(int iGreatWorkIndex, int &iCityID, BuildingTypes &eBuilding, uint &iSlot);
-#else
 	bool GetGreatWorkLocation(int iGreatWorkIndex, int &iCityID, BuildingTypes &eBuilding, int &iSlot);
-#endif
 
 	void DoSwapGreatWorks();
 	void MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuildingInMyEmpire> &buildings, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2);
 	bool ThemeBuilding(vector<CvGreatWorkBuildingInMyEmpire>::const_iterator it, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2, bool bConsiderOtherPlayers);
-#ifdef AUI_WARNING_FIXES
-	bool ThemeEqualArtArtifact(CvGreatWorkBuildingInMyEmpire kBldg, int iThemingBonusIndex, uint iNumSlots, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2, bool bConsiderOtherPlayers);
-#else
 	bool ThemeEqualArtArtifact(CvGreatWorkBuildingInMyEmpire kBldg, int iThemingBonusIndex, int iNumSlots, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2, bool bConsiderOtherPlayers);
-#endif
 	bool FillBuilding(vector<CvGreatWorkBuildingInMyEmpire>::const_iterator it, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2);
-#ifdef AUI_WARNING_FIXES
-	void MoveWorkIntoSlot(CvGreatWorkInMyEmpire kWork, int iCityID, BuildingTypes eBuilding, uint iSlot);
-#else
 	void MoveWorkIntoSlot (CvGreatWorkInMyEmpire kWork, int iCityID, BuildingTypes eBuilding, int iSlot);
-#endif
 	int GetSwappableWritingIndex() const;
 	int GetSwappableArtIndex() const;
 	int GetSwappableArtifactIndex() const;
@@ -261,10 +232,10 @@ public:
 	int GetInfluenceCityStateSpyRankBonus(PlayerTypes eCityStatePlayer) const;
 	int GetInfluenceMajorCivSpyRankBonus(PlayerTypes ePlayer) const;
 	CvString GetInfluenceSpyRankTooltip (CvString szName, CvString iRank, PlayerTypes ePlayer);
-#if defined(AUI_WARNING_FIXES) || defined(AUI_CONSTIFY)
-	int GetTourism() const;
-#else
+
 	int GetTourism();
+#if defined(LEK_YIELD_TOURISM) && defined(STANDARDIZE_YIELDS)
+	int GetTourismTimes100() const;
 #endif
 	int GetTourismModifierWith(PlayerTypes ePlayer) const;
 	CvString GetTourismModifierWithTooltip(PlayerTypes ePlayer) const;
@@ -352,25 +323,14 @@ public:
 
 	void Init(CvCity* m_pCity);
 
-#ifdef AUI_WARNING_FIXES
-	uint GetNumGreatWorks() const;
-	uint GetNumGreatWorkSlots() const;
-	uint GetNumAvailableGreatWorkSlots(GreatWorkSlotType eSlotType) const;
-#else
 	int GetNumGreatWorks() const;
 	int GetNumGreatWorkSlots() const;
 	int GetNumAvailableGreatWorkSlots(GreatWorkSlotType eSlotType) const;
-#endif
 	void ClearGreatWorks();
 	GreatWorkSlotType GetSlotTypeFirstAvailableCultureBuilding() const;
 
-#if defined(AUI_CONSTIFY) || defined(AUI_WARNING_FIXES)
-	int GetBaseTourismBeforeModifiers() const;
-	int GetBaseTourism() const;
-#else
 	int GetBaseTourismBeforeModifiers();
 	int GetBaseTourism();
-#endif
 	int GetTourismMultiplier(PlayerTypes ePlayer, bool bIgnoreReligion, bool bIgnoreOpenBorders, bool bIgnoreTrade, bool bIgnorePolicies, bool bIgnoreIdeologies) const;
 
 	CvString GetTourismTooltip();
@@ -384,6 +344,9 @@ public:
 	int GetCultureFromWonders() const;
 	int GetCultureFromNaturalWonders() const;
 	int GetCultureFromImprovements() const;
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetPublicThemingBonusIndex(BuildingClassTypes eBuildingClass) const { return GetThemingBonusIndex(eBuildingClass); }
+#endif
 
 	void LogGreatWorks (FILogFile* pLog);
 

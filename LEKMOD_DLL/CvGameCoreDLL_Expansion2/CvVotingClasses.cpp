@@ -8258,6 +8258,7 @@ void CvLeagueAI::Read(FDataStream& kStream)
 {
 	uint uiVersion;
 	kStream >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvLeagueAI::Read] uiVersion=%u (expected 2)", uiVersion); }
 
 	if (uiVersion >= 2)
 	{
@@ -9990,7 +9991,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 		for (int i = 0; i < NUM_YIELD_TYPES; i++)
 		{
 			YieldTypes e = (YieldTypes) i;
-			if (GetPlayer()->GetPlayerTraits()->GetYieldChangeIncomingTradeRoute(e) > 0)
+			if (GetPlayer()->GetPlayerTraits()->GetYieldChangePerTradePartnerByDomain(DOMAIN_LAND, e) > 0)
 			{
 				iScore += -40;
 				break;
@@ -10049,7 +10050,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 			for (int i = 0; i < NUM_YIELD_TYPES; i++)
 			{
 				YieldTypes e = (YieldTypes) i;
-				if (GetPlayer()->GetPlayerTraits()->GetYieldChangeIncomingTradeRoute(e) > 0)
+				if (GetPlayer()->GetPlayerTraits()->GetYieldChangePerTradePartnerByDomain(DOMAIN_LAND, e) > 0)
 				{
 					iScore += -20;
 					break;

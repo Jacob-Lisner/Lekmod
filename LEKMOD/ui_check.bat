@@ -177,6 +177,8 @@ copy /y "%patchfolder%\Lua\tmp\ui\UnitList\UnitList.lua.ignore" "%patchfolder%\L
 copy /y "%patchfolder%\Lua\tmp\ui\UnitList\UnitList.xml.ignore" "%patchfolder%\Lua\UI\UnitList.xml" > nul
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\UnitPanel\EnemyUnitPanel.lua.ignore" "%patchfolder%\Lua\UI\EnemyUnitPanel.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\UnitPanel\EnemyUnitPanel.xml.ignore" "%patchfolder%\Lua\UI\EnemyUnitPanel.xml" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\UnitPanel\EnemyUnitPanel_small.xml.ignore" "%patchfolder%\Lua\UI\EnemyUnitPanel_small.xml" > nul
 set text="-- modified by bc1 from Civ V 1.0.3.276 code"
 FIND %text% "%euifolder%\UnitPanel\UnitPanel.lua" > nul 2>&1 && (
   copy /y "%patchfolder%\Lua\tmp\eui\UnitPanel\UnitPanel.lua.ignore" "%patchfolder%\Lua\UI\UnitPanel.lua" > nul
@@ -203,8 +205,6 @@ REM ----------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\InGame.lua.ignore" "%patchfolder%\Lua\UI\InGame.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.lua.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.xml.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.xml" > nul
-REM --------------------------------------------------------------------------------------------------
-copy /y "%patchfolder%\Lua\tmp\ui\mountain.lua.ignore" "%patchfolder%\Lua\UI\mountain.lua" > nul
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\prophetreplace.lua.ignore" "%patchfolder%\Lua\UI\prophetreplace.lua" > nul
 REM --------------------------------------------------------------------------------------------------

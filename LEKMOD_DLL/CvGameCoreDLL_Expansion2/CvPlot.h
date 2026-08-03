@@ -127,6 +127,10 @@ public:
 	bool isWithinTeamCityRadius(TeamTypes eTeam, PlayerTypes eIgnorePlayer = NO_PLAYER) const;
 
 	bool isLake() const;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool isPseudoLake() const;
+	void setPseudoLake(bool bValue);
+#endif
 	bool isFreshWater() const;
 
 	bool isRiverCrossingFlowClockwise(DirectionTypes eDirection) const;
@@ -773,6 +777,10 @@ public:
 	void SetArtifactGreatWork(GreatWorkType eWork);
 	bool HasWrittenArtifact() const;
 
+#if defined(v35_TRAITIFY)
+	void PerformCultureBomb(PlayerTypes eCulprit, int iRadius, bool bSteal, bool bImpactDiplo = true);
+#endif
+
 protected:
 	class PlotBoolField
 	{
@@ -972,7 +980,9 @@ protected:
 	char m_cContinentType;
 	char m_cRiverCrossing;	// bit field
 #endif
-
+#if !defined(LEKMOD_BUGANDA_LAKE)
+	bool m_bPseudoLake : 1;
+#endif
 	bool m_bImprovementPillaged:1;
 	bool m_bRoutePillaged:1;
 #if defined(LEKMOD_NO_INSTANT_REPAIR_ON_ROUTE)

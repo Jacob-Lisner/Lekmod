@@ -4885,7 +4885,14 @@ bool CvHomelandAI::MoveCivilianToSafety(CvUnit* pUnit, bool bIgnoreUnits)
 							{
 								if(pLoopUnit->isWaiting() || !(pLoopUnit->canMove()))
 								{
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 									iValue += pLoopUnit->GetMaxDefenseStrength(pLoopPlot, NULL) * pLoopUnit->GetCurrHitPoints();
+#else
+									CvCombatInfo kCombatInfo;
+									kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pLoopUnit);
+									kCombatInfo.setPlot(pLoopPlot);
+									iValue += pLoopUnit->GetMaxDefenseStrength(kCombatInfo) * pLoopUnit->GetCurrHitPoints();
+#endif
 								}
 							}
 						}

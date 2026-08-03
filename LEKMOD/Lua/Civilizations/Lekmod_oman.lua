@@ -35,27 +35,7 @@ function lekmod_oman_ub_damage(player_id)
 
 end
 ------------------------------------------------------------------------------------------------------------------------
--- Oman UB. Add a dummy building to a city with the UB that gives +2 Production for each trade route originating from the city.
-------------------------------------------------------------------------------------------------------------------------
-function lekmod_oman_building_production(player_id)
-
-	local player = Players[player_id]
-	if player:GetCivilizationType() == this_civ and player:IsAlive() then
-		for city in player:Cities() do
-			if city:IsHasBuilding(GameInfoTypes["BUILDING_MC_OMANI_MINAA"]) then
-				local number_of_routes = LekmodUtilities:get_number_trade_routes_from_city(player, city, false, false)
-				if city and city:IsHasBuilding(GameInfoTypes["BUILDING_MC_OMANI_MINAA"]) then
-					city:SetNumRealBuilding(GameInfoTypes["BUILDING_OMAN_TRAIT"], number_of_routes)
-				end
-			end
-		end
-	end
-
-end
-------------------------------------------------------------------------------------------------------------------------
 if is_active then
     GameEvents.PlayerDoTurn.Add(lekmod_oman_ub_damage)
-    GameEvents.PlayerDoTurn.Add(lekmod_oman_building_production)
-    GameEvents.UnitPrekill.Add(lekmod_oman_building_production)
 end
 

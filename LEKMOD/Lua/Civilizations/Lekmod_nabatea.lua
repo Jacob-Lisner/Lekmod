@@ -35,26 +35,5 @@ function lekmod_nabatea_unit_exploration(player_id, unit, unit_x, unit_y)
 
 end
 ------------------------------------------------------------------------------------------------------------------------
--- Nabatea UB. Add a dummy building to a city with the UB that gives +1 food for each trade route originating from the city.
-------------------------------------------------------------------------------------------------------------------------
-function lekmod_nabatea_building_food(player_id)
-
-	local player = Players[player_id]
-	if player:GetCivilizationType() ~= this_civ or not player:IsAlive() then return end
-	for city in player:Cities() do
-		if city:IsHasBuilding(GameInfoTypes["BUILDING_MC_KOKH"]) then
-			local number_of_routes = LekmodUtilities:get_number_trade_routes_from_city(player, city, false, false)
-			if city then
-				city:SetNumRealBuilding(GameInfoTypes["BUILDING_NABATEA_TRAIT"], number_of_routes)
-			end
-		end
-	end
-
-end
-------------------------------------------------------------------------------------------------------------------------
-if is_active then
-   GameEvents.PlayerDoTurn.Add(lekmod_nabatea_building_food)
-   GameEvents.UnitPrekill.Add(lekmod_nabatea_building_food)
-end
    -- A unique unit can be present in the game without the civilization being active.
    GameEvents.UnitSetXY.Add(lekmod_nabatea_unit_exploration)

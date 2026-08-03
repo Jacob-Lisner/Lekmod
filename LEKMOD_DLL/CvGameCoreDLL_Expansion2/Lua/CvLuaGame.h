@@ -411,6 +411,9 @@ protected:
 #ifdef LUAAPI_GET_TURN_TIME_ELAPSED
 	static int lGetTurnTimeElapsed(lua_State* L);
 #endif
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	static int lGetCombatDamage(lua_State* L);
+#endif
 };
 
 #endif //CVLUAGAME_H

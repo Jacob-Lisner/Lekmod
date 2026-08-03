@@ -578,7 +578,19 @@ end
 
 -- TOURISM
 function GetTourismTooltip(pCity)
-	return pCity:GetTourismTooltip();
+
+	local strTourismToolTip = "";
+
+	local iYieldType = YieldTypes.YIELD_TOURISM;
+
+	if (not OptionsManager.IsNoBasicHelp()) then
+		strTourismToolTip = strTourismToolTip .. Locale.ConvertTextKey("TXT_KEY_TOURISM_HELP_INFO");
+		strTourismToolTip = strTourismToolTip .. "[NEWLINE][NEWLINE]";
+	end
+
+	strTourismToolTip = strTourismToolTip .. GetYieldTooltipHelper(pCity, iYieldType, "[ICON_TOURISM]");
+
+	return strTourismToolTip;
 end
 
 -- Yield Tooltip Helper

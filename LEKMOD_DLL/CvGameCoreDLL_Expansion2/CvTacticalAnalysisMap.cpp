@@ -734,7 +734,14 @@ void CvTacticalAnalysisMap::AddToDominanceZones(int iIndex, CvTacticalAnalysisCe
 					iStrength = pFriendlyUnit->GetBaseCombatStrength(true);
 				}
 				pZone->AddFriendlyStrength(iStrength * m_iUnitStrengthMultiplier);
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 				pZone->AddFriendlyRangedStrength(pFriendlyUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true));
+#else
+				CvCombatInfo kCombatInfo;
+				kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pFriendlyUnit);
+				kCombatInfo.setAttackIsRanged(true);
+				pZone->AddFriendlyRangedStrength(pFriendlyUnit->GetMaxRangedCombatStrength(kCombatInfo));
+#endif
 				if(pFriendlyUnit->GetRange() > GetBestFriendlyRange())
 				{
 					SetBestFriendlyRange(pFriendlyUnit->GetRange());
@@ -764,7 +771,14 @@ void CvTacticalAnalysisMap::AddToDominanceZones(int iIndex, CvTacticalAnalysisCe
 					iStrength = pEnemyUnit->GetBaseCombatStrength(true);
 				}
 				pZone->AddEnemyStrength(iStrength * m_iUnitStrengthMultiplier);
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 				pZone->AddEnemyRangedStrength(pEnemyUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true));
+#else
+				CvCombatInfo kCombatInfo;
+				kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pEnemyUnit);
+				kCombatInfo.setAttackIsRanged(true);
+				pZone->AddEnemyRangedStrength(pEnemyUnit->GetMaxRangedCombatStrength(kCombatInfo));
+#endif
 				pZone->AddEnemyUnitCount(1);
 				if(pEnemyUnit->isRanged())
 				{
@@ -840,7 +854,14 @@ void CvTacticalAnalysisMap::CalculateMilitaryStrengths()
 										iUnitStrength = pLoopUnit->GetBaseCombatStrength(true);
 									}
 									pZone->AddFriendlyStrength(iUnitStrength * iMultiplier * m_iUnitStrengthMultiplier);
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 									pZone->AddFriendlyRangedStrength(pLoopUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true));
+#else
+									CvCombatInfo kCombatInfo;
+									kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pLoopUnit);
+									kCombatInfo.setAttackIsRanged(true);
+									pZone->AddFriendlyRangedStrength(pLoopUnit->GetMaxRangedCombatStrength(kCombatInfo));
+#endif
 									if(pLoopUnit->GetRange() > GetBestFriendlyRange())
 									{
 										SetBestFriendlyRange(pLoopUnit->GetRange());
@@ -901,8 +922,14 @@ void CvTacticalAnalysisMap::CalculateMilitaryStrengths()
 												}
 
 												pZone->AddEnemyStrength(iUnitStrength * iMultiplier * m_iUnitStrengthMultiplier);
-
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 												int iRangedStrength = pLoopUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true);
+#else
+												CvCombatInfo kCombatInfo;
+												kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pLoopUnit);
+												kCombatInfo.setAttackIsRanged(true);
+												int iRangedStrength = pLoopUnit->GetMaxRangedCombatStrength(kCombatInfo);
+#endif
 												if(!bVisible)
 												{
 													iRangedStrength /= 2;

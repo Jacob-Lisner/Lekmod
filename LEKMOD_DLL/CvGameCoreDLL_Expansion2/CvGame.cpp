@@ -1075,7 +1075,9 @@ void CvGame::uninit()
 	SAFE_DELETE(m_pAdvisorRecommender);
 
 	m_bForceEndingTurn = false;
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	m_iCombatModListLength = 0;
+#endif
 	m_lastTurnAICivsProcessed = -1;
 	m_iEndTurnMessagesSent = 0;
 	m_iElapsedGameTurns = 0;
@@ -10595,7 +10597,17 @@ void CvGame::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
-
+	{
+		FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp);
+		pDbg->Msg("CvGame::Read TOP uiVersion=%u (expected %d) endian=%d", uiVersion, g_CurrentCvGameVersion, (int)kStream.GetDesiredEndianNess());
+	}
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	kStream >> m_iCombatModListLength;
+	{
+		FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp);
+		pDbg->Msg("CvGame::Read after m_iCombatModListLength=%d", m_iCombatModListLength);
+	}
+#endif
 	kStream >> m_iEndTurnMessagesSent;
 	kStream >> m_iElapsedGameTurns;
 	kStream >> m_iStartTurn;
@@ -10632,7 +10644,6 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> m_iNumVictoryVotesExpected;
 	kStream >> m_iVotesNeededForDiploVictory;
 	kStream >> m_iMapScoreMod;
-
 	// m_uiInitialTime not saved
 #ifdef GAME_UPDATE_TURN_TIMER_ONCE_PER_TURN
 	kStream >> m_fPreviousTurnLen;
@@ -10803,7 +10814,9 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> m_iEarliestBarbarianReleaseTurn;
 	kStream >> m_kGameDeals;
 	kStream >> *m_pGameReligions;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("CvGame::Read before GameCulture used=%u, NumGreatWorks=%d", kStream.GetSizeLeft(), m_pGameCulture ? m_pGameCulture->GetNumGreatWorks() : -1); }
 	kStream >> *m_pGameCulture;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("CvGame::Read after GameCulture used=%u, NumGreatWorks=%d", kStream.GetSizeLeft(), m_pGameCulture->GetNumGreatWorks()); }
 	kStream >> *m_pGameLeagues;
 	kStream >> *m_pGameTrade;
 #ifdef MP_PLAYERS_VOTING_SYSTEM
@@ -10870,7 +10883,9 @@ void CvGame::Write(FDataStream& kStream) const
 {
 	// Current version number
 	kStream << g_CurrentCvGameVersion;
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	kStream << m_iCombatModListLength;
+#endif
 	kStream << m_iEndTurnMessagesSent;
 	kStream << m_iElapsedGameTurns;
 	kStream << m_iStartTurn;
@@ -10966,7 +10981,7 @@ void CvGame::Write(FDataStream& kStream) const
 
 	CvInfosSerializationHelper::WriteHashedDataArray<SpecialUnitTypes, bool>(kStream, m_pabSpecialUnitValid, GC.getNumSpecialUnitInfos());
 
-	CvInfosSerializationHelper::WriteHashedDataArray<VictoryTypes, int>(kStream, m_ppaaiTeamVictoryRank, GC.getNUM_VICTORY_POINT_AWARDS(), GC.getNumSpecialUnitInfos());
+	CvInfosSerializationHelper::WriteHashedDataArray<VictoryTypes, int>(kStream, m_ppaaiTeamVictoryRank, GC.getNUM_VICTORY_POINT_AWARDS(), GC.getNumVictoryInfos());
 
 	kStream << m_aszDestroyedCities;
 	kStream << m_aszGreatPeopleBorn;
@@ -11008,7 +11023,9 @@ void CvGame::Write(FDataStream& kStream) const
 
 	kStream << m_kGameDeals;
 	kStream << *m_pGameReligions;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("CvGame::Write before GameCulture used=%u, NumGreatWorks=%d", kStream.GetSizeLeft(), m_pGameCulture->GetNumGreatWorks()); }
 	kStream << *m_pGameCulture;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("CvGame::Write after GameCulture used=%u", kStream.GetSizeLeft()); }
 	kStream << *m_pGameLeagues;
 	kStream << *m_pGameTrade;
 #ifdef MP_PLAYERS_VOTING_SYSTEM
@@ -11735,7 +11752,7 @@ void CvGame::DoMinorBullyUnit(PlayerTypes eBully, PlayerTypes eMinor)
 	CvAssertMsg(eMinor >= MAX_MAJOR_CIVS, "eMinor is not in expected range (invalid Index)");
 	CvAssertMsg(eMinor < MAX_CIV_PLAYERS, "eMinor is not in expected range (invalid Index)");
 
-	UnitTypes eUnitType = (UnitTypes) GC.getInfoTypeForString("UNIT_WORKER"); //antonjs: todo: XML/function
+	UnitTypes eUnitType = static_cast<UnitTypes>(GET_PLAYER(eBully).getCivilizationInfo().getCivilizationUnits(GC.getInfoTypeForString("UNITCLASS_WORKER")));
 
 	gDLL->sendMinorBullyUnit(eBully, eMinor, eUnitType);
 }
@@ -12734,7 +12751,454 @@ int CvGame::GetNumHiddenArchaeologySites() const
 	}
 	return iRtnValue;
 }
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS) // Relocate to CvGame, as this is Game-wide logic. not a lot of sense to keep on CvUnit or CvCity
+void CvGame::getCombatDamage(CvCombatInfo& kInfo)
+{
+	int iMaxHP = GC.getMAX_HIT_POINTS();
+	/*CvCombatInfo should have :
+	BATTLE_UNIT_ATTACKER, can be city or unit
+	BATTLE_UNIT_DEFENDER, can be city or unit
+	BATTLE_UNIT_INTERCEPTOR, can be unit or null
+	*/
+	if (kInfo.getUnit(BATTLE_UNIT_ATTACKER) != NULL) // Attacker is Unit
+	{
+		CvUnit& attacker = *kInfo.getUnit(BATTLE_UNIT_ATTACKER);
+		int iAttackerStrength = attacker.GetMaxAttackStrength(kInfo);
+		int iDefenderStrength = 0, iDamage = 0, iWoundedRatio = 0;
+		// Intercepting attacker?
+		if (kInfo.getUnit(BATTLE_UNIT_INTERCEPTOR) != NULL) // Interceptor is Unit.
+		{
+			const CvUnit& interceptor = *kInfo.getUnit(BATTLE_UNIT_INTERCEPTOR);
+			int iInterceptorStrength = interceptor.GetMaxDefenseStrength(kInfo); // const once below is gone.
+			iWoundedRatio = interceptor.getWoundedRatio(kInfo.getExtraDamageTaken(BATTLE_UNIT_INTERCEPTOR));
+			iDamage = GC.getINTERCEPTION_SAME_STRENGTH_MIN_DAMAGE() * iWoundedRatio / iMaxHP;
 
+			kInfo.doRandomness(BATTLE_UNIT_INTERCEPTOR, iWoundedRatio);
+			iDamage += kInfo.getCombatSeed(BATTLE_UNIT_INTERCEPTOR);
+
+			double fStrengthRatio = kInfo.doStrengthRatio(iAttackerStrength, iInterceptorStrength);
+			iDamage = static_cast<int>(iDamage * fStrengthRatio);
+
+			// Interception Damage can be reduced by victim's promotions
+			iDamage *= (100 + attacker.GetInterceptionDefenseDamageModifier());
+			iDamage /= 10000; // 100 for the modifier, 100 for the damage being a percentage of max HP
+
+			// Interceptions Deal at least 1 damage, but no more than iMaxHP - 1
+			iDamage = range(iDamage, 1, iMaxHP - 1);
+			kInfo.setDamageInflicted(BATTLE_UNIT_INTERCEPTOR, iDamage);
+			//kInfo.setFinalDamage(BATTLE_UNIT_INTERCEPTOR, interceptor.getDamage()); as of this moment, the interceptor doesn't take any damage.
+		}
+		else if (kInfo.getCity(BATTLE_UNIT_INTERCEPTOR) != NULL) // Interceptor is City.
+		{
+			const CvCity& interceptor = *kInfo.getCity(BATTLE_UNIT_INTERCEPTOR);
+			const int iInterceptorStrength = interceptor.getStrengthValue();
+			iDamage = GC.getINTERCEPTION_SAME_STRENGTH_MIN_DAMAGE();
+			iWoundedRatio = iMaxHP; // Cities don't have wounded ratio, so we just use 100% (iMaxHP)
+
+			kInfo.doRandomness(BATTLE_UNIT_INTERCEPTOR, iWoundedRatio);
+			iDamage += kInfo.getCombatSeed(BATTLE_UNIT_INTERCEPTOR);
+
+			double fStrengthRatio = kInfo.doStrengthRatio(iAttackerStrength, iInterceptorStrength);
+			iDamage = static_cast<int>(iDamage * fStrengthRatio);
+			iDamage /= 100;
+			// Interceptions Deal at least 1 damage, but no more than iMaxHP - 1
+			iDamage = range(iDamage, GC.getMIN_CITY_STRIKE_DAMAGE(), iMaxHP - 1);
+			kInfo.setDamageInflicted(BATTLE_UNIT_INTERCEPTOR, iDamage);
+		}
+		int iExtraDamage = kInfo.getExtraDamageTaken(BATTLE_UNIT_ATTACKER) + kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR);
+		if (kInfo.getUnit(BATTLE_UNIT_DEFENDER) != NULL) // Defender is Unit
+		{
+			CvUnit& defender = *kInfo.getUnit(BATTLE_UNIT_DEFENDER);
+			iDefenderStrength = defender.GetMaxDefenseStrength(kInfo);
+			int iDamage = 0;
+			std::pair<int, int> damagePair(-1, -1); // Attacker / Defender
+			if (kInfo.getAttackIsRanged() && !defender.IsCanDefend())
+			{
+				damagePair.first = GC.getNONCOMBAT_UNIT_RANGED_DAMAGE(); // Non-combat units take a set amount of damage from ranged attacks
+			}
+			const bool bRangedAttack = kInfo.getAttackIsRanged() || kInfo.getAttackIsBombingMission();
+			damagePair.second = kInfo.getDefenderRetaliates() ? -1 : 0; // if defender retaliates, we need to calculate damage for both units, otherwise we only need to calculate damage dealt to the defender
+			do
+			{
+				if (damagePair.first != -1 && damagePair.second != -1)
+					break; // if we have both damages, we can break out of the loop
+				const bool bAttacker = (damagePair.first == -1);
+				
+				CvUnit& unit		= bAttacker ? attacker : defender;
+				// CvUnit& opponent	= bAttacker ? defender : attacker; 
+
+				const int iUnitStrength		= bAttacker ? iAttackerStrength : iDefenderStrength;
+				const int iOpponentStrength = bAttacker ? iDefenderStrength : iAttackerStrength;
+
+				const int iWoundedRatio = unit.getWoundedRatio(bAttacker ? iExtraDamage : kInfo.getExtraDamageTaken(BATTLE_UNIT_DEFENDER));
+				const int iAttackSameStrengthMinDamage = bRangedAttack ? /*400*/ GC.getRANGE_ATTACK_SAME_STRENGTH_MIN_DAMAGE() : /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE();
+
+				iDamage = iAttackSameStrengthMinDamage * iWoundedRatio / iMaxHP;
+				kInfo.doRandomness(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER, iWoundedRatio);
+				iDamage += kInfo.getCombatSeed(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER);
+				double fStrengthRatio = kInfo.doStrengthRatio(iUnitStrength, iOpponentStrength);
+				iDamage = static_cast<int>(iDamage * fStrengthRatio);
+				iDamage /= 100;
+				
+				iDamage = std::max(1, iDamage); // Damage is at least 1
+
+				bAttacker ? damagePair.first = iDamage : damagePair.second = iDamage;
+			} while (damagePair.first == -1 || damagePair.second == -1);
+			int iAttackerDamageDealt = damagePair.first;
+			int iDefenderDamageDealt = damagePair.second;
+			// We don't retaliate per the info, so set the defender damage to 0
+			if (iDefenderDamageDealt < 0)
+			{
+				iDefenderDamageDealt = 0;
+			}
+			// If this is an air sweep, and the defender is not an air unit, then reduce the damage dealt to both units by the air sweep modifier
+			if (kInfo.getAttackIsAirSweep() && defender.getDomainType() != DOMAIN_AIR)
+			{
+				iAttackerDamageDealt *= /*0*/ GC.getAIR_SWEEP_INTERCEPTION_DAMAGE_MOD();
+				iAttackerDamageDealt /= 100;
+				iAttackerDamageDealt = std::max(0, iAttackerDamageDealt);
+				iDefenderDamageDealt *= /*0*/ GC.getAIR_SWEEP_INTERCEPTION_DAMAGE_MOD();
+				iDefenderDamageDealt /= 100;
+				iDefenderDamageDealt = std::max(0, iDefenderDamageDealt);
+			}
+			
+			int iDefenderFinalDamage = iAttackerDamageDealt + defender.getDamage();
+			int iAttackerFinalDamage = iDefenderDamageDealt + attacker.getDamage() + kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR);
+			// Will both units be killed by this? :o If so, take drastic corrective measures
+			if (kInfo.getDefenderRetaliates() && iDefenderFinalDamage >= iMaxHP && iAttackerFinalDamage >= iMaxHP)
+			{
+				// Did the Attacker die from Interception? if so no need to check if the attacker can survive, as it already didn't.
+				const bool bAttackerCanStillSurvive = attacker.getDamage() + kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR) < iMaxHP;
+				if (iDefenderFinalDamage > iAttackerFinalDamage && bAttackerCanStillSurvive)
+				{
+					iDefenderDamageDealt = iMaxHP - attacker.getDamage() - kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR) - 1;
+					iAttackerFinalDamage = iMaxHP - 1;
+					iDefenderFinalDamage = iMaxHP;
+				}
+				else // Defender wins ties. Or Interception has already killed the attacker. In either case, the defender survives with 1 HP.
+				{
+					iAttackerDamageDealt = iMaxHP - defender.getDamage() - 1;
+					iDefenderFinalDamage = iMaxHP - 1;
+					iAttackerFinalDamage = iMaxHP;
+				}
+			}
+			// If the defender is a ranged unit, and the attacker is a melee unit, and the defender will be killed by this
+			if (bRangedAttack && iDefenderFinalDamage >= iMaxHP)
+			{
+				iAttackerDamageDealt = defender.GetMaxHitPoints() - defender.getDamage();
+				iDefenderFinalDamage = iMaxHP;
+			}
+			// set Damages
+			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage); // Final HP - Attacker
+			kInfo.setDamageInflicted(BATTLE_UNIT_ATTACKER, iAttackerDamageDealt); // Damage inflicted by Attacker
+			kInfo.setFinalDamage(BATTLE_UNIT_DEFENDER, iDefenderFinalDamage); // Final HP - Defender
+			kInfo.setDamageInflicted(BATTLE_UNIT_DEFENDER, iDefenderDamageDealt); // Damage inflicted by Defender
+			kInfo.doExperience();
+
+			// Fear Damage exists? idk
+			// kInfo.setFearDamageInflicted(BATTLE_UNIT_ATTACKER, iAttackerDamageDealt);
+			// kInfo.setFearDamageInflicted(BATTLE_UNIT_DEFENDER, iDefenderDamage);
+		}
+		else if (kInfo.getCity(BATTLE_UNIT_DEFENDER) != NULL) // Defender is City
+		{
+			CvCity& defender = *kInfo.getCity(BATTLE_UNIT_DEFENDER);
+			iDefenderStrength = defender.getStrengthValue();
+			int iWoundedRatio = 0, iDamage = 0;
+			const bool bRangedAttack = kInfo.getAttackIsRanged() || kInfo.getAttackIsBombingMission();
+			std::pair<int, int> damagePair(-1, -1);
+			if (kInfo.getDefenderRetaliates())
+			{
+				if (iDefenderStrength <= 0)
+					damagePair.second = 0; // Defender has no strength, so it cannot retaliate, so we don't need to calculate damage for the defender
+			}
+			else
+			{
+				damagePair.second = 0; // if defender retaliates, we need to calculate damage for both units, otherwise we only need to calculate damage dealt to the defender
+			}
+			do
+			{
+				const bool bAttacker = (damagePair.first == -1);
+				iWoundedRatio = bAttacker ? attacker.getWoundedRatio(iExtraDamage) : iMaxHP; // Cities are always at full health
+
+				const int iStrength = bAttacker ? iAttackerStrength : iDefenderStrength;
+				const int iOpponentStrength = bAttacker ? iDefenderStrength : iAttackerStrength;
+
+				const int iAttackSameStrengthMinDamage = bRangedAttack ? /*400*/ GC.getRANGE_ATTACK_SAME_STRENGTH_MIN_DAMAGE() : /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE();
+				iDamage = iAttackSameStrengthMinDamage * iWoundedRatio / iMaxHP;
+				kInfo.doRandomness(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER, iWoundedRatio);
+				iDamage += kInfo.getCombatSeed(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER);
+				double fStrengthRatio = kInfo.doStrengthRatio(iStrength, iOpponentStrength);
+				iDamage = static_cast<int>(iDamage * fStrengthRatio);
+				// Theoretical modifier for when a unit attacks a city. Not currently used (v35)
+				if (bAttacker && !bRangedAttack)
+				{
+					iDamage *= /*100*/ GC.getATTACKING_CITY_MELEE_DAMAGE_MOD();
+					iDamage /= 100;
+				}
+				if (!bAttacker && !bRangedAttack)
+				{
+					iDamage *= /*100*/ GC.getCITY_ATTACKING_DAMAGE_MOD();
+					iDamage /= 100;
+				}
+				iDamage /= 100;
+				iDamage = iDamage > 0 ? iDamage : 1;
+
+				bAttacker ? damagePair.first = iDamage : damagePair.second = iDamage;
+			} while (damagePair.first == -1 || damagePair.second == -1);
+			int iAttackerDamageDealt = damagePair.first;
+			int iDefenderDamageDealt = damagePair.second;
+			if (iDefenderDamageDealt < 0)
+			{
+				iDefenderDamageDealt = 0; // no retaliation, so no damage to the attacker
+			}
+			else if (iDefenderDamageDealt < GC.getMIN_CITY_STRIKE_DAMAGE())
+			{
+				// Cities always deal at least a minimum amount of damage to the attacker, even if the attacker is stronger than the city.
+				iDefenderDamageDealt = GC.getMIN_CITY_STRIKE_DAMAGE();
+			}
+
+			int iDefenderFinalDamage = iAttackerDamageDealt + defender.getDamage();
+			int iAttackerFinalDamage = iDefenderDamageDealt + attacker.getDamage() + kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR);
+			if (!bRangedAttack) // Melee Strike at a City
+			{
+				// Will both the attacker die and the city fall? if so the unit wins
+				if (iDefenderFinalDamage >= defender.GetMaxHitPoints() && iAttackerFinalDamage >= iMaxHP)
+				{
+					iDefenderDamageDealt = iMaxHP - attacker.getDamage() - 1;
+					iAttackerFinalDamage = iMaxHP - 1;
+					iDefenderFinalDamage = iMaxHP;
+				}
+			}
+			else // Ranged Strike at a City
+			{
+				// Cities cannot fall below 1 HP from a ranged attack, so if the attacker would kill, we need to adjust the damage to the city so that it survives with 1 HP
+				if (iDefenderFinalDamage >= defender.GetMaxHitPoints())
+				{
+					iAttackerDamageDealt = defender.GetMaxHitPoints() - defender.getDamage() - 1;
+					iDefenderFinalDamage = defender.GetMaxHitPoints() - 1;
+				}
+			}
+
+			// set Damages
+			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage ); // Final HP - Attacker
+			kInfo.setDamageInflicted(BATTLE_UNIT_ATTACKER, iAttackerDamageDealt); // Damage inflicted by Attacker
+			kInfo.setFinalDamage(BATTLE_UNIT_DEFENDER, iDefenderFinalDamage); // Final HP - Defender
+			kInfo.setDamageInflicted(BATTLE_UNIT_DEFENDER, iDefenderDamageDealt); // Damage inflicted by Defender
+			kInfo.doExperience();
+		}
+		else
+		{
+			CvAssertMsg(false, "Defender is neither Unit nor City");
+		}
+		
+	}
+	else if (kInfo.getCity(BATTLE_UNIT_ATTACKER) != NULL) // Attacker is City
+	{
+		CvCity& attacker = *kInfo.getCity(BATTLE_UNIT_ATTACKER);
+		int iAttackerStrength = attacker.getStrengthValue(true);
+		int iDefenderStrength = 0;
+		if (kInfo.getUnit(BATTLE_UNIT_DEFENDER) != NULL) // Defender is Unit
+		{
+			CvUnit& defender = *kInfo.getUnit(BATTLE_UNIT_DEFENDER);
+			iDefenderStrength = defender.GetMaxDefenseStrength(kInfo);
+			int iWoundedRatio = 0, iDamage = 0;
+			std::pair<int, int> damagePair(-1, -1);
+			if (kInfo.getAttackIsRanged() && !defender.IsCanDefend())
+			{
+				damagePair.first = GC.getNONCOMBAT_UNIT_RANGED_DAMAGE(); // Non-combat units take a set amount of damage from ranged attacks
+			}
+			damagePair.second = kInfo.getDefenderRetaliates() ? -1 : 0; // if defender retaliates, we need to calculate damage for both units, otherwise we only need to calculate damage dealt to the defender
+			do
+			{
+				if (damagePair.first != -1 && damagePair.second != -1)
+					break; // if we have both damages, we can break out of the loop
+				const bool bAttacker = (damagePair.first == -1);
+				const bool bRangedAttack = kInfo.getAttackIsRanged();
+				iWoundedRatio = bAttacker ? iMaxHP : defender.getWoundedRatio(kInfo.getExtraDamageTaken(BATTLE_UNIT_DEFENDER)); // Cities are always at full health
+				const int iStrength = bAttacker ? iAttackerStrength : iDefenderStrength;
+				const int iOpponentStrength = bAttacker ? iDefenderStrength : iAttackerStrength;
+				const int iAttackSameStrengthMinDamage = bRangedAttack ? /*400*/ GC.getRANGE_ATTACK_SAME_STRENGTH_MIN_DAMAGE() : /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE();
+				iDamage = iAttackSameStrengthMinDamage * iWoundedRatio / iMaxHP;
+				kInfo.doRandomness(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER, iWoundedRatio);
+				iDamage += kInfo.getCombatSeed(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER);
+				double fStrengthRatio = kInfo.doStrengthRatio(iStrength, iOpponentStrength);
+				iDamage = static_cast<int>(iDamage * fStrengthRatio);
+				// Theoretical modifier for when a unit attacks a city. Not currently used (v35)
+				if (bAttacker && !bRangedAttack)
+				{
+					iDamage *= /*100*/ GC.getATTACKING_CITY_MELEE_DAMAGE_MOD();
+					iDamage /= 100;
+				}
+				if (bAttacker)
+				{
+					iDamage *= /*100*/ GC.getCITY_ATTACKING_DAMAGE_MOD();
+					iDamage /= 100;
+				}
+				iDamage /= 100;
+				iDamage = iDamage > 0 ? iDamage : 1;
+
+				bAttacker ? damagePair.first = iDamage : damagePair.second = iDamage;
+			} while (damagePair.first == -1 || damagePair.second == -1);
+			int iAttackerDamageDealt = damagePair.first;
+			if (iAttackerDamageDealt < GC.getMIN_CITY_STRIKE_DAMAGE())
+			{
+				iAttackerDamageDealt = GC.getMIN_CITY_STRIKE_DAMAGE();
+			}
+			int iDefenderDamageDealt = damagePair.second;
+			if (iDefenderDamageDealt < 0)
+			{
+				iDefenderDamageDealt = 0;
+			}
+
+			int iDefenderFinalDamage = iAttackerDamageDealt + defender.getDamage();
+			int iAttackerFinalDamage = iDefenderDamageDealt + attacker.getDamage();
+			if (kInfo.getAttackIsRanged() && iDefenderFinalDamage >= iMaxHP)
+			{
+				iDefenderFinalDamage = iMaxHP - defender.getDamage();
+			}
+			else if (kInfo.getAttackIsRanged() && iAttackerFinalDamage >= iMaxHP)
+			{
+				iAttackerFinalDamage = iMaxHP - attacker.getDamage();
+			}
+			// set Damages
+			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage); // Final HP - Attacker
+			kInfo.setDamageInflicted(BATTLE_UNIT_ATTACKER, iAttackerDamageDealt); // Damage inflicted by Attacker
+			kInfo.setFinalDamage(BATTLE_UNIT_DEFENDER, iDefenderFinalDamage); // Final HP - Defender
+			kInfo.setDamageInflicted(BATTLE_UNIT_DEFENDER, iDefenderDamageDealt); // Damage inflicted by Defender
+			kInfo.doExperience();
+		}
+		else if (kInfo.getCity(BATTLE_UNIT_DEFENDER) != NULL) // Defender is City
+		{
+			CvCity& defender = *kInfo.getCity(BATTLE_UNIT_DEFENDER);
+			iDefenderStrength = defender.getStrengthValue();
+			int iDamage = 0;
+			std::pair<int, int> damagePair(-1, -1);
+			damagePair.second = kInfo.getDefenderRetaliates() ? -1 : 0; // if defender retaliates, we need to calculate damage for both units, otherwise we only need to calculate damage dealt to the defender
+			do
+			{
+				const bool bAttacker = (damagePair.first == -1);
+				const bool bRangedAttack = kInfo.getAttackIsRanged();
+				const int iStrength = bAttacker ? iAttackerStrength : iDefenderStrength;
+				const int iOpponentStrength = bAttacker ? iDefenderStrength : iAttackerStrength;
+				const int iAttackSameStrengthMinDamage = bRangedAttack ? /*400*/ GC.getRANGE_ATTACK_SAME_STRENGTH_MIN_DAMAGE() : /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE();;
+				iDamage = iAttackSameStrengthMinDamage;
+				kInfo.doRandomness(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER, iMaxHP);
+				iDamage += kInfo.getCombatSeed(bAttacker ? BATTLE_UNIT_ATTACKER : BATTLE_UNIT_DEFENDER);
+				double fStrengthRatio = kInfo.doStrengthRatio(iStrength, iOpponentStrength);
+				iDamage = static_cast<int>(iDamage * fStrengthRatio);
+				// Theoretical modifier for when a unit attacks a city. Not currently used (v35)
+				if (bAttacker && !bRangedAttack)
+				{
+					iDamage *= /*100*/ GC.getATTACKING_CITY_MELEE_DAMAGE_MOD();
+					iDamage /= 100;
+				}
+				if (bAttacker)
+				{
+					iDamage *= /*100*/ GC.getCITY_ATTACKING_DAMAGE_MOD();
+					iDamage /= 100;
+				}
+				iDamage /= 100;
+				iDamage = iDamage > 0 ? iDamage : 1;
+
+				bAttacker ? damagePair.first = iDamage : damagePair.second = iDamage;
+			} while (damagePair.first == -1 || damagePair.second == -1);
+			int iAttackerDamageDealt = damagePair.first;
+			if (iAttackerDamageDealt < GC.getMIN_CITY_STRIKE_DAMAGE())
+			{
+				iAttackerDamageDealt = GC.getMIN_CITY_STRIKE_DAMAGE();
+			}
+			int iDefenderDamageDealt = damagePair.second;
+			if (iDefenderDamageDealt < 0) // No Retaliation
+			{
+				iDefenderDamageDealt = 0;
+			}
+			else if (iDefenderDamageDealt < GC.getMIN_CITY_STRIKE_DAMAGE()) // Retaliation is happening, but the damage is too low, so we set it to the minimum
+			{
+				iDefenderDamageDealt = GC.getMIN_CITY_STRIKE_DAMAGE();
+			}
+
+			int iDefenderFinalDamage = iAttackerDamageDealt + defender.getDamage();
+			int iAttackerFinalDamage = iDefenderDamageDealt + attacker.getDamage();
+			if (kInfo.getAttackIsRanged() && iDefenderFinalDamage >= iMaxHP)
+			{
+				iDefenderFinalDamage = iMaxHP - defender.getDamage();
+			}
+			else if (kInfo.getAttackIsRanged() && iAttackerFinalDamage >= iMaxHP)
+			{
+				iAttackerFinalDamage = iMaxHP - attacker.getDamage();
+			}
+			// set Damages
+			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage); // Final HP - Attacker
+			kInfo.setDamageInflicted(BATTLE_UNIT_ATTACKER, iAttackerDamageDealt); // Damage inflicted by Attacker
+			kInfo.setFinalDamage(BATTLE_UNIT_DEFENDER, iDefenderFinalDamage); // Final HP - Defender
+			kInfo.setDamageInflicted(BATTLE_UNIT_DEFENDER, iDefenderDamageDealt); // Damage inflicted by Defender
+			kInfo.doExperience();
+		}
+		else
+		{
+			CvAssertMsg(false, "Defender is neither Unit nor City");
+		}
+	}
+	else
+	{
+		CvAssertMsg(false, "Attacker is neither Unit nor City");
+	}
+
+	return;
+}
+//	--------------------------------------------------------------------------------
+/// Shortcut for generating combat modifier tooltip help
+void CvGame::BuildCombatModHelpText(CvCombatModifierList& kModifierList, const char* szTextKey, int iModifier, const char* szExtraKey) const
+{
+	if (iModifier == 0)
+		return;
+
+	Localization::String localizedText = Localization::Lookup(szTextKey);
+
+	if (szExtraKey != NULL)
+	{
+		localizedText << szExtraKey;
+	}
+
+	kModifierList.AddEntry(localizedText.toUTF8(), iModifier);
+}
+//	--------------------------------------------------------------------------------
+/// Combat modifier tooltip with an additional integer argument
+void CvGame::BuildCombatModHelpText(CvCombatModifierList& kModifierList, const char* szTextKey, int iModifier, int iExtraInt) const
+{
+	if (iModifier == 0)
+		return;
+
+	Localization::String localizedText = Localization::Lookup(szTextKey);
+
+	localizedText << iExtraInt;
+
+	kModifierList.AddEntry(localizedText.toUTF8(), iModifier);
+}
+void CvGame::BuildCombatStrengthHelpText(CvCombatModifierList& kModifierList, const char* szTextKey, int iValue, const char* szExtraKey) const
+{
+	if (iValue == 0)
+		return;
+
+	Localization::String strText = Localization::Lookup(szTextKey);
+
+	if (szExtraKey != NULL && szExtraKey[0] != '\0')
+		strText << szExtraKey;
+
+	kModifierList.AddEntry(strText.toUTF8(), iValue, false);
+}
+
+void CvGame::BuildCombatStrengthHelpText(CvCombatModifierList& kModifierList, const char* szTextKey, int iValue, int iExtraValue) const
+{
+	if (iValue == 0)
+		return;
+
+	Localization::String strText = Localization::Lookup(szTextKey);
+	strText << iExtraValue;
+
+	kModifierList.AddEntry(strText.toUTF8(), iValue, false);
+}
+#endif
 //	--------------------------------------------------------------------------------
 PlayerTypes GetRandomMajorPlayer()
 {
@@ -13074,49 +13538,27 @@ CombatPredictionTypes CvGame::GetCombatPrediction(const CvUnit* pAttackingUnit, 
 	}
 
 	CombatPredictionTypes ePrediction = NO_COMBAT_PREDICTION;
-
-#ifndef DEL_RANGED_COUNTERATTACKS
-	if(pAttackingUnit->isRanged())
+	bool bRanged = pAttackingUnit->GetBaseRangedCombatStrength() > 0 && (pAttackingUnit->isOnlyDefensive() || pAttackingUnit->isMustSetUpToRangedAttack() && pAttackingUnit->isSetUpForRangedAttack());
+	if(bRanged)
 	{
 		return COMBAT_PREDICTION_RANGED;
 	}
-#endif
 
 	CvPlot* pFromPlot = pAttackingUnit->plot();
 	CvPlot* pToPlot = pDefendingUnit->plot();
 
-#ifdef DEL_RANGED_COUNTERATTACKS
-	int iAttackingDamageInflicted = 0;
-	int iDefenderDamageInflicted = 0;
-	if (pAttackingUnit->isRanged())
-	{
-		if (!GC.getGame().isOption("GAMEOPTION_ENABLE_RANGED_COUNTERATTACKS") || pDefendingUnit->IsCityAttackOnly() ||
-			!((pDefendingUnit->canRangeStrike() && pDefendingUnit->canEverRangeStrikeAt(pFromPlot->getX(), pFromPlot->getY())) ||
-				// Melee unit counterattacks
-			(pDefendingUnit->IsCanAttackWithMove() && pToPlot->isAdjacent(pFromPlot) && pDefendingUnit->PlotValid(pFromPlot) && pDefendingUnit->PlotValid(pToPlot))))
-		{
-			return COMBAT_PREDICTION_RANGED;
-		}
-		else
-		{
-			iAttackingDamageInflicted = pAttackingUnit->GetRangeCombatDamage(pDefendingUnit, /*pCity*/ NULL, /*bIncludeRand*/ false);
-			if (pDefendingUnit->IsCanAttackRanged())
-			{
-				iDefenderDamageInflicted = pDefendingUnit->GetRangeCombatDamage(pAttackingUnit, NULL, false);
-			}
-			else if (iAttackingDamageInflicted + pDefendingUnit->getDamage() < pDefendingUnit->GetMaxHitPoints())
-			{
-				// Melee unit (defender) is counterattacking by attacking into the plot from which they were bombarded, where the attacker is
-				int iAttackerStrength = pAttackingUnit->GetMaxDefenseStrength(pFromPlot, pDefendingUnit);
-				int iDefenderStrength = pDefendingUnit->GetMaxAttackStrength(pToPlot, pFromPlot, pAttackingUnit);
-				iDefenderDamageInflicted = pDefendingUnit->getCombatDamage(iDefenderStrength, iAttackerStrength, iAttackingDamageInflicted + pDefendingUnit->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-			}
-		}
-	}
-	else
-	{
-#endif
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	CvCombatInfo kInfo;
+	kInfo.setUnit(BATTLE_UNIT_ATTACKER, const_cast<CvUnit*>(pAttackingUnit));
+	kInfo.setUnit(BATTLE_UNIT_DEFENDER, const_cast<CvUnit*>(pDefendingUnit));
+	kInfo.setPlot(pToPlot);
+	kInfo.setCombatPrediction(true);
 
+	int iAttackingStrength = pAttackingUnit->GetMaxAttackStrength(kInfo);
+	int iDefenderStrength = pDefendingUnit->GetMaxDefenseStrength(kInfo);
+
+	getCombatDamage(kInfo);
+#else
 	int iAttackingStrength = pAttackingUnit->GetMaxAttackStrength(pFromPlot, pToPlot, pDefendingUnit);
 	if(iAttackingStrength == 0)
 	{
@@ -13124,17 +13566,9 @@ CombatPredictionTypes CvGame::GetCombatPrediction(const CvUnit* pAttackingUnit, 
 	}
 
 	int iDefenderStrength = pDefendingUnit->GetMaxDefenseStrength(pToPlot, pAttackingUnit, false);
-
-#ifdef DEL_RANGED_COUNTERATTACKS
-		iAttackingDamageInflicted = pAttackingUnit->getCombatDamage(iAttackingStrength, iDefenderStrength, pAttackingUnit->getDamage(), false, false, false);
-		iDefenderDamageInflicted = pDefendingUnit->getCombatDamage(iDefenderStrength, iAttackingStrength, pDefendingUnit->getDamage(), false, false, false);
-	}
-#else
-	//iMyDamageInflicted = pMyUnit:GetCombatDamage(iMyStrength, iTheirStrength, pMyUnit:GetDamage() + iTheirFireSupportCombatDamage, false, false, false);
-	int iAttackingDamageInflicted = pAttackingUnit->getCombatDamage(iAttackingStrength, iDefenderStrength, pAttackingUnit->getDamage(), false, false, false);
-	int iDefenderDamageInflicted  = pDefendingUnit->getCombatDamage(iDefenderStrength, iAttackingStrength, pDefendingUnit->getDamage(), false, false, false);
-	//iTheirDamageInflicted = iTheirDamageInflicted + iTheirFireSupportCombatDamage;
 #endif
+	int iAttackingDamageInflicted = kInfo.getDamageInflicted(BATTLE_UNIT_ATTACKER);
+	int iDefenderDamageInflicted = kInfo.getDamageInflicted(BATTLE_UNIT_DEFENDER);
 
 	int iMaxUnitHitPoints = GC.getMAX_HIT_POINTS();
 	if(iAttackingDamageInflicted > iMaxUnitHitPoints)
@@ -13161,23 +13595,9 @@ CombatPredictionTypes CvGame::GetCombatPrediction(const CvUnit* pAttackingUnit, 
 
 	if(bAttackerDies && bDefenderDies)
 	{
-#ifdef AUI_GAME_FIX_COMBAT_PREDICTION_ACCURATE_PREDICT_TIES
-		// He who hath the least amount of damage survives with 1 HP left
-		if (pAttackingUnit->getDamage() + iDefenderDamageInflicted < pDefendingUnit->getDamage() + iAttackingDamageInflicted)
-		{
-			bAttackerDies = false;
-		}
-		else
-		{
-			bDefenderDies = false;
-		}
-	}
-	if (bAttackerDies)
-#else
 		ePrediction = COMBAT_PREDICTION_STALEMATE;
 	}
 	else if(bAttackerDies)
-#endif
 	{
 		ePrediction = COMBAT_PREDICTION_TOTAL_DEFEAT;
 	}

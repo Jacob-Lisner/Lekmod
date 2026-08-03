@@ -285,7 +285,6 @@ public:
 	int GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType);
 
 	bool canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestEra = false, bool bTestVisible = false, bool bTestGold = true, bool bTestPlotOwner = true) const;
-
 #ifdef LEKMOD_NEW_ANCIENT_RUIN_REWARDS
 	bool canBuildNoTech(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible = false, bool bTestGold = true, bool bTestPlotOwner = true) const;
 #endif
@@ -404,10 +403,18 @@ public:
 
 	int GetCapitalYieldPerPopChange(YieldTypes eYield) const;
 	void ChangeCapitalYieldPerPopChange(YieldTypes eYield, int iChange);
-
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	int GetGreatWorkYieldChange(YieldTypes eYield) const;
 	void ChangeGreatWorkYieldChange(YieldTypes eYield, int iChange);
-
+#else
+	void ChangeGreatWorkYieldChange(YieldTypes eYield, int iChange);
+	int GetGreatWorkClassYieldChange(GreatWorkClass eGreatWorkClass, YieldTypes eYield) const;
+	void ChangeGreatWorkClassYieldChange(GreatWorkClass eGreatWorkClass, YieldTypes eYield, int iChange);
+#if !defined(LEK_YIELD_TOURISM)
+	int GetGreatWorkClassTourismChange(GreatWorkClass eGreatWorkClass) const;
+	void ChangeGreatWorkClassTourismChange(GreatWorkClass eGreatWorkClass, int iChange);
+#endif
+#endif
 	CvPlot* getStartingPlot() const;
 	void setStartingPlot(CvPlot* pNewValue);
 
@@ -507,7 +514,11 @@ public:
 	void ChangeSpecialistCultureChange(int iChange);
 
 	int GetCultureYieldFromPreviousTurns(int iGameTurn, int iNumPreviousTurnsToCount);
-	
+#if defined(STANDARDIZE_YIELDS)
+	int GetTotalYieldEverGeneratedTimes100(YieldTypes eYield) const;
+	void ChangeTotalYieldEverGeneratedTimes100(YieldTypes eYield, int iChange);
+	void SetTotalYieldEverGeneratedTimes100(YieldTypes eYield, int iChange);
+#endif
 	int GetNumCitiesFreeAestheticsSchools() const; // NQMP GJS - add support for NumCitiesFreeAestheticsSchools
 	void ChangeNumCitiesFreeAestheticsSchools(int iChange); // NQMP GJS - add support for NumCitiesFreeAestheticsSchools
 	int GetNumCitiesFreePietyGardens() const;
@@ -892,7 +903,9 @@ public:
 
 	int GetGreatGeneralCombatBonus() const;
 	void SetGreatGeneralCombatBonus(int iValue);
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	void ChangeGreatGeneralCombatBonus(int iChange);
+#endif
 	// Unit Killed in Combat
 	void DoUnitKilledCombat(PlayerTypes eKilledPlayer, UnitTypes eUnit);
 
@@ -978,10 +991,10 @@ public:
 
 	int GetPolicyCostMinorCivModifier() const;
 	void ChangePolicyCostMinorCivModifier(int iChange);
-
+#if !defined(LEK_YIELD_TOURISM)
 	int GetInfluenceSpreadModifier() const;
 	void ChangeInfluenceSpreadModifier(int iChange);
-
+#endif
 	int GetExtraVotesPerDiplomat() const;
 	void ChangeExtraVotesPerDiplomat(int iChange);
 
@@ -1098,7 +1111,11 @@ public:
 	bool IsAllowPuppetPurchasing() const;
 	void ChangeAllowPuppetPurchasingCount(int iChange);
 #endif
-
+#if defined(LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT)
+	int GetInfluenceNullificationCount() const { return m_iInfluenceNullificationCount; }
+	bool IsNullifyInfluenceModifier() const { return m_iInfluenceNullificationCount > 0; }
+	void ChangeInfluenceNullificationCount(int iChange) { m_iInfluenceNullificationCount += iChange; }
+#endif
 	int GetEnablesSSPartPurchaseCount() const;
 	bool IsEnablesSSPartPurchase() const;
 	void ChangeEnablesSSPartPurchaseCount(int iChange);
@@ -1156,9 +1173,6 @@ public:
 
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	int GetNumTurnsBeforeMinorAlliesRefuseBribes() const;
-#endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	int GetGoldenAgeTileBonusFaith() const;
 #endif
 
 	int getCultureBombTimer() const;
@@ -1334,7 +1348,17 @@ public:
 
 	int getExtraYieldThreshold(YieldTypes eIndex) const;
 	void updateExtraYieldThreshold(YieldTypes eIndex);
-
+#if defined(STANDARDIZE_YIELDS)
+	int getYield(YieldTypes eYield, bool bForReligion) const { return getYieldTimes100(eYield, bForReligion) / 100; }
+	int getYieldTimes100(YieldTypes eYield, bool bForReligion) const;
+	int getYieldFromCitiesTimes100(YieldTypes eYield, bool bIgnoreTrade) const;
+	int getYieldFromOtherPlayersTimes100(YieldTypes eYield) const;
+	int getYieldFromHappinessTimes100(YieldTypes eYield) const;
+	int getYieldPenaltiesTimes100(YieldTypes eYield) const;
+	int getYieldFromMinorCivsTimes100(YieldTypes eYield) const;
+	int getYieldFromTraitsTimes100(YieldTypes eYield) const;
+	int getYieldFromReligionTimes100(YieldTypes eYield, int iTotal) const;
+#endif
 	// Science
 
 	int GetScience() const;
@@ -1972,7 +1996,9 @@ protected:
 	FAutoVariable<int, CvPlayer> m_iJONSCulture;
 	FAutoVariable<int, CvPlayer> m_iJONSCultureEverGenerated;
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	FAutoVariable<int, CvPlayer> m_iCulturePerWonder;
+#endif
 	FAutoVariable<int, CvPlayer> m_iCultureWonderMultiplier;
 	FAutoVariable<int, CvPlayer> m_iCulturePerTechResearched;
 	int m_iFaith;
@@ -2129,7 +2155,9 @@ protected:
 	FAutoVariable<int, CvPlayer> m_iUnitProductionMaintenanceMod;
 	FAutoVariable<int, CvPlayer> m_iPolicyCostBuildingModifier;
 	FAutoVariable<int, CvPlayer> m_iPolicyCostMinorCivModifier;
+#if !defined(LEK_YIELD_TOURISM)
 	int m_iInfluenceSpreadModifier;
+#endif
 	int m_iExtraVotesPerDiplomat;
 	FAutoVariable<int, CvPlayer> m_iNumNukeUnits;
 	FAutoVariable<int, CvPlayer> m_iNumOutsideUnits;
@@ -2176,7 +2204,9 @@ protected:
 #ifdef NQ_ALLOW_PUPPET_PURCHASING_FROM_POLICIES
 	int m_iAllowPuppetPurchasingCount;
 #endif
-
+#if defined(LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT)
+	int m_iInfluenceNullificationCount;
+#endif
 	int m_iEnablesSSPartPurchaseCount;
 	FAutoVariable<int, CvPlayer> m_iConscriptCount;
 	FAutoVariable<int, CvPlayer> m_iMaxConscript;
@@ -2296,6 +2326,9 @@ protected:
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiWorldWonderYieldChanges;
 #endif
+#if defined(STANDARDIZE_YIELDS) // YieldEverGenerated Array, instead of an int per yield type
+	FAutoVariable<std::vector<int>, CvPlayer> m_aiYieldEverGeneratedTimes100;
+#endif
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCityYieldChange;
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCoastalCityYieldChange;
 	FAutoVariable<std::vector<int>, CvPlayer> m_aiCapitalYieldChange;
@@ -2368,9 +2401,14 @@ protected:
 	FAutoVariable<std::vector<bool>, CvPlayer> m_pabLoyalMember;
 
 	FAutoVariable<std::vector<bool>, CvPlayer> m_pabGetsScienceFromPlayer;
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	FAutoVariable< std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > >, CvPlayer> m_ppaaiGreatWorkClassYieldChange;
+#endif
 	FAutoVariable< std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > >, CvPlayer> m_ppaaiSpecialistExtraYield;
 	FAutoVariable< std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > >, CvPlayer> m_ppaaiImprovementYieldChange;
+#if defined(STANDARDIZE_YIELDS)
+	std::vector<BuildingYieldChange> m_aBuildingYieldChangeCache;
+#endif
 
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppiImprovementYieldChange;
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppiResourceYieldChange;

@@ -75,6 +75,7 @@ public:
 	int getCachedProductionT100ForThisTurn() const;
 	int getCachedCultureT100ForThisTurn() const;
 #endif
+	void doUpdateCacheOnTurn();
 	void doTurn();
 
 	bool isCitySelected();
@@ -119,7 +120,11 @@ public:
 	int findPopulationRank();
 	int findBaseYieldRateRank(YieldTypes eYield);
 	int findYieldRateRank(YieldTypes eYield);
-
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	std::vector<int> getWonderYieldCache();
+	int getWonderYields(YieldTypes eYield) const;
+	void buildWonderYieldCache();
+#endif
 #ifdef AUI_WARNING_FIXES
 	UnitTypes allUpgradesAvailable(UnitTypes eUnit, uint iUpgradeCount = 0) const;
 #else
@@ -149,7 +154,17 @@ public:
 #if defined(MISC_CHANGES) // CvCity resource class yield changes
 	void ChangeResourceClassExtraYield(ResourceClassTypes eResourceClass, YieldTypes eYield, int iChange);
 #endif
-
+#if defined(TRADE_REFACTOR) // :)) Trade Connection extra yields
+	int GetTradeConnectionOriginLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionOriginSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	void ChangeTradeConnectionOriginExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange);
+	int GetTradeConnectionDestLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionDestSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	void ChangeTradeConnectionDestExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange);
+	int GetIncomingTradeConnectionLandExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetIncomingTradeConnectionSeaExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	void ChangeIncomingTradeConnectionExtraYield(TradeConnectionType eTradeConnection, YieldTypes eYield, bool bSea, int iChange);
+#endif
 	int GetFeatureExtraYield(FeatureTypes eFeature, YieldTypes eYield) const;
 	void ChangeFeatureExtraYield(FeatureTypes eFeature, YieldTypes eYield, int iChange);
 
@@ -527,7 +542,9 @@ public:
 
 	int getMilitaryProductionModifier() const;
 	void changeMilitaryProductionModifier(int iChange);
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int getMilitaryProductionFromGreatWorks() const;
+#endif
 	int getSpaceProductionModifier() const;
 	void changeSpaceProductionModifier(int iChange);
 
@@ -751,7 +768,9 @@ public:
 #endif
 	void SetExtraLuxuryResources(int iNewValue);
 	void ChangeExtraLuxuryResources(int iChange);
-
+#if defined(LEKMOD_RELOCATE_RESOURCE)
+	CvPlot* addResourceLocally(CvPlot* pFromPlot,ResourceTypes eResource, int iAmount);
+#endif
 	CvCityBuildings* GetCityBuildings() const;
 
 	int getProjectProduction(ProjectTypes eIndex) const;
@@ -795,7 +814,8 @@ public:
 	int GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const;
 #endif
 	void updateStrengthValue();
-	int getStrengthValue(bool bForRangeStrike = false) const;
+	int getStrengthValue(bool bForRangeStrike = false, CvCombatModifierList* kModifierList = NULL) const;
+	int calculateStrengthValue(bool bForRangeStrike = false, CvCombatModifierList* kModifierList = NULL) const;
 	int GetPower() const;
 
 	int getDamage() const;
@@ -809,11 +829,7 @@ public:
 	bool CanRangeStrikeNow() const;
 	bool IsHasBuildingThatAllowsRangeStrike() const;
 
-#ifdef DEL_RANGED_COUNTERATTACKS
-	bool canRangeStrikeAt(int iX, int iY, bool bOnlyCheckForEverPossible = false) const;
-#else
 	bool canRangeStrikeAt(int iX, int iY) const;
-#endif
 	CityTaskResult rangeStrike(int iX, int iY);
 	CvUnit* rangedStrikeTarget(CvPlot* pPlot);
 	bool canRangedStrikeTarget(const CvPlot& targetPlot) const;
@@ -860,7 +876,11 @@ public:
 	int GetCheapestPlotInfluence() const;
 	void SetCheapestPlotInfluence(int iValue);
 	void DoUpdateCheapestPlotInfluence();
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	int GetNumThingsPurchasedThisTurn() const { return m_iNumThingsPurchasedThisTurn; }
+	void SetNumThingsPurchasedThisTurn(int iValue);
+	void ChangeNumThingsPurchasedThisTurn(int iChange);
+#endif
 	// End plot acquisition
 
 	bool isValidBuildingLocation(BuildingTypes eIndex) const;
@@ -967,6 +987,9 @@ public:
 	void			setCombatUnit(CvUnit* pUnit, bool bAttacking = false);
 	void			clearCombat();
 	bool			isFighting() const;
+	int				getMaxXPValue() const;
+	bool			canEarnGlobalXP() const;
+
 	///
 	bool HasBuilding(BuildingTypes iBuildingType) const;
 	bool HasBuildingClass(BuildingClassTypes iBuildingClassType) const;
@@ -1053,6 +1076,9 @@ protected:
 	FAutoVariable<int, CvCity> m_iRazingTurns;
 	FAutoVariable<int, CvCity> m_iCountExtraLuxuries;
 	FAutoVariable<int, CvCity> m_iCheapestPlotInfluence;
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+	FAutoVariable<int, CvCity> m_iNumThingsPurchasedThisTurn;
+#endif
 	int m_iEspionageModifier;
 
 	OperationSlot m_unitBeingBuiltForOperation;
@@ -1144,7 +1170,14 @@ protected:
 	mutable FFastSmallFixedList< OrderData, 25, true, c_eCiv5GameplayDLL > m_orderQueue;
 
 	vector<SCityExtraYields> m_yieldChanges; //[NUM_YIELD_TYPES]
-
+#if defined(TRADE_REFACTOR)
+	int** m_aaiTradeConnectionOriginLandYieldChange;
+	int** m_aaiTradeConnectionOriginSeaYieldChange;
+	int** m_aaiTradeConnectionDestinationLandYieldChange;
+	int** m_aaiTradeConnectionDestinationSeaYieldChange;
+	int** m_aaiIncomingTradeConnectionLandYieldChange;
+	int** m_aaiIncomingTradeConnectionSeaYieldChange;
+#endif
 	int** m_aaiBuildingSpecialistUpgradeProgresses;
 	int** m_ppaiResourceYieldChange;
 	int** m_ppaiFeatureYieldChange;
@@ -1167,7 +1200,9 @@ protected:
 	FAutoVariable<std::vector<bool>, CvCity> m_abBaseYieldRankValid;
 	FAutoVariable<std::vector<int>, CvCity> m_aiYieldRank;
 	FAutoVariable<std::vector<bool>, CvCity> m_abYieldRankValid;
-
+#if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
+	FAutoVariable<std::vector<int>, CvCity> m_viWonderYieldCache;
+#endif
 	IDInfo m_combatUnit;		// The unit the city is in combat with
 
 	void doGrowth();

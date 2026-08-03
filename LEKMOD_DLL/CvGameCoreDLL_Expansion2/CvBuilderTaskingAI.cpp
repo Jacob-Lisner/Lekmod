@@ -1984,7 +1984,11 @@ void CvBuilderTaskingAI::AddRouteDirectives(CvUnit* pUnit, CvPlot* pPlot, int iM
 	}
 
 	CvUnitEntry& kUnitInfo = pUnit->getUnitInfo();
-	if(!kUnitInfo.GetBuilds(eRouteBuild))
+#if defined(v35_TRAITIFY)
+	if(!kUnitInfo.GetBuilds(eRouteBuild) && !GET_PLAYER(pUnit->getOwner()).GetPlayerTraits()->IsBuildableByUnitCombat(eRouteBuild, pUnit->getUnitCombatType()))
+#else
+	if (!kUnitInfo.GetBuilds(eRouteBuild))
+#endif
 	{
 		return;
 	}
@@ -2452,7 +2456,7 @@ bool CvBuilderTaskingAI::ShouldBuilderConsiderPlot(CvUnit* pUnit, CvPlot* pPlot)
 	switch(pUnit->getDomainType())
 	{
 	case DOMAIN_LAND:
-		if(pPlot->isWater())
+		if (pPlot->isWater() && !pUnit->IsHasEmbarkAbility()) // if we cannot embark, don't consider sea plots
 		{
 			return false;
 		}

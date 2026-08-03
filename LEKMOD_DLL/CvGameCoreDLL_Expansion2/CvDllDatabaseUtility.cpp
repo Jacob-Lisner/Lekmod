@@ -339,6 +339,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 
 	//Misc
 	PrefetchCollection(GC.getRouteInfo(), "Routes");
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	PrefetchCollection(GC.getGreatWorkClassInfo(), "GreatWorkClasses");
+#endif
 
 	CvNotificationXMLEntries* pkNotificationEntries =  GC.GetNotificationEntries();
 	if(pkNotificationEntries != NULL)
@@ -346,6 +349,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 		PrefetchCollection(pkNotificationEntries->GetNotificationEntries(), "Notifications");
 	}
 
+#if defined(TRADE_REFACTOR)
+	PrefetchCollection(GC.getTradeConnectionInfo(), "TradeConnections");
+#endif
 	//Technologies
 	PrefetchCollection(GC.getTechInfo(), "Technologies");
 
@@ -627,6 +633,9 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateVectorSize(getNumSpecialUnitInfos);
 	ValidateVectorSize(getNumVoteSourceInfos);
 	ValidateVectorSize(getNumUnitCombatClassInfos);
+#if defined(TRADE_REFACTOR)
+	ValidateVectorSize(getNumTradeConnectionInfos);
+#endif
 
 	ValidateCount(gc.getUnitAIInfo().size);
 
@@ -638,6 +647,9 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateCount(gc.getYieldInfo().size);
 
 	ValidateVectorSize(getNumRouteInfos);
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	ValidateVectorSize(getNumGreatWorkClassInfos);
+#endif
 	ValidateVectorSize(getNumImprovementInfos);
 	ValidateVectorSize(getNumBuildInfos);
 	ValidateVectorSize(getNumHandicapInfos);

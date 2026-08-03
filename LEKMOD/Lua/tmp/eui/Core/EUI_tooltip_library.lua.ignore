@@ -2098,7 +2098,16 @@ end
 
 -- TOURISM
 local function GetTourismTooltip(city)
-	return city:GetTourismTooltip()
+	local tips = table()
+
+	if OptionsManager.IsNoBasicHelp() then
+		tips:insertLocalized("TXT_KEY_TOURISM_HELP_INFO")
+		tips:insert("")
+	end
+
+	tips:insert(GetYieldTooltipHelper( city, YieldTypes.YIELD_TOURISM))
+	return tips:concat("[NEWLINE]")
+
 end
 
 ----------------------------------------------------------------

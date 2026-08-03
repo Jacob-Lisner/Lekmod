@@ -10,15 +10,41 @@
 #ifndef CIV5_TRAIT_CLASSES_H
 #define CIV5_TRAIT_CLASSES_H
 
-struct FreeResourceXCities
+struct FreeResourceCities
 {
-	FreeResourceXCities():
-		m_iNumCities(0),
-		m_iResourceQuantity(0)
-	{};
+	FreeResourceCities()
+		: m_eResource(NO_RESOURCE)
+		, m_eTechRequired(NO_TECH)
+		, m_iResourceQuantity(0)
+		, m_iNumCities(0)
+		, m_iGroup(0)
+		, m_iPriority(0)
+		, m_bCity(false)
+		, m_bFound(false)
+		, m_bTech(false)
+		, m_bUniqueArea(false)
+		, m_bCycleGroup(false)
+		, m_bClaimPlot(false)
+	{
+	};
 
-	int m_iNumCities;
+	ResourceTypes m_eResource;
+	TechTypes m_eTechRequired;
+
 	int m_iResourceQuantity;
+	int m_iNumCities;
+
+	// Group behavior
+	int m_iGroup;
+	int m_iPriority;
+	bool m_bCycleGroup;
+
+	// Trigger / placement rules
+	bool m_bCity;
+	bool m_bFound;
+	bool m_bTech;
+	bool m_bUniqueArea;
+	bool m_bClaimPlot;
 };
 
 struct MayaBonusChoice
@@ -82,9 +108,6 @@ public:
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	int GetNumTurnsBeforeMinorAlliesRefuseBribes() const;
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	int GetGoldenAgeTileBonusFaith() const;
-#endif
 	int GetCultureFromKills() const;
 	int GetFaithFromKills() const;
 	int GetCityCultureBonus() const;
@@ -109,7 +132,6 @@ public:
 #if defined(TRAITIFY) // Int and Bool getters
 	bool IsHalfMoreSpecialistUnhappiness() const;
 
-	int GetGoldenAgeCultureModifier() const;
 	int GetNumExtraLeagueVotes() const;
 	int GetNumTradeRouteBonus() const;
 	int GetMinorFriendshipMinimum() const;
@@ -120,18 +142,21 @@ public:
 	int GetInternationalRouteGrowthModifier() const;
 	int GetLocalHappinessPerCity() const;
 	int GetGlobalHappinessPerCity() const;
-	int GetInternalTradeRouteYieldModifier() const;
 	int GetUnhappinessModifierForPuppetedCities() const;
 	int GetFaithCostModifier() const; 
 	int GetIdeologyPressureUnhappinessModifier() const;
 	int GetForeignRelgionPressureModifier() const;
 	int GetFriendlyLandsCitizenMoveChange() const;
 #endif
+#if defined(v35_TRAITIFY)
+	bool IsEmbarkedUnitsFullStrength() const { return m_bEmbarkedUnitsFullStrength; }
+	int GetCityStateUnitGiftExtraExperience() const { return m_iCityStateUnitGiftExtraExperience; }
+	int GetGreatGeneralSiegeBonus() const { return m_iGreatGeneralSiegeBonus; }
+#endif
 #if defined(LEKMOD_v34)
 	bool IsReligionEnhanceReformation() const;
 
 	int GetSelfReligiousPressureModifier() const;
-	int GetLandTradeRouteYieldBonus() const;
 #endif
 
 	//EAP: Natural Wonder finder faith
@@ -238,6 +263,14 @@ public:
 	int GetRouteMovementChange(int i) const;
 	int GetFreshWaterImprovementYieldChanges(int i, int j) const;
 	int GetNonFreshWaterImprovementYieldChanges(int i, int j) const;
+	int GetGoldenAgeYieldModifier(int i) const;
+#endif
+#if defined(v35_TRAITIFY)
+	bool IsBuildableByUnitCombat(const int build, const int unitCombat) const;
+	int GetUnitCombatWorkRateChange(int i) const { return m_paiUnitCombatWorkRateChange[i]; };
+	int GetBuildCompleteTileClaimRange(int i) const { return m_paiBuildCompleteTileClaimRange[i]; };
+	int GetBuildCompleteTileStealRange(int i) const { return m_paiBuildCompleteTileStealRange[i]; };
+	bool IsEmbarkedMissionAllowed(MissionTypes eMission) const { return NO_MISSION != eMission ? m_vbEmbarkedMissionAllowed[eMission] : false; };
 #endif
 #if defined(LEKMOD_v34)
 	int GetYieldPerPopulation(int i) const;
@@ -256,11 +289,26 @@ public:
 	int GetCityEraYieldChange(int i, int j) const;
 	int GetCityTechYieldChange(int i, int j) const;
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetGreatWorkYieldChange(int i) const;
+	int GetGreatWorkClassYieldChange(int i, int j) const;
+#endif
 	int GetYieldChangeStrategicResources(int i) const;
 	int GetYieldChangeLuxuryResources(int i) const; // NQMP GJS - New Netherlands UA
 	int GetYieldChangeNaturalWonder(int i) const;
+#if !defined(TRADE_REFACTOR)
 	int GetYieldChangePerTradePartner(int i) const;
 	int GetYieldChangeIncomingTradeRoute(int i) const;
+#else
+	int GetTradePartnerYieldFlatBonusPerEra(int i) const;
+	int GetTradeConnectionLandYieldChange(int i, int j) const;
+	int GetTradeConnectionSeaYieldChange(int i, int j) const;
+	int GetYieldChangePerTradePartnerByDomain(int i, int j) const;
+	int GetIncomingTradeConnectionLandYieldChange(int i, int j) const;
+	int GetIncomingTradeConnectionSeaYieldChange(int i, int j) const;
+	int GetTradeConnectionLandYieldModifier(int i, int j) const;
+	int GetTradeConnectionSeaYieldModifier(int i, int j) const;
+#endif
 	int GetYieldModifier(int i) const;
 #if defined(LEKMOD_TRAIT_BUILDING_CLASS_PRODUCTION_MODIFIERS)
 	int GetBuildingClassProductionModifier(int i) const;
@@ -278,7 +326,11 @@ public:
 #endif
 
 	int GetUnimprovedFeatureYieldChanges(FeatureTypes eIndex1, YieldTypes eIndex2) const;
-	FreeResourceXCities GetFreeResourceXCities(ResourceTypes eResource) const;
+	const std::vector<FreeResourceCities>& GetFreeResourceCities() const { return m_vFreeResourceCities; }
+
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	const std::vector<GoldenAgeYieldThreshold>& GetGoldenAgeYieldThresholds() const { return m_sGoldenAgeYieldThresholds; }
+#endif
 
 	bool IsFreePromotionUnitCombat(const int promotionID, const int unitCombatID) const;
 	bool IsObsoleteByTech(TeamTypes eTeam);
@@ -335,9 +387,6 @@ protected:
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	int m_iNumTurnsBeforeMinorAlliesRefuseBribes;
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	int m_iGoldenAgeTileBonusFaith;
-#endif
 
 	int m_iCultureFromKills;
 	int m_iFaithFromKills;
@@ -365,7 +414,6 @@ protected:
 #if defined(TRAITIFY) // int and bool members
 	bool m_bHalfMoreSpecialistUnhappiness;
 
-	int m_iGoldenAgeCultureModifier;
 	int m_iNumExtraLeagueVotes;
 	int m_iNumTradeRouteBonus;
 	int m_iMinorFriendshipMinimum;
@@ -376,18 +424,21 @@ protected:
 	int m_iInternationalRouteGrowthModifier;
 	int m_iLocalHappinessPerCity;
 	int m_iGlobalHappinessPerCity;
-	int m_iInternalTradeRouteYieldModifier;
 	int m_iUnhappinessModifierForPuppetedCities;
 	int m_iFaithCostModifier;
 	int m_iIdeologyPressureUnhappinessModifier;
 	int m_iForeignRelgionPressureModifier;
 	int m_iFriendlyLandsCitizenMoveChange;
 #endif
+#if defined(v35_TRAITIFY)
+	bool m_bEmbarkedUnitsFullStrength;
+	int m_iCityStateUnitGiftExtraExperience;
+	int m_iGreatGeneralSiegeBonus;
+#endif
 #if defined(LEKMOD_v34)
 	bool m_bReligionEnhanceReformation;
 
 	int m_iSelfReligiousPressureModifier;
-	int m_iLandTradeRouteYieldBonus;
 #endif
 
 	//EAP: Natural wonder faith for the finder
@@ -489,6 +540,14 @@ protected:
 	int* m_paiBuildingClassHappiness;
 	int* m_paiBuildingClassGlobalHappiness;
 	int* m_piPuppetYieldModifiers;
+	int* m_piGoldenAgeYieldModifiers;
+#endif
+#if defined(v35_TRAITIFY)
+	multimap<int, int> m_BuildableByUnitCombat;
+	int* m_paiUnitCombatWorkRateChange;
+	int* m_paiBuildCompleteTileClaimRange;
+	int* m_paiBuildCompleteTileStealRange;
+	std::vector<bool> m_vbEmbarkedMissionAllowed;
 #endif
 #if defined(LEKMOD_v34)
 	int* m_paiYieldPerPopulation;
@@ -497,13 +556,28 @@ protected:
 #if defined(FULL_YIELD_FROM_KILLS)
 	int* m_paiYieldFromKills;
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int* m_paiGreatWorkYieldChanges;
+	int** m_ppiGreatWorkClassYieldChanges;
+#endif
 	int* m_paiExtraYieldThreshold;
 	int* m_paiYieldChange;
 	int* m_paiYieldChangeStrategicResources;
 	int* m_paiYieldChangeLuxuryResources; // NQMP GJS - New Netherlands UA
 	int* m_paiYieldChangeNaturalWonder;
+#if !defined(TRADE_REFACTOR)
 	int* m_paiYieldChangePerTradePartner;
 	int* m_paiYieldChangeIncomingTradeRoute;
+#else
+	int* m_paiTradePartnerYieldFlatBonusPerEra;
+	int** m_ppiTradeConnectionLandYieldChange;
+	int** m_ppiTradeConnectionSeaYieldChange;
+	int** m_ppiYieldChangePerTradePartnerByDomain;
+	int** m_ppiIncomingTradeConnectionLandYieldChange;
+	int** m_ppiIncomingTradeConnectionSeaYieldChange;
+	int** m_ppiTradeConnectionLandYieldModifier;
+	int** m_ppiTradeConnectionSeaYieldModifier;
+#endif
 	int* m_paiYieldModifier;
 	int* m_piStrategicResourceQuantityModifier;
 	int* m_piResourceQuantityModifiers;
@@ -535,8 +609,10 @@ protected:
 #endif
 
 	std::multimap<int, int> m_FreePromotionUnitCombats;
-
-	std::vector<FreeResourceXCities> m_aFreeResourceXCities;
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	std::vector<GoldenAgeYieldThreshold> m_sGoldenAgeYieldThresholds;
+#endif
+	std::vector<FreeResourceCities> m_vFreeResourceCities;
 	std::vector<bool> m_abNoTrainUnitClass;
 
 #ifdef LEKMOD_TRAIT_NO_BUILD_IMPROVEMENTS
@@ -713,12 +789,6 @@ public:
 		return m_iNumTurnsBeforeMinorAlliesRefuseBribes;
 	}
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	int GetGoldenAgeTileBonusFaith() const
-	{
-		return m_iGoldenAgeTileBonusFaith;
-	}
-#endif
 	int GetCultureFromKills() const
 	{
 		return m_iCultureFromKills;
@@ -795,10 +865,6 @@ public:
 	{
 		return m_bHalfMoreSpecialistUnhappiness;
 	};
-	int GetGoldenAgeCultureModifier() const
-	{
-		return m_iGoldenAgeCultureModifier;
-	};
 	int GetNumExtraLeagueVotes() const
 	{
 		return m_iNumExtraLeagueVotes;
@@ -839,10 +905,6 @@ public:
 	{
 		return m_iGlobalHappinessPerCity;
 	};
-	int GetInternalTradeRouteYieldModifier() const
-	{
-		return m_iInternalTradeRouteYieldModifier;
-	};
 	int GetUnhappinessModifierForPuppetedCities() const
 	{
 		return m_iUnhappinessModifierForPuppetedCities;
@@ -864,6 +926,11 @@ public:
 		return m_iFriendlyLandsCitizenMoveChange;
 	};
 #endif
+#if defined(v35_TRAITIFY)
+	bool IsEmbarkedUnitsFullStrength() const { return m_bEmbarkedUnitsFullStrength; }
+	int GetCityStateUnitGiftExtraExperience() const { return m_iCityStateUnitGiftExtraExperience; }
+	int GetGreatGeneralSiegeBonus() const { return m_iGreatGeneralSiegeBonus; }
+#endif
 #if defined(LEKMOD_v34)
 	bool IsReligionEnhanceReformation() const
 	{
@@ -872,10 +939,6 @@ public:
 	int GetSelfReligiousPressureModifier() const
 	{
 		return m_iSelfReligiousPressureModifier;
-	};
-	int GetLandTradeRouteYieldBonus() const
-	{
-		return m_iLandTradeRouteYieldBonus;
 	};
 #endif
 	int GetNaturalWonderFirstFinderGold() const
@@ -1165,6 +1228,12 @@ public:
 		return m_iWorldWonderYieldChange[(int)eYield];
 	};
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetGreatWorkYieldChange(YieldTypes eYield) const
+	{
+		return m_iGreatWorkYieldChange[(int)eYield];
+	};
+#endif
 #if defined(TRAITIFY)
 	int GetPuppetYieldModifier(YieldTypes eYield) const
 	{
@@ -1174,7 +1243,12 @@ public:
 	{
 		return m_iRouteMovementChange[(int)eRoute];
 	};
+	int GetGoldenAgeYieldModifier(YieldTypes eYield) const
+	{
+		return m_iGoldenAgeYieldModifier[(int)eYield];
+	};
 #endif
+#if !defined(TRADE_REFACTOR)
 	int GetYieldChangePerTradePartner(YieldTypes eYield) const
 	{
 		return m_iYieldChangePerTradePartner[(int)eYield];
@@ -1189,6 +1263,19 @@ public:
 	{
 		return m_iYieldChangeIncomingTradeRoute[(int)eYield];
 	};
+#else
+	int GetTradePartnerYieldFlatBonusPerEra(YieldTypes eYield) const
+	{
+		return m_iTradePartnerYieldFlatBonusPerEra[(int)eYield];
+	};
+	int GetTradeConnectionLandYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionSeaYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetYieldChangePerTradePartnerByDomain(DomainTypes eDomain, YieldTypes eYield) const;
+	int GetIncomingTradeConnectionLandYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetIncomingTradeConnectionSeaYieldChange(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionLandYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionSeaYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+#endif
 	int GetYieldRateModifier(YieldTypes eYield) const
 	{
 		return m_iYieldRateModifier[(int)eYield];
@@ -1209,12 +1296,18 @@ public:
 	int GetAnySpecificSpecialistYieldChange(SpecialistTypes eSpecialist, YieldTypes eYield) const;
 #endif
 	int GetUnimprovedFeatureYieldChange(FeatureTypes eFeature, YieldTypes eYield) const;
-	FreeResourceXCities GetFreeResourceXCities(ResourceTypes eResource) const;
+	const std::vector<FreeResourceCities>& GetFreeResourceCities() const { return m_vFreeResourceCities; }
+	std::vector<std::pair<int, int> >& GetUsedGroupAreas() { return m_vUsedGroupAreas; }
+	std::vector<std::pair<int, int> >& GetGroupPriority() { return m_vGroupPriority; }
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	const std::vector<GoldenAgeYieldThreshold>& CvPlayerTraits::GetGoldenAgeYieldThresholdBonus() const { return m_sGoldenAgeYieldThreshold; }
+#endif
 
 	bool HasFreePromotionUnitCombat(const int promotionID, const int unitCombatID) const;
 
 	// Public functions to make trait-based game state changes
 	void AddUniqueLuxuries(CvCity *pCity);
+
 	bool CheckForBarbarianConversion(CvPlot* pPlot);
 	int GetCapitalBuildingDiscount(BuildingTypes eBuilding);
 	
@@ -1275,6 +1368,13 @@ public:
 	int GetFreshWaterImprovementYieldChange(ImprovementTypes eImprovement, YieldTypes eYieldType);
 	int GetNonFreshWaterImprovementYieldChange(ImprovementTypes eImprovement, YieldTypes eYieldType);
 #endif
+#if defined(v35_TRAITIFY)
+	bool IsBuildableByUnitCombat(BuildTypes eBuild, UnitCombatTypes eUnitCombat) const;
+	int GetUnitCombatWorkRateChange(UnitCombatTypes eUnitCombat) const { return NO_UNITCOMBAT != eUnitCombat ? m_viUnitCombatWorkRateChange[eUnitCombat] : 0; }
+	int GetBuildCompleteTileClaimRange(ImprovementTypes eImprovement) const { return NO_BUILD != eImprovement ? m_viBuildCompleteTileClaimRange[eImprovement] : 0; }
+	int GetBuildCompleteTileStealRange(ImprovementTypes eImprovement) const { return NO_BUILD != eImprovement ? m_viBuildCompleteTileStealRange[eImprovement] : 0; }
+	bool IsEmbarkedMissionAllowed(MissionTypes eMission) const { return NO_MISSION != eMission ? m_vbEmbarkedAllowedMissions[eMission] : false; }
+#endif
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 	int GetCapitalYieldChange(YieldTypes eYield);
 	int GetCapitalEraYieldChange(EraTypes eEra, YieldTypes eYield);
@@ -1286,6 +1386,9 @@ public:
 #if defined(LEKMOD_v34)
 	int GetYieldPerPopulation(YieldTypes eYield);
 	int GetYieldPerPopulationForeignReligion(YieldTypes eYield);
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int GetGreatWorkClassYieldChange(GreatWorkClass eClass, YieldTypes eYield);
 #endif
 
 	// Maya calendar routines
@@ -1344,9 +1447,6 @@ private:
 #ifdef NQ_NUM_TURNS_BEFORE_MINOR_ALLIES_REFUSE_BRIBES_FROM_TRAIT
 	int m_iNumTurnsBeforeMinorAlliesRefuseBribes;
 #endif
-#ifdef NQ_GOLDEN_PILGRIMAGE
-	int m_iGoldenAgeTileBonusFaith;
-#endif
 	int m_iCultureFromKills;
 	int m_iFaithFromKills;
 	int m_iCityCultureBonus;
@@ -1371,7 +1471,6 @@ private:
 #if defined(TRAITIFY) // int and bool members
 	bool m_bHalfMoreSpecialistUnhappiness;
 
-	int m_iGoldenAgeCultureModifier;
 	int m_iNumExtraLeagueVotes;
 	int m_iNumTradeRouteBonus;
 	int m_iMinorFriendshipMinimum;
@@ -1382,18 +1481,21 @@ private:
 	int m_iInternationalRouteGrowthModifier;
 	int m_iLocalHappinessPerCity;
 	int m_iGlobalHappinessPerCity;
-	int m_iInternalTradeRouteYieldModifier;
 	int m_iUnhappinessModifierForPuppetedCities;
 	int m_iFaithCostModifier;
 	int m_iIdeologyPressureUnhappinessModifier;
 	int m_iForeignRelgionPressureModifier;
 	int m_iFriendlyLandsCitizenMoveChange;
 #endif
+#if defined(v35_TRAITIFY)
+	bool m_bEmbarkedUnitsFullStrength;
+	int m_iCityStateUnitGiftExtraExperience;
+	int m_iGreatGeneralSiegeBonus;
+#endif
 #if defined(LEKMOD_v34)
 	bool m_bReligionEnhanceReformation;
 
 	int m_iSelfReligiousPressureModifier;
-	int m_iLandTradeRouteYieldBonus;
 #endif
 
 	//EAP: Natural wonder faith for the finder
@@ -1485,8 +1587,19 @@ private:
 	int m_iYieldChangeStrategicResources[NUM_YIELD_TYPES];
 	int m_iYieldChangeLuxuryResources[NUM_YIELD_TYPES]; // NQMP GJS - New Netherlands UA
 	int m_iYieldChangeNaturalWonder[NUM_YIELD_TYPES];
+#if !defined(TRADE_REFACTOR)
 	int m_iYieldChangePerTradePartner[NUM_YIELD_TYPES];
 	int m_iYieldChangeIncomingTradeRoute[NUM_YIELD_TYPES];
+#else
+	int m_iTradePartnerYieldFlatBonusPerEra[NUM_YIELD_TYPES];
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiTradeConnectionLandYieldChange;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiTradeConnectionSeaYieldChange;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiYieldChangePerTradePartnerByDomain;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiIncomingTradeConnectionLandYieldChange;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiIncomingTradeConnectionSeaYieldChange;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiTradeConnectionLandYieldModifier;
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiTradeConnectionSeaYieldModifier;
+#endif
 	int m_iYieldRateModifier[NUM_YIELD_TYPES];
 	int m_iStrategicResourceQuantityModifier[NUM_TERRAIN_TYPES];
 
@@ -1530,9 +1643,14 @@ private:
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	int m_iWorldWonderYieldChange[NUM_YIELD_TYPES];
 #endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	int m_iGreatWorkYieldChange[NUM_YIELD_TYPES];
+	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiGreatWorkClassYieldChange;
+#endif
 #if defined(TRAITIFY)
 	int m_iRouteMovementChange[NUM_ROUTE_TYPES];
 	int m_iPuppetYieldModifiers[NUM_YIELD_TYPES];
+	int m_iGoldenAgeYieldModifier[NUM_YIELD_TYPES];
 	std::vector<bool> m_abRemoveRequiredTerrain;
 	std::vector<bool> m_abForceSpawnCapital;
 	std::vector<int> m_aiBuildingClassHappiness;
@@ -1546,6 +1664,12 @@ private:
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiFreshWaterImprovementYieldChange;
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiNonFreshWaterImprovementYieldChange;
 #endif
+#if defined(v35_TRAITIFY)
+	std::vector<int> m_viUnitCombatWorkRateChange;
+	std::vector<int> m_viBuildCompleteTileClaimRange;
+	std::vector<int> m_viBuildCompleteTileStealRange;
+	std::vector<bool> m_vbEmbarkedAllowedMissions;
+#endif
 #if defined(LEKMOD_CITY_YIELDS_TRAITS)
 	int m_aiCapitalYieldChange[NUM_YIELD_TYPES];
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiCapitalEraYieldChange;
@@ -1554,7 +1678,12 @@ private:
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiCityEraYieldChange;
 	std::vector< Firaxis::Array<int, NUM_YIELD_TYPES > > m_ppaaiCityTechYieldChange;
 #endif
-	std::vector<FreeResourceXCities> m_aFreeResourceXCities;
+	std::vector<FreeResourceCities> m_vFreeResourceCities;
+	std::vector<std::pair<int, int> > m_vUsedGroupAreas;
+	std::vector<std::pair<int, int> > m_vGroupPriority;
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+	std::vector<GoldenAgeYieldThreshold> m_sGoldenAgeYieldThreshold;
+#endif
 };
 
 #endif //CIV5_TRAIT_CLASSES_H

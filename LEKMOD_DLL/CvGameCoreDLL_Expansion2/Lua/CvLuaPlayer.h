@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ÔøΩ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -1018,6 +1018,7 @@ protected:
 	static int lGetNumInternationalTradeRoutesUsed(lua_State* L);
 	static int lGetNumInternationalTradeRoutesAvailable(lua_State* L);
 	static int lGetPotentialInternationalTradeRouteDestinations(lua_State* L);
+#if !defined(TRADE_REFACTOR)
 	static int lGetInternationalTradeRouteBaseBonus(lua_State* L);
 	static int lGetInternationalTradeRouteGPTBonus(lua_State* L);
 	static int lGetInternationalTradeRouteResourceBonus(lua_State* L);
@@ -1031,6 +1032,25 @@ protected:
 	static int lGetInternationalTradeRouteDomainModifier(lua_State* L);
 	static int lGetInternationalTradeRouteTotal(lua_State* L);
 	static int lGetInternationalTradeRouteScience(lua_State* L);
+#else
+	static int lGetTradeConnectionBaseYield(lua_State* L);
+	static int lGetTradeConnectionOriginGPTValue(lua_State* L);
+	static int lGetTradeConnectionDestinationGPTValue(lua_State* L);
+	static int lGetTradeConnectionResourceValue(lua_State* L);
+	static int lGetTradeConnectionYourBuildingValue(lua_State* L);
+	static int lGetTradeConnectionTheirBuildingValue(lua_State* L);
+	static int lGetTradeConnectionExclusiveValue(lua_State* L);
+	static int lGetTradeConnectionPolicyValue(lua_State* L);
+	static int lGetTradeConnectionTraitValue(lua_State* L);
+	static int lGetTradeConnectionReligionValue(lua_State* L);
+	// Mods
+	static int lGetTradeConnectionPolicyValueModifier(lua_State* L);
+	static int lGetTradeConnectionTraitValueModifier(lua_State* L);
+	static int lGetTradeConnectionDomainValueModifier(lua_State* L);
+	static int lGetTradeConnectionRiverValueModifier(lua_State* L);
+	// Sum of All
+	static int lGetTradeConnectionTotalValue(lua_State* L);
+#endif
 	static int lGetPotentialTradeUnitNewHomeCity(lua_State* L);
 	static int lGetPotentialAdmiralNewPort(lua_State* L);
 	static int lGetNumAvailableTradeUnits(lua_State* L);
@@ -1066,6 +1086,22 @@ protected:
 	static int lGetLiberationPreviewString(lua_State* L);
 #ifdef ENHANCED_GRAPHS
 	static int lAddReplayOpenedDemographics(lua_State* L);
+#endif
+#if defined(STANDARDIZE_YIELDS)
+	static int lGetYield(lua_State* L);
+	static int lGetYieldTimes100(lua_State* L);
+	static int lGetYieldFromCitiesTimes100(lua_State* L);
+	static int lGetYieldFromOtherPlayersTimes100(lua_State* L);
+	static int lGetYieldFromHappinessTimes100(lua_State* L);
+	static int lGetYieldPenaltiesTimes100(lua_State* L);
+	static int lGetYieldFromMinorCivsTimes100(lua_State* L);
+	static int lGetYieldFromTraitsTimes100(lua_State* L);
+	static int lGetYieldFromReligionTimes100(lua_State* L);
+#endif
+	static int lGetNumCitiesPolicyCostDiscount(lua_State* L);
+#if defined(v35_TRAITIFY)
+	static int lIsEmbarkedUnitsFullStrength(lua_State* L);
+	static int lIsEmbarkedMissionAllowed(lua_State* L);
 #endif
 };
 

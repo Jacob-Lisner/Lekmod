@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -31,12 +31,11 @@ public:
 	    ATTACK_OPTION_NO_DEFENSIVE_SUPPORT = 1
 	};
 
-	static void GenerateMeleeCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender, CvPlot& kPlot, CvCombatInfo* pkCombatInfo);
-	static void GenerateRangedCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender, CvPlot& kPlot, CvCombatInfo* pkCombatInfo);
-	static void GenerateRangedCombatInfo(CvCity& kAttacker, CvUnit* pkDefender, CvPlot& plot, CvCombatInfo* pkCombatInfo);
-	static void GenerateAirCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender, CvPlot& kPlot, CvCombatInfo* pkCombatInfo);
-	static void GenerateAirSweepCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender, CvPlot& kPlot, CvCombatInfo* pkCombatInfo);
-	static void GenerateNuclearCombatInfo(CvUnit& kAttacker, CvPlot& plot, CvCombatInfo* pkCombatInfo);
+	static void GenerateMeleeCombatInfo(CvCombatInfo* pkCombatInfo);
+	static void GenerateRangedCombatInfo(CvCombatInfo* pkCombatInfo);
+	static void GenerateAirCombatInfo(CvCombatInfo* pkCombatInfo);
+	static void GenerateAirSweepCombatInfo(CvCombatInfo* pkCombatInfo);
+	static void GenerateNuclearCombatInfo(CvCombatInfo* pkCombatInfo);
 
 	static void ResolveCombat(const CvCombatInfo& kInfo, uint uiParentEventID = 0);
 
@@ -54,6 +53,7 @@ public:
 protected:
 	static void ResolveRangedUnitVsCombat(const CvCombatInfo& kInfo, uint uiParentEventID);
 	static void ResolveRangedCityVsUnitCombat(const CvCombatInfo& kCombatInfo, uint uiParentEventID);
+	static void ResolveRangedCityVsCityCombat(const CvCombatInfo& kCombatInfo, uint uiParentEventID);
 	static void ResolveMeleeCombat(const CvCombatInfo& kInfo, uint uiParentEventID);
 	static void ResolveCityMeleeCombat(const CvCombatInfo& kCombatInfo, uint uiParentEventID);
 	static void ResolveAirUnitVsCombat(const CvCombatInfo& kInfo, uint uiParentEventID);

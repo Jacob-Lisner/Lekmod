@@ -5845,8 +5845,16 @@ void CvTacticalAI::IdentifyPriorityTargets()
 			if(pEnemyUnit)
 			{
 				iExpectedDamage = 0;
-
-				if(pEnemyUnit->IsCanAttackRanged() && pEnemyUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > pEnemyUnit->GetMaxAttackStrength(NULL, pLoopCity->plot(), NULL))
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+				if (pEnemyUnit->IsCanAttackRanged() && pEnemyUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > pEnemyUnit->GetMaxAttackStrength(NULL, pLoopCity->plot(), NULL))
+#else
+				CvCombatInfo kCombatInfo;
+				kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pEnemyUnit.pointer());
+				kCombatInfo.setCity(BATTLE_UNIT_DEFENDER, pLoopCity);
+				kCombatInfo.setPlot(pLoopCity->plot());
+				kCombatInfo.setAttackIsRanged(true);
+				if (pEnemyUnit->IsCanAttackRanged() && pEnemyUnit->GetMaxRangedCombatStrength(kCombatInfo) > pEnemyUnit->GetMaxAttackStrength(kCombatInfo))
+#endif
 				{
 					if(plotDistance(pEnemyUnit->getX(), pEnemyUnit->getY(), pLoopCity->getX(), pLoopCity->getY()) <= pEnemyUnit->GetRange())
 					{
@@ -5858,7 +5866,11 @@ void CvTacticalAI::IdentifyPriorityTargets()
 				}
 				else if(CanReachInXTurns(pEnemyUnit, pLoopCity->plot(), 1))
 				{
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 					int iAttackerStrength = pEnemyUnit->GetMaxAttackStrength(NULL, pLoopCity->plot(), NULL);
+#else
+					int iAttackerStrength = pEnemyUnit->GetMaxAttackStrength(kCombatInfo);
+#endif
 					int iDefenderStrength = pLoopCity->getStrengthValue();
 					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pLoopCity->getOwner(), pLoopCity->getX(), pLoopCity->getY(), pEnemyUnit->getX(), pEnemyUnit->getY());
 					int iDefenderFireSupportCombatDamage = 0;
@@ -5956,7 +5968,15 @@ void CvTacticalAI::IdentifyPriorityBarbarianTargets()
 				{
 					CvPlot* pPlot = GC.getMap().plot(pTarget->GetTargetX(), pTarget->GetTargetY());
 					UnitHandle pEnemyUnit = pPlot->getVisibleEnemyDefender(m_pPlayer->GetID());
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 					if(pEnemyUnit->IsCanAttackRanged() && pEnemyUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > pEnemyUnit->GetMaxAttackStrength(NULL, pLoopPlot, NULL))
+#else
+					CvCombatInfo kCombatInfo;
+					kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pEnemyUnit.pointer());
+					kCombatInfo.setPlot(pLoopPlot);
+					kCombatInfo.setAttackIsRanged(true);
+					if (pEnemyUnit->IsCanAttackRanged() && pEnemyUnit->GetMaxRangedCombatStrength(kCombatInfo) > pEnemyUnit->GetMaxAttackStrength(kCombatInfo))
+#endif
 					{
 						if(plotDistance(pEnemyUnit->getX(), pEnemyUnit->getY(), pLoopPlot->getX(), pLoopPlot->getY()) <= pEnemyUnit->GetRange())
 						{
@@ -6277,10 +6297,6 @@ void CvTacticalAI::ExecuteAttack(CvTacticalTarget* pTarget, CvPlot* pTargetPlot,
 	// Start by applying damage from city bombards
 	for(unsigned int iI = 0; iI < m_CurrentMoveCities.size() && iDamageRemaining > 0; iI++)
 	{
-#ifdef DEL_RANGED_COUNTERATTACKS
-		if (!bInflictWhatWeTake || m_CurrentMoveCities[iI].GetExpectedTargetDamage() >= m_CurrentMoveCities[iI].GetExpectedSelfDamage())
-		{
-#endif
 		CvCity* pCity = m_pPlayer->getCity(m_CurrentMoveCities[iI].GetID());
 		if(pCity != NULL)
 		{
@@ -6294,9 +6310,6 @@ void CvTacticalAI::ExecuteAttack(CvTacticalTarget* pTarget, CvPlot* pTargetPlot,
 			// Subtract off expected damage
 			iDamageRemaining -= m_CurrentMoveCities[iI].GetExpectedTargetDamage();
 		}
-#ifdef DEL_RANGED_COUNTERATTACKS
-		}
-#endif
 	}
 
 	// First loop is ranged units only
@@ -8893,9 +8906,13 @@ bool CvTacticalAI::FindUnitsWithinStrikingDistance(CvPlot* pTarget, int iNumTurn
 				{
 					continue;
 				}
-
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 				int iAttackStrength = pLoopUnit->GetMaxAttackStrength(NULL, NULL, NULL);
-
+#else
+				CvCombatInfo kCombatInfo;
+				kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pLoopUnit.pointer());
+				int iAttackStrength = pLoopUnit->GetMaxAttackStrength(kCombatInfo);
+#endif
 				// Looking for damaged units?  If so, recalculate attack strength
 				if (iPreferredDamageLevel > 0)
 				{
@@ -8935,7 +8952,12 @@ bool CvTacticalAI::FindUnitsWithinStrikingDistance(CvPlot* pTarget, int iNumTurn
 									unit.SetID(pLoopUnit->GetID());
 
 									// Want ranged units to attack first, so inflate this
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 									unit.SetAttackStrength(100 * pLoopUnit->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true));
+#else
+									kCombatInfo.setAttackIsRanged(true);
+									unit.SetAttackStrength(100 * pLoopUnit->GetMaxRangedCombatStrength(kCombatInfo));
+#endif
 									unit.SetHealthPercent(100, 100);  // Don't take damage from bombarding, so show as fully healthy
 									m_CurrentMoveUnits.push_back(unit);
 									rtnValue = true;
@@ -9039,7 +9061,14 @@ bool CvTacticalAI::FindParatroopersWithinStrikingDistance(CvPlot* pTarget)
 		{
 			CvTacticalUnit unit;
 			unit.SetID(pLoopUnit->GetID());
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 			unit.SetAttackStrength(pLoopUnit->GetMaxAttackStrength(NULL, NULL, NULL));
+#else
+			CvCombatInfo kCombatInfo;
+			kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pLoopUnit.pointer());
+			kCombatInfo.setPlot(pTarget);
+			unit.SetAttackStrength(pLoopUnit->GetMaxAttackStrength(kCombatInfo));
+#endif
 			unit.SetHealthPercent(pLoopUnit->GetCurrHitPoints(), pLoopUnit->GetMaxHitPoints());
 			m_CurrentMoveUnits.push_back(unit);
 			rtnValue = true;
@@ -9296,31 +9325,20 @@ int CvTacticalAI::ComputeTotalExpectedDamage(CvTacticalTarget* pTarget, CvPlot* 
 				{
 					iExpectedDamage = pAttacker->GetRangeCombatDamage(pDefender.pointer(), NULL, false);
 					iExpectedSelfDamage = 0;
-#ifdef DEL_RANGED_COUNTERATTACKS
-					if (GC.getGame().isOption("GAMEOPTION_ENABLE_RANGED_COUNTERATTACKS") && !pDefender->IsCityAttackOnly())
-					{
-						if ((pDefender->canRangeStrike() && pDefender->GetRange() >= pAttacker->GetRange()) ||
-							(pDefender->IsCanAttackWithMove() && pAttacker->plot()->isAdjacent(pDefender->plot()) && pDefender->PlotValid(pDefender->plot()) && pDefender->PlotValid(pAttacker->plot())))
-						{
-							if (pDefender->IsCanAttackRanged())
-							{
-								iExpectedSelfDamage = pDefender->GetRangeCombatDamage(pAttacker.pointer(), NULL, true);
-							}
-							else if (iExpectedDamage + pDefender->getDamage() < pDefender->GetMaxHitPoints())
-							{
-								// Melee unit (defender) is counterattacking by attacking into the plot from which they were bombarded, where the attacker is
-								int iAttackerStrength = pAttacker->GetMaxDefenseStrength(pAttacker->plot(), pDefender.pointer());
-								int iDefenderStrength = pDefender->GetMaxAttackStrength(pDefender->plot(), pAttacker->plot(), pAttacker.pointer());
-								iExpectedSelfDamage = pDefender->getCombatDamage(iDefenderStrength, iAttackerStrength, iExpectedDamage + pDefender->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-							}
-						}
-					}
-#endif
 				}
 				else
 				{
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 					int iAttackerStrength = pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL);
 					int iDefenderStrength = pDefender->GetMaxDefenseStrength(pTargetPlot, pAttacker.pointer());
+#else
+					CvCombatInfo kCombatInfo;
+					kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pAttacker.pointer());
+					kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pDefender.pointer());
+					kCombatInfo.setPlot(pTargetPlot);
+					int iAttackerStrength = pAttacker->GetMaxAttackStrength(kCombatInfo);
+					int iDefenderStrength = pDefender->GetMaxDefenseStrength(kCombatInfo);
+#endif
 					UnitHandle pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pDefender->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY());
 					int iDefenderFireSupportCombatDamage = 0;
 					if(pFireSupportUnit)
@@ -9342,23 +9360,28 @@ int CvTacticalAI::ComputeTotalExpectedDamage(CvTacticalTarget* pTarget, CvPlot* 
 			CvCity* pCity = pTargetPlot->getPlotCity();
 			if(pCity != NULL)
 			{
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 				if(pAttacker->IsCanAttackRanged() && pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL))
+#else
+				CvCombatInfo kCombatInfo;
+				kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pAttacker.pointer());
+				kCombatInfo.setCity(BATTLE_UNIT_DEFENDER, pCity);
+				kCombatInfo.setPlot(pTargetPlot);
+				kCombatInfo.setAttackIsRanged(true);
+				if (pAttacker->IsCanAttackRanged() && pAttacker->GetMaxRangedCombatStrength(kCombatInfo) > pAttacker->GetMaxAttackStrength(kCombatInfo))
+#endif
 				{
 					iExpectedDamage = pAttacker->GetRangeCombatDamage(NULL, pCity, false);
 					iExpectedSelfDamage = 0;
-#ifdef DEL_RANGED_COUNTERATTACKS
-					if (GC.getGame().isOption("GAMEOPTION_ENABLE_RANGED_COUNTERATTACKS"))
-					{
-						if (pCity->canRangeStrikeAt(pAttacker->getX(), pAttacker->getY(), true))
-						{
-							iExpectedSelfDamage = pCity->rangeCombatDamage(pAttacker.pointer(), NULL, true);
-						}
-					}
-#endif
 				}
 				else
 				{
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 					int iAttackerStrength = pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL);
+#else
+					kCombatInfo.setAttackIsRanged(false);
+					int iAttackerStrength = pAttacker->GetMaxAttackStrength(kCombatInfo);
+#endif
 					int iDefenderStrength = pCity->getStrengthValue();
 					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pCity->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY());
 					int iDefenderFireSupportCombatDamage = 0;
@@ -9386,46 +9409,12 @@ int CvTacticalAI::ComputeTotalExpectedBombardDamage(UnitHandle pTarget)
 {
 	int rtnValue = 0;
 	int iExpectedDamage;
-#ifdef DEL_RANGED_COUNTERATTACKS
-	int iExpectedSelfDamage = 0;
-#endif
 
 	// Now loop through all the cities that can bombard it
 	for(unsigned int iI = 0; iI < m_CurrentMoveCities.size(); iI++)
 	{
 		CvCity* pAttackingCity = m_pPlayer->getCity(m_CurrentMoveCities[iI].GetID());
 		iExpectedDamage = pAttackingCity->rangeCombatDamage(pTarget.pointer(), NULL, false);
-#ifdef DEL_RANGED_COUNTERATTACKS
-		iExpectedSelfDamage = 0;
-		if (GC.getGame().isOption("GAMEOPTION_ENABLE_RANGED_COUNTERATTACKS"))
-		{
-			if (// Ranged unit counterattacks
-				(pTarget->canRangeStrike() && pTarget->canEverRangeStrikeAt(pAttackingCity->getX(), pAttackingCity->getY())) ||
-				// Melee unit counterattacks
-				(pTarget->IsCanAttackWithMove() && pTarget->plot()->isAdjacent(pAttackingCity->plot()) && pTarget->PlotValid(pTarget->plot()) && pTarget->PlotValid(pAttackingCity->plot())))
-			{
-				if (pTarget->IsCanAttackRanged())
-				{
-					iExpectedSelfDamage = pTarget->GetRangeCombatDamage(NULL, pAttackingCity, false);
-				}
-				else if (iExpectedDamage + pTarget->getDamage() < pTarget->GetMaxHitPoints())
-				{
-					// Melee unit (defender) is counterattacking by attacking into the plot from which they were bombarded, where the attacker is
-					int iAttackerStrength = pAttackingCity->getStrengthValue();
-					int iDefenderStrength = pTarget->GetMaxAttackStrength(pTarget->plot(), pAttackingCity->plot(), NULL);
-					iExpectedSelfDamage = pTarget->getCombatDamage(iDefenderStrength, iAttackerStrength, iExpectedDamage + pTarget->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ true);
-					iExpectedDamage = MAX(iExpectedDamage, pTarget->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttackingCity->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ true, /*bDefenderIsCity*/ false));
-				}
-			}
-
-			// Cities can't be knocked to less than 1 HP by counterattacks
-			if (iExpectedSelfDamage + pAttackingCity->getDamage() >= pAttackingCity->GetMaxHitPoints())
-			{
-				iExpectedSelfDamage = pAttackingCity->GetMaxHitPoints() - pAttackingCity->getDamage() - 1;
-			}
-		}
-		m_CurrentMoveCities[iI].SetExpectedSelfDamage(iExpectedSelfDamage);
-#endif
 		m_CurrentMoveCities[iI].SetExpectedTargetDamage(iExpectedDamage);
 		rtnValue += iExpectedDamage;
 	}

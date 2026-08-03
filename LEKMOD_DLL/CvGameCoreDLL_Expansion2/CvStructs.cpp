@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -181,6 +181,8 @@ void checkBattleUnitType(BattleUnitTypes /*unitType*/)
 //------------------------------------------------------------------------------------------------
 CvCombatInfo::CvCombatInfo() :
 	m_pTargetPlot(NULL),
+	m_pFromPlot(NULL),
+	m_bUseLiveOriginPlot(true),
 	m_bAttackerAdvances(false),
 	m_bAttackIsRanged(false),
 	m_bAttackIsBombingMission(false),
@@ -190,9 +192,10 @@ CvCombatInfo::CvCombatInfo() :
 	m_iNuclearDamageLevel(0),
 	m_bVisualize(false),
 	m_bAttackedAdvancedVis(false),
-	m_iDamageMemberCount(0)
+	m_iDamageMemberCount(0),
+	m_bCombatPrediction(false)
 {
-	for(int i=0; i<BATTLE_UNIT_COUNT; i++)
+	for(int i = 0; i < BATTLE_UNIT_COUNT; i++)
 	{
 		m_pUnits[i] = NULL;
 		m_pCities[i] = NULL;
@@ -203,12 +206,16 @@ CvCombatInfo::CvCombatInfo() :
 		m_iMaxExperienceAllowed[i] = 0;
 		m_bInBorders[i] = false;
 		m_bUpdateGlobal[i] = false;
+		m_iExtraDamageTaken[i] = 0;
+		m_iCombatSeed[i] = -1;
 	}
 }
 
 CvCombatInfo& CvCombatInfo::operator=(const CvCombatInfo& rhs)
 {
 	m_pTargetPlot = rhs.m_pTargetPlot;
+	m_pFromPlot = rhs.m_pFromPlot;
+	m_bUseLiveOriginPlot = rhs.m_bUseLiveOriginPlot;
 	m_bAttackerAdvances = rhs.m_bAttackerAdvances;
 	m_bAttackIsRanged = rhs.m_bAttackIsRanged;
 	m_bAttackIsBombingMission = rhs.m_bAttackIsBombingMission;
@@ -218,10 +225,12 @@ CvCombatInfo& CvCombatInfo::operator=(const CvCombatInfo& rhs)
 	m_iNuclearDamageLevel = rhs.m_iNuclearDamageLevel;
 	m_bVisualize = rhs.m_bVisualize;
 	m_bAttackedAdvancedVis = rhs.m_bAttackedAdvancedVis;
+	m_bCombatPrediction = rhs.m_bCombatPrediction;
 
-	for(int i=0; i<BATTLE_UNIT_COUNT; i++)
+	for(int i = 0; i < BATTLE_UNIT_COUNT; i++)
 	{
 		m_pUnits[i] = rhs.m_pUnits[i];
+		m_pCities[i] = rhs.m_pCities[i];
 
 		m_iFinalDamage[i] = rhs.m_iFinalDamage[i];
 		m_iDamageInflicted[i] = rhs.m_iDamageInflicted[i];
@@ -231,6 +240,9 @@ CvCombatInfo& CvCombatInfo::operator=(const CvCombatInfo& rhs)
 		m_iMaxExperienceAllowed[i] = rhs.m_iMaxExperienceAllowed[i];
 		m_bInBorders[i] = rhs.m_bInBorders[i];
 		m_bUpdateGlobal[i] = rhs.m_bUpdateGlobal[i];
+		m_iExtraDamageTaken[i] = rhs.m_iExtraDamageTaken[i];
+		m_iCombatSeed[i] = rhs.m_iCombatSeed[i];
+		m_kCombatMembers[i] = rhs.m_kCombatMembers[i];
 	}
 
 	m_iDamageMemberCount = rhs.m_iDamageMemberCount;
@@ -241,252 +253,308 @@ CvCombatInfo& CvCombatInfo::operator=(const CvCombatInfo& rhs)
 	return (*this);
 }
 
-
-CvUnit* CvCombatInfo::getUnit(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_pUnits[unitType];
-}
-void CvCombatInfo::setUnit(BattleUnitTypes unitType, CvUnit* unit)
-{
-	checkBattleUnitType(unitType);
-	m_pUnits[unitType] = unit;
-}
-
-CvCity* CvCombatInfo::getCity(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	if(m_pCities[unitType])
-		return m_pCities[unitType];
-	else if(unitType == BATTLE_UNIT_DEFENDER && m_pTargetPlot)
-	{
-		if(m_pTargetPlot->isCity())
-			return m_pTargetPlot->getPlotCity();
-	}
-	return NULL;
-}
-
-void CvCombatInfo::setCity(BattleUnitTypes unitType, CvCity* pkCity)
-{
-	checkBattleUnitType(unitType);
-	m_pCities[unitType] = pkCity;
-}
-
-CvPlot* CvCombatInfo::getPlot() const
-{
-	return m_pTargetPlot;
-}
-void CvCombatInfo::setPlot(CvPlot* plot)
-{
-	m_pTargetPlot = plot;
-}
-
-bool CvCombatInfo::getAttackerAdvances() const
-{
-	return m_bAttackerAdvances;
-}
-
-void CvCombatInfo::setAttackerAdvances(bool bAdvance)
-{
-	m_bAttackerAdvances = bAdvance;
-}
-
-bool CvCombatInfo::getDefenderRetaliates() const
-{
-	return m_bDefenderRetaliates;
-}
-
-void CvCombatInfo::setDefenderRetaliates(bool bDefenderRetaliates)
-{
-	m_bDefenderRetaliates = bDefenderRetaliates;
-}
-
-void CvCombatInfo::setAttackIsRanged(bool bRanged)
-{
-	m_bAttackIsRanged = bRanged;
-}
-
-bool CvCombatInfo::getAttackIsRanged() const
-{
-	return m_bAttackIsRanged;
-}
-
-void CvCombatInfo::setAttackIsBombingMission(bool bBombingMission)
-{
-	m_bAttackIsBombingMission = bBombingMission;
-}
-
-bool CvCombatInfo::getAttackIsBombingMission() const
-{
-	return m_bAttackIsBombingMission;
-}
-
-void CvCombatInfo::setAttackIsAirSweep(bool bAirSweep)
-{
-	m_bAttackIsAirSweep = bAirSweep;
-}
-
-bool CvCombatInfo::getAttackIsAirSweep() const
-{
-	return m_bAttackIsAirSweep;
-}
-
-void CvCombatInfo::setDefenderCaptured(bool bDefenderCaptured)
-{
-	m_bDefenderCaptured = bDefenderCaptured;
-}
-
-bool CvCombatInfo::getDefenderCaptured() const
-{
-	return m_bDefenderCaptured;
-}
-
-int CvCombatInfo::getDamageInflicted(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_iDamageInflicted[unitType];
-}
-void CvCombatInfo::setDamageInflicted(BattleUnitTypes unitType, int iDamage)
-{
-	checkBattleUnitType(unitType);
-	m_iDamageInflicted[unitType] = iDamage;
-}
-
-int CvCombatInfo::getFinalDamage(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_iFinalDamage[unitType];
-}
-void CvCombatInfo::setFinalDamage(BattleUnitTypes unitType, int iFinalDamage)
-{
-	checkBattleUnitType(unitType);
-	m_iFinalDamage[unitType] = iFinalDamage;
-}
-
-
-int CvCombatInfo::getFearDamageInflicted(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_iFearDamageInflicted[unitType];
-}
-void CvCombatInfo::setFearDamageInflicted(BattleUnitTypes unitType, int iDamage)
-{
-	checkBattleUnitType(unitType);
-	m_iFearDamageInflicted[unitType] = iDamage;
-}
-
-int CvCombatInfo::getExperience(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_iExperienceChange[unitType];
-}
-void CvCombatInfo::setExperience(BattleUnitTypes unitType, int iExperience)
-{
-	checkBattleUnitType(unitType);
-	m_iExperienceChange[unitType] = iExperience;
-}
-
-int CvCombatInfo::getMaxExperienceAllowed(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_iMaxExperienceAllowed[unitType];
-}
-void CvCombatInfo::setMaxExperienceAllowed(BattleUnitTypes unitType, int iMaxExperience)
-{
-	checkBattleUnitType(unitType);
-	m_iMaxExperienceAllowed[unitType] = iMaxExperience;
-}
-
-bool CvCombatInfo::getInBorders(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_bInBorders[unitType];
-}
-void CvCombatInfo::setInBorders(BattleUnitTypes unitType, bool bInBorders)
-{
-	checkBattleUnitType(unitType);
-	m_bInBorders[unitType] = bInBorders;
-}
-
-bool CvCombatInfo::getUpdateGlobal(BattleUnitTypes unitType) const
-{
-	checkBattleUnitType(unitType);
-	return m_bUpdateGlobal[unitType];
-}
-void CvCombatInfo::setUpdateGlobal(BattleUnitTypes unitType, bool bUpdateGlobal)
-{
-	checkBattleUnitType(unitType);
-	m_bUpdateGlobal[unitType] = bUpdateGlobal;
-}
-
-bool CvCombatInfo::getVisualizeCombat() const
-{
-	return m_bVisualize;
-}
-
-void CvCombatInfo::setVisualizeCombat(bool bVisualize)
-{
-	m_bVisualize = bVisualize;
-}
-
-bool CvCombatInfo::getAttackerAdvancedVisualization() const
-{
-	return m_bAttackedAdvancedVis;
-}
-
-void CvCombatInfo::setAttackerAdvancedVisualization(bool bAdvance)
-{
-	m_bAttackedAdvancedVis = bAdvance;
-}
-
-bool CvCombatInfo::getAttackIsNuclear() const
-{
-	return m_iNuclearDamageLevel > 0;
-}
-
-int CvCombatInfo::getAttackNuclearLevel() const
-{
-	return m_iNuclearDamageLevel;
-}
-
-void CvCombatInfo::setAttackNuclearLevel(int iNuclearDamageLevel)
-{
-	m_iNuclearDamageLevel = iNuclearDamageLevel;
-}
-
 const CvCombatMemberEntry* CvCombatInfo::getCombatMember(BattleUnitTypes unitType) const
 {
 	if((int)unitType < (int)BATTLE_UNIT_COUNT)
 		return &m_kCombatMembers[unitType];
 	return NULL;
 }
-
-CvCombatMemberEntry* CvCombatInfo::getDamageMembers()
+// Perform the Random Roll for this combat
+void CvCombatInfo::doRandomness(BattleUnitTypes eUnitType, int iWoundedRatio)
 {
-	return &m_kDamageMembers[0];
+	if (getCombatSeed(eUnitType) == -1)
+		return; // if we haven't set the combat seed yet, don't do randomness yet.  This is for set seeds.
+	const char* szLog = "Combat Damage Roll";
+	// this is bad, but theres like 4 global values that all equal this for combat so fuck it.
+	int iExtraDamage = 2400;
+
+	switch (eUnitType)
+	{
+	case BATTLE_UNIT_ATTACKER:
+		szLog = "Attacker Damage Roll";
+		break;
+
+	case BATTLE_UNIT_DEFENDER:
+		szLog = "Defender Damage Roll";
+		break;
+
+	case BATTLE_UNIT_INTERCEPTOR:
+		szLog = "Interceptor Damage Roll";
+		break;
+
+	default:
+		CvAssertMsg(false, "Invalid BattleUnitTypes value");
+		return;
+	}
+	int iRoll = 0;
+	if (IsCombatRandom())
+	{
+		iRoll = GC.getGame().getJonRandNum(iExtraDamage, szLog);
+		iRoll *= iWoundedRatio;
+		iRoll /= 100;
+	}
+	else
+	{
+		iRoll = iExtraDamage;
+		iRoll -= 1;
+		iRoll *= iWoundedRatio;
+		iRoll /= 100;
+		iRoll /= 2;
+	}
+	setCombatSeed(eUnitType, iRoll);
+
+}
+// Perform the Strength Ratio calculation for this combat
+double CvCombatInfo::doStrengthRatio(int strength, int opponentStrength)
+{
+	const double max = 10.0f;
+	double ratio = (opponentStrength > 0) ? static_cast<double>(strength) / static_cast<double>(opponentStrength) : static_cast<double>(strength);
+	if (opponentStrength > strength)
+	{
+		ratio = (strength > 0) ? static_cast<double>(opponentStrength) / static_cast<double>(strength) : static_cast<double>(opponentStrength);
+	}
+	if (ratio > max)
+	{
+		ratio = max;
+	}
+	ratio = (ratio + 3.0) / 4.0;
+	ratio = pow(ratio, 4.0);
+	ratio = (ratio + 1.0) / 2.0;
+	if (opponentStrength > strength)
+	{
+		ratio = 1.0 / ratio;
+	}
+	return ratio;
+}
+// Perform the Experience calculation for this combat
+void CvCombatInfo::doExperience()
+{
+	for (int i = 0; i < BATTLE_UNIT_COUNT; ++i)
+	{
+		BattleUnitTypes unit = static_cast<BattleUnitTypes>(i);
+		setExperience(unit, 0);
+		setMaxExperienceAllowed(unit, 0);
+		setInBorders(unit, false);
+		setUpdateGlobal(unit, false);
+	}
+
+	CvPlot* pPlot = getPlot();
+	if (pPlot == NULL || getAttackIsNuclear())
+		return;
+
+	CvUnit* pAttackerUnit = getUnit(BATTLE_UNIT_ATTACKER);
+	CvCity* pAttackerCity = getCity(BATTLE_UNIT_ATTACKER);
+	CvUnit* pDefenderUnit = getUnit(BATTLE_UNIT_DEFENDER);
+	CvCity* pDefenderCity = getCity(BATTLE_UNIT_DEFENDER);
+	CvUnit* pInterceptor = getUnit(BATTLE_UNIT_INTERCEPTOR);
+
+	int iAttackerExperience = 0;
+	int iDefenderExperience = 0;
+	int iInterceptorExperience = 0;
+
+	// Air sweep: interceptor is stored as the defender.
+	if (getAttackIsAirSweep())
+	{
+		if (pAttackerUnit != NULL &&
+			pDefenderUnit != NULL)
+		{
+			if (pDefenderUnit->getDomainType() != DOMAIN_AIR)
+			{
+				iAttackerExperience = 0; // Air sweeps against ground units do not give XP to the attacker.
+				iDefenderExperience = GC.getEXPERIENCE_DEFENDING_AIR_SWEEP_GROUND();
+			}
+			else
+			{
+				iAttackerExperience = GC.getEXPERIENCE_ATTACKING_AIR_SWEEP();
+				iDefenderExperience = GC.getEXPERIENCE_DEFENDING_AIR_SWEEP_AIR();
+			}
+		}
+	}
+	// Bombing mission.
+	else if (getAttackIsBombingMission())
+	{
+		if (pAttackerUnit != NULL)
+		{
+			if (pDefenderUnit != NULL)
+			{
+				iAttackerExperience = GC.getEXPERIENCE_ATTACKING_UNIT_AIR();
+				iDefenderExperience = GC.getEXPERIENCE_DEFENDING_UNIT_AIR();
+			}
+			else if (pDefenderCity != NULL)
+			{
+				iAttackerExperience = GC.getEXPERIENCE_ATTACKING_CITY_AIR();
+			}
+		}
+
+		if (pInterceptor != NULL)
+		{
+			iInterceptorExperience = GC.getEXPERIENCE_DEFENDING_AIR_SWEEP_GROUND();
+		}
+	}
+	// Normal ranged strike.
+	else if (getAttackIsRanged())
+	{
+		if (pAttackerUnit != NULL)
+		{
+			if (pDefenderUnit != NULL)
+			{
+				iAttackerExperience = GC.getEXPERIENCE_ATTACKING_UNIT_RANGED();
+			}
+			else if (pDefenderCity != NULL)
+			{
+				iAttackerExperience = GC.getEXPERIENCE_ATTACKING_CITY_RANGED();
+			}
+		}
+
+		if (pDefenderUnit != NULL)
+		{
+			iDefenderExperience = GC.getEXPERIENCE_DEFENDING_UNIT_RANGED();
+		}
+	}
+	else if (pAttackerUnit != NULL) // Melee.
+	{
+		if (pDefenderUnit != NULL)
+		{
+			iAttackerExperience = GC.getEXPERIENCE_ATTACKING_UNIT_MELEE();
+			iDefenderExperience = GC.getEXPERIENCE_DEFENDING_UNIT_MELEE();
+		}
+		else if (pDefenderCity != NULL)
+		{
+			iAttackerExperience = GC.getEXPERIENCE_ATTACKING_CITY_MELEE();
+		}
+	}
+
+	setExperience(BATTLE_UNIT_ATTACKER, iAttackerExperience);
+	setExperience(BATTLE_UNIT_DEFENDER, iDefenderExperience);
+	setExperience(BATTLE_UNIT_INTERCEPTOR, iInterceptorExperience);
+
+	// Attacker metadata.
+	if (pAttackerUnit != NULL)
+	{
+		setInBorders(BATTLE_UNIT_ATTACKER, pPlot->getOwner() == pAttackerUnit->getOwner());
+
+		if (pDefenderUnit != NULL)
+		{
+			setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, pDefenderUnit->maxXPValue());
+			setUpdateGlobal(BATTLE_UNIT_ATTACKER, pDefenderUnit->canEarnGlobalXP());
+		}
+		else if (pDefenderCity != NULL)
+		{
+			setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, pDefenderCity->getMaxXPValue());
+			setUpdateGlobal(BATTLE_UNIT_ATTACKER, pDefenderCity->canEarnGlobalXP());
+		}
+
+		// No General Progress for air sweeps against ground units.
+		if (getAttackIsAirSweep() && pDefenderUnit != NULL && pDefenderUnit->getDomainType() != DOMAIN_AIR )
+		{
+			setUpdateGlobal(BATTLE_UNIT_ATTACKER, false);
+		}
+	}
+
+	// Defender metadata.
+	if (pDefenderUnit != NULL)
+	{
+		setInBorders(BATTLE_UNIT_DEFENDER, pPlot->getOwner() == pDefenderUnit->getOwner());
+		if (pAttackerUnit != NULL)
+		{
+			setMaxExperienceAllowed(BATTLE_UNIT_DEFENDER, pAttackerUnit->maxXPValue());
+			setUpdateGlobal(BATTLE_UNIT_DEFENDER, pAttackerUnit->canEarnGlobalXP());
+		}
+		else if (pAttackerCity != NULL)
+		{
+			setMaxExperienceAllowed(BATTLE_UNIT_DEFENDER, pAttackerCity->getMaxXPValue());
+			setUpdateGlobal(BATTLE_UNIT_DEFENDER, pAttackerCity->canEarnGlobalXP());
+		}
+	}
+
+	// Bombing interceptor metadata.
+	if (pInterceptor != NULL && pAttackerUnit != NULL )
+	{
+		setMaxExperienceAllowed(BATTLE_UNIT_INTERCEPTOR, pAttackerUnit->maxXPValue());
+		setInBorders(BATTLE_UNIT_INTERCEPTOR, pPlot->getOwner() == pInterceptor->getOwner());
+		setUpdateGlobal(BATTLE_UNIT_INTERCEPTOR, pAttackerUnit->canEarnGlobalXP());
+	}
 }
 
-const CvCombatMemberEntry* CvCombatInfo::getDamageMembers() const
+bool CvCombatInfo::IsCombatRandom() const
 {
-	return &m_kDamageMembers[0];
+	return !GC.getGame().isOption(GAMEOPTION_NO_COMBAT_RANDOMNESS) && !IsCombatPrediction();
+}
+// Did the Attacker bite the dust?
+bool CvCombatInfo::IsAttackerDead() const
+{
+	if (getUnit(BATTLE_UNIT_ATTACKER) != NULL)
+	{
+		return (getFinalDamage(BATTLE_UNIT_ATTACKER) >= getUnit(BATTLE_UNIT_ATTACKER)->GetMaxHitPoints());
+	}
+	if (getCity(BATTLE_UNIT_ATTACKER) != NULL)
+	{
+		return (getFinalDamage(BATTLE_UNIT_ATTACKER) >= getCity(BATTLE_UNIT_ATTACKER)->GetMaxHitPoints());
+	}
+	return false;
+}
+// Did the Defender bite the dust?
+bool CvCombatInfo::IsDefenderDead() const
+{
+	if (getUnit(BATTLE_UNIT_DEFENDER) != NULL)
+	{
+		return (getFinalDamage(BATTLE_UNIT_DEFENDER) >= getUnit(BATTLE_UNIT_DEFENDER)->GetMaxHitPoints());
+	}
+	if (getCity(BATTLE_UNIT_DEFENDER) != NULL)
+	{
+		return (getFinalDamage(BATTLE_UNIT_DEFENDER) >= getCity(BATTLE_UNIT_DEFENDER)->GetMaxHitPoints());
+	}
+	return false;
+}
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+void CvCombatModifierList::AddEntry(const CvString& strText, int iModifier, bool bPercent)
+{
+	if (iModifier == 0)
+		return;
+
+	if (iMiscCount > 0)
+	{
+		CvCombatModifierEntry& kMiscEntry = m_kEntries.back();
+
+		iMiscModifier += iModifier;
+		++iMiscCount;
+
+		RebuildMiscellaneous();
+		return;
+	}
+
+	// Unlimited, or another named row fits.
+	if (iMaxLines <= 0 || static_cast<int>(m_kEntries.size()) < iMaxLines)
+	{
+		m_kEntries.push_back(CvCombatModifierEntry(strText, iModifier, bPercent));
+		return;
+	}
+
+	if (m_kEntries.empty())
+		return;
+
+	CvCombatModifierEntry& kLastEntry = m_kEntries.back();
+
+	iMiscModifier = kLastEntry.m_iModifier + iModifier;
+	iMiscCount = 2;
+
+	RebuildMiscellaneous();
 }
 
-int CvCombatInfo::getDamageMemberCount() const
+void CvCombatModifierList::RebuildMiscellaneous()
 {
-	return m_iDamageMemberCount;
-}
+	if (m_kEntries.empty())
+		return;
 
-int CvCombatInfo::getMaxDamageMemberCount() const
-{
-	return MAX_DAMAGE_MEMBER_COUNT;
-}
+	Localization::String localizedText = Localization::Lookup("TXT_KEY_COMBATMOD_MISCELLANEOUS");
+	localizedText << iMiscCount;
 
-void CvCombatInfo::setDamageMemberCount(int iDamageMemberCount)
-{
-	CvAssertMsg(iDamageMemberCount >=0 && iDamageMemberCount <= MAX_DAMAGE_MEMBER_COUNT, "Invalid damage member count!");
-	m_iDamageMemberCount = std::min(iDamageMemberCount, (int)MAX_DAMAGE_MEMBER_COUNT);
+	CvCombatModifierEntry& kMiscEntry = m_kEntries.back();
+	kMiscEntry.m_strText = localizedText.toUTF8();
+	kMiscEntry.m_iModifier = iMiscModifier;
+	kMiscEntry.m_bMiscellaneous = true;
 }
-
+#endif
 //------------------------------------------------------------------------------------------------
 // FUNCTION:    CvMissionDefinition::CvMissionDefinition
 //! \brief      Default constructor.
@@ -721,4 +789,22 @@ FDataStream& operator>>(FDataStream& loadFrom, MissionData& writeTo)
 	return loadFrom;
 }
 
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+FDataStream& operator>>(FDataStream& kStream, GoldenAgeYieldThreshold& writeTo)
+{
+	kStream >> writeTo.m_eThresholdYield;
+	kStream >> writeTo.m_iThresholdAmount;
+	kStream >> writeTo.m_eRwdYield;
+	kStream >> writeTo.m_iRwdAmount;
+	return kStream;
+}
 
+FDataStream& operator<<(FDataStream& kStream, const GoldenAgeYieldThreshold& readFrom)
+{
+	kStream << readFrom.m_eThresholdYield;
+	kStream << readFrom.m_iThresholdAmount;
+	kStream << readFrom.m_eRwdYield;
+	kStream << readFrom.m_iRwdAmount;
+	return kStream;
+}
+#endif

@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -290,81 +290,117 @@ public:
 	CvCombatInfo();
 	CvCombatInfo& operator=(const CvCombatInfo&);
 
-	CvUnit* getUnit(BattleUnitTypes unitType) const;
-	void setUnit(BattleUnitTypes unitType, CvUnit* unit);
+	CvUnit* getUnit(BattleUnitTypes unitType) const { return m_pUnits[unitType]; };
+	void setUnit(BattleUnitTypes unitType, CvUnit* unit) { m_pUnits[unitType] = unit; };
 
-	CvCity* getCity(BattleUnitTypes unitType) const;
-	void setCity(BattleUnitTypes unitType, CvCity* pkCity);
+	CvCity* getCity(BattleUnitTypes unitType) const { return m_pCities[unitType]; };
+	void setCity(BattleUnitTypes unitType, CvCity* pkCity) { m_pCities[unitType] = pkCity; };
 
 	const CvCombatMemberEntry* getCombatMember(BattleUnitTypes unitType) const;
 
-	CvPlot* getPlot() const;
-	void setPlot(CvPlot* plot);
+	CvPlot* getPlot() const { return m_pTargetPlot; };
+	void setPlot(CvPlot* plot) { m_pTargetPlot = plot; };
 
-	bool getAttackerAdvances() const;
-	void setAttackerAdvances(bool bAdvance);
+	// Optional override for the attacker's origin plot (river-crossing/elevation/amphib checks). Falls back to the attacker's live plot() if NULL, unless getUseLiveOriginPlot() is false.
+	CvPlot* getFromPlot() const { return m_pFromPlot; };
+	void setFromPlot(CvPlot* plot) { m_pFromPlot = plot; };
 
-	bool getDefenderRetaliates() const;
-	void setDefenderRetaliates(bool bRetaliate);
+	// When getFromPlot() is NULL, controls whether the attacker's live plot() is used as a fallback (true, the
+	// default, matches original behavior for real combat/AI callers that never touch fromPlot at all) or whether
+	// origin-plot-dependent checks (river crossing, amphibious, elevation) are skipped entirely (false -- for
+	// preview callers that explicitly tried to resolve a hypothetical origin and couldn't, e.g. a target that
+	// can't be reached this turn, where checking against the attacker's unrelated current position is meaningless).
+	bool getUseLiveOriginPlot() const { return m_bUseLiveOriginPlot; };
+	void setUseLiveOriginPlot(bool bUse) { m_bUseLiveOriginPlot = bUse; };
 
-	bool getAttackIsRanged() const;
-	void setAttackIsRanged(bool bRanged);
+	bool getAttackerAdvances() const { return m_bAttackerAdvances; };
+	void setAttackerAdvances(bool bAdvance) { m_bAttackerAdvances = bAdvance; };
 
-	bool getAttackIsBombingMission() const;
-	void setAttackIsBombingMission(bool bBombingMission);
+	bool getDefenderRetaliates() const { return m_bDefenderRetaliates; };
+	void setDefenderRetaliates(bool bRetaliate) { m_bDefenderRetaliates = bRetaliate; };
 
-	bool getAttackIsAirSweep() const;
-	void setAttackIsAirSweep(bool bAirSweep);
+	bool getAttackIsRanged() const { return m_bAttackIsRanged; };
+	void setAttackIsRanged(bool bRanged) { m_bAttackIsRanged = bRanged; };
 
-	bool getDefenderCaptured() const;
-	void setDefenderCaptured(bool bDefenderCaptured);
+	bool getAttackIsBombingMission() const { return m_bAttackIsBombingMission; };
+	void setAttackIsBombingMission(bool bBombingMission) { m_bAttackIsBombingMission = bBombingMission; };
 
-	bool getAttackIsNuclear() const;
-	int getAttackNuclearLevel() const;
-	void setAttackNuclearLevel(int iNuclearDamageLevel);
+	bool getAttackIsAirSweep() const { return m_bAttackIsAirSweep; };
+	void setAttackIsAirSweep(bool bAirSweep) { m_bAttackIsAirSweep = bAirSweep; };
 
-	int getDamageInflicted(BattleUnitTypes unitType) const;
-	void setDamageInflicted(BattleUnitTypes unitType, int iDamage);
+	bool getDefenderCaptured() const { return m_bDefenderCaptured; };
+	void setDefenderCaptured(bool bDefenderCaptured) { m_bDefenderCaptured = bDefenderCaptured; };
 
-	int getFinalDamage(BattleUnitTypes unitType) const;
-	void setFinalDamage(BattleUnitTypes unitType, int iFinalDamage);
+	bool getAttackIsNuclear() const { return m_iNuclearDamageLevel > 0; };
+	int getAttackNuclearLevel() const { return m_iNuclearDamageLevel; };
+	void setAttackNuclearLevel(int iNuclearDamageLevel) { m_iNuclearDamageLevel = iNuclearDamageLevel; };
 
-	int getFearDamageInflicted(BattleUnitTypes unitType) const;
-	void setFearDamageInflicted(BattleUnitTypes unitType, int iDamage);
+	int getDamageInflicted(BattleUnitTypes unitType) const { return m_iDamageInflicted[unitType]; };
+	void setDamageInflicted(BattleUnitTypes unitType, int iDamage) { m_iDamageInflicted[unitType] = iDamage; };
 
-	int getExperience(BattleUnitTypes unitType) const;
-	void setExperience(BattleUnitTypes unitType, int iExperience);
+	int getFinalDamage(BattleUnitTypes unitType) const { return m_iFinalDamage[unitType]; };
+	void setFinalDamage(BattleUnitTypes unitType, int iFinalDamage) { m_iFinalDamage[unitType] = iFinalDamage; };
 
-	int getMaxExperienceAllowed(BattleUnitTypes unitType) const;
-	void setMaxExperienceAllowed(BattleUnitTypes unitType, int iMaxExperience);
+	int getFearDamageInflicted(BattleUnitTypes unitType) const { return m_iFearDamageInflicted[unitType]; };
+	void setFearDamageInflicted(BattleUnitTypes unitType, int iDamage) { m_iFearDamageInflicted[unitType] = iDamage; };
 
-	bool getInBorders(BattleUnitTypes unitType) const;
-	void setInBorders(BattleUnitTypes unitType, bool bInBorders);
+	int getExperience(BattleUnitTypes unitType) const { return m_iExperienceChange[unitType]; };
+	void setExperience(BattleUnitTypes unitType, int iExperience) { m_iExperienceChange[unitType] = iExperience; };
 
-	bool getUpdateGlobal(BattleUnitTypes unitType) const;
-	void setUpdateGlobal(BattleUnitTypes unitType, bool bUpdateGlobal);
+	int getMaxExperienceAllowed(BattleUnitTypes unitType) const { return m_iMaxExperienceAllowed[unitType]; };
+	void setMaxExperienceAllowed(BattleUnitTypes unitType, int iMaxExperience) { m_iMaxExperienceAllowed[unitType] = iMaxExperience; };
 
-	bool getVisualizeCombat() const;
-	void setVisualizeCombat(bool bVisualize);
+	bool getInBorders(BattleUnitTypes unitType) const { return m_bInBorders[unitType]; };
+	void setInBorders(BattleUnitTypes unitType, bool bInBorders) { m_bInBorders[unitType] = bInBorders; };
 
-	bool getAttackerAdvancedVisualization() const;
-	void setAttackerAdvancedVisualization(bool bAdvance);
+	bool getUpdateGlobal(BattleUnitTypes unitType) const { return m_bUpdateGlobal[unitType]; };
+	void setUpdateGlobal(BattleUnitTypes unitType, bool bUpdateGlobal) { m_bUpdateGlobal[unitType] = bUpdateGlobal; };
 
-	CvCombatMemberEntry* getDamageMembers();
-	const CvCombatMemberEntry* getDamageMembers() const;
-	int getDamageMemberCount() const;
-	int getMaxDamageMemberCount() const;
-	void setDamageMemberCount(int iDamageMemberCount);
+	bool getVisualizeCombat() const { return m_bVisualize; };
+	void setVisualizeCombat(bool bVisualize) { m_bVisualize = bVisualize; };
+
+	bool getAttackerAdvancedVisualization() const { return m_bAttackedAdvancedVis; };
+	void setAttackerAdvancedVisualization(bool bAdvance) { m_bAttackedAdvancedVis = bAdvance; };
+
+	bool IsCombatPrediction() const { return m_bCombatPrediction; };
+	void setCombatPrediction(bool bCombatPrediction) { m_bCombatPrediction = bCombatPrediction; };
+
+	int getExtraDamageTaken(BattleUnitTypes unitType) const { return m_iExtraDamageTaken[unitType]; };
+	void setExtraDamageTaken(BattleUnitTypes unitType, int iDamage) { m_iExtraDamageTaken[unitType] = iDamage; };
+
+	int getCombatSeed(BattleUnitTypes unitType) const { return m_iCombatSeed[unitType]; };
+	void setCombatSeed(BattleUnitTypes unitType, int iSeed) { m_iCombatSeed[unitType] = iSeed; };
+	// Helpers for combat
+	// Perform the Random Roll for this combat
+	void doRandomness(BattleUnitTypes unitType, int iWoundedRatio);
+	// Perform the Strength Ratio calculation for this combat
+	double doStrengthRatio(int strength, int opponentStrength);
+	// Perform the Experience calculation for this combat
+	void doExperience();
+
+	// Helpers
+	bool IsCombatRandom() const;
+	bool IsAttackerDead() const;
+	bool IsDefenderDead() const;
+
+
+	CvCombatMemberEntry* getDamageMembers() { return &m_kDamageMembers[0]; }
+	const CvCombatMemberEntry* getDamageMembers() const { return &m_kDamageMembers[0]; }
+	int getDamageMemberCount() const { return m_iDamageMemberCount; }
+	int getMaxDamageMemberCount() const { return MAX_DAMAGE_MEMBER_COUNT; }
+	void setDamageMemberCount(int iDamageMemberCount) { m_iDamageMemberCount = std::min(iDamageMemberCount, (int)MAX_DAMAGE_MEMBER_COUNT); }
 
 protected:
 	CvUnit* 	m_pUnits[BATTLE_UNIT_COUNT];					//!< The units involved
 	CvCity* 	m_pCities[BATTLE_UNIT_COUNT];					//!< The cities involved
 
 	CvPlot* 	m_pTargetPlot;									//!< The plot that the attacker is attacking
+	CvPlot* 	m_pFromPlot;									//!< Optional override for the attacker's origin plot; NULL means use the attacker's live plot() unless m_bUseLiveOriginPlot is false
+	bool		m_bUseLiveOriginPlot;							//!< When m_pFromPlot is NULL, whether to fall back to the attacker's live plot() (true) or skip origin-plot checks entirely (false)
 	bool		m_bAttackerAdvances;							//!< Should the attacker advance?
 	bool		m_bAttackIsRanged;								//!< Attack is ranged
 	bool		m_bAttackIsBombingMission;						//!< Attack is a bombing mission by an airplane
-	bool		m_bAttackIsAirSweep;							//!< Attack is a bombing mission by an airplane
+	bool		m_bAttackIsAirSweep;							//!< Attack is a Air Sweep by an Fighter
 	bool		m_bDefenderRetaliates;							//!< Defender does not retaliate (usually set with ranged attacks)
 	bool		m_bDefenderCaptured;							//!< The defender is captured, not killed.
 
@@ -382,6 +418,9 @@ protected:
 	bool		m_bVisualize;									//!< The combat should be visualized
 
 	bool		m_bAttackedAdvancedVis;							//!< If true, the attacker has already advanced its visualization of the unit (happened during combat sim).
+	bool		m_bCombatPrediction;							//!< If true, this combat info is being used for combat prediction and not actual combat.
+	int 		m_iExtraDamageTaken[BATTLE_UNIT_COUNT];			//!< Used for Predicting RangedSupportFire, as thats a totally separate combat instance.
+	int			m_iCombatSeed[BATTLE_UNIT_COUNT];				//!< The random seed for this combat
 
 	CvCombatMemberEntry	m_kCombatMembers[BATTLE_UNIT_COUNT];
 	// Units/cities damaged in the attack.  0 for most attacks that have just the normal defenders.  Primarily used with area attacks such as the various nuclear attacks.
@@ -389,7 +428,58 @@ protected:
 	int			m_iDamageMemberCount;
 	CvCombatMemberEntry	m_kDamageMembers[MAX_DAMAGE_MEMBER_COUNT];
 };
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+struct CvCombatDamageRange
+{
+	int iMin;
+	int iMax;
+	int iAverage;
+	CvCombatDamageRange() : iMin(0), iMax(0), iAverage(0) {}
+};
+struct CvCombatModifierEntry
+{
+	CvCombatModifierEntry()
+		: m_iModifier(0)
+		, m_bPercent(true)
+		, m_bMiscellaneous(false)
+	{
+	}
 
+	CvCombatModifierEntry(const CvString& strText, int iModifier, bool bPercent = true, bool bMiscellaneous = false)
+		: m_strText(strText)
+		, m_iModifier(iModifier)
+		, m_bPercent(bPercent)
+		, m_bMiscellaneous(bMiscellaneous)
+	{
+	}
+
+	CvString m_strText;
+	int m_iModifier;
+	bool m_bPercent;
+	bool m_bMiscellaneous;
+};
+
+struct CvCombatModifierList
+{
+	CvCombatModifierList(int iMaxLines = 0)
+		: iMaxLines(iMaxLines)
+		, iMiscModifier(0)
+		, iMiscCount(0)
+		, bAttackerSide(false)
+	{
+	}
+
+	void AddEntry(const CvString& strText, int iModifier, bool bPercent = true);
+	void RebuildMiscellaneous();
+
+	std::vector<CvCombatModifierEntry> m_kEntries;
+
+	int iMaxLines;
+	int iMiscModifier;
+	int iMiscCount;
+	bool bAttackerSide;
+};
+#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  CLASS:      CvMissionDefinition
 //!  \brief		Base mission definition struct
@@ -440,5 +530,23 @@ public:
 private:
 	int	m_aDamage[BATTLE_UNIT_COUNT];		//!< The ending damage of the units
 };
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+struct GoldenAgeYieldThreshold
+{
+	GoldenAgeYieldThreshold()
+		: m_eThresholdYield(NO_YIELD)
+		, m_iThresholdAmount(0)
+		, m_eRwdYield(NO_YIELD)
+		, m_iRwdAmount(0)
+	{
+	}
+	YieldTypes m_eThresholdYield;
+	int m_iThresholdAmount;
+	YieldTypes m_eRwdYield;
+	int m_iRwdAmount;
+};
 
+FDataStream& operator<<(FDataStream&, const GoldenAgeYieldThreshold&);
+FDataStream& operator>>(FDataStream&, GoldenAgeYieldThreshold&);
+#endif
 #endif	// CVSTRUCTS_H

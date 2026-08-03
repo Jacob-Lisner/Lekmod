@@ -4051,6 +4051,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvPlayerEspionage& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvPlayerEspionage::Read] uiVersion=%u (expected 0)", uiVersion); }
 
 	int iNumSpies;
 	loadFrom >> iNumSpies;
@@ -4188,6 +4189,11 @@ FDataStream& operator>>(FDataStream& loadFrom, CvPlayerEspionage& writeTo)
 		writeTo.m_aIntrigueNotificationMessages.push_back(kMessage);
 	}
 
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp);
+	  pDbg->Msg("  [CvPlayerEspionage::Read END] spies=%d spyNames=%d stealableTechCivs=%d numTechsToStealCivs=%d heistCivs=%d spyMsgs=%d intrigueMsgs=%d",
+		(int)writeTo.m_aSpyList.size(), (int)writeTo.m_aiSpyListNameOrder.size(), (int)writeTo.m_aaPlayerStealableTechList.size(),
+		(int)writeTo.m_aiNumTechsToStealList.size(), (int)writeTo.m_aHeistLocations[0].size(), (int)writeTo.m_aSpyNotificationMessages.size(), (int)writeTo.m_aIntrigueNotificationMessages.size()); }
+
 	return loadFrom;
 }
 
@@ -4305,6 +4311,11 @@ FDataStream& operator<<(FDataStream& saveTo, const CvPlayerEspionage& readFrom)
 		saveTo << readFrom.m_aIntrigueNotificationMessages[ui].m_bShared;
 #endif
 	}
+
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp);
+	  pDbg->Msg("  [CvPlayerEspionage::Write END] spies=%d spyNames=%d stealableTechCivs=%d numTechsToStealCivs=%d heistCivs=%d spyMsgs=%d intrigueMsgs=%d",
+		(int)readFrom.m_aSpyList.size(), (int)readFrom.m_aiSpyListNameOrder.size(), (int)readFrom.m_aaPlayerStealableTechList.size(),
+		(int)readFrom.m_aiNumTechsToStealList.size(), (int)readFrom.m_aHeistLocations[0].size(), (int)readFrom.m_aSpyNotificationMessages.size(), (int)readFrom.m_aIntrigueNotificationMessages.size()); }
 
 	return saveTo;
 }
@@ -6071,6 +6082,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvEspionageAI& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvEspionageAI::Read] uiVersion=%u (expected 0)", uiVersion); }
 
 	uint uiCount;
 	loadFrom >> uiCount;
@@ -6125,7 +6137,13 @@ FDataStream& operator>>(FDataStream& loadFrom, CvEspionageAI& writeTo)
 
 	loadFrom >> writeTo.m_bUNCountdownStarted;
 	loadFrom >> writeTo.m_iTurnEspionageStarted;
-	
+
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp);
+	  pDbg->Msg("  [CvEspionageAI::Read END] civOutOfTech=%d spiesCaught=%d spiesKilled=%d spiesDied=%d lastCaught=%d lastKilled=%d lastDied=%d UN=%d turnStarted=%d",
+		(int)writeTo.m_aiCivOutOfTechTurn.size(), (int)writeTo.m_aiNumSpiesCaught.size(), (int)writeTo.m_aiNumSpiesKilled.size(), (int)writeTo.m_aiNumSpiesDied.size(),
+		(int)writeTo.m_aiTurnLastSpyCaught.size(), (int)writeTo.m_aiTurnLastSpyKilled.size(), (int)writeTo.m_aiTurnLastSpyDied.size(),
+		(int)writeTo.m_bUNCountdownStarted, writeTo.m_iTurnEspionageStarted); }
+
 	return loadFrom;
 }
 
@@ -6179,6 +6197,12 @@ FDataStream& operator<<(FDataStream& saveTo, const CvEspionageAI& readFrom)
 
 	saveTo << readFrom.m_bUNCountdownStarted;
 	saveTo << readFrom.m_iTurnEspionageStarted;
+
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp);
+	  pDbg->Msg("  [CvEspionageAI::Write END] civOutOfTech=%d spiesCaught=%d spiesKilled=%d spiesDied=%d lastCaught=%d lastKilled=%d lastDied=%d UN=%d turnStarted=%d",
+		(int)readFrom.m_aiCivOutOfTechTurn.size(), (int)readFrom.m_aiNumSpiesCaught.size(), (int)readFrom.m_aiNumSpiesKilled.size(), (int)readFrom.m_aiNumSpiesDied.size(),
+		(int)readFrom.m_aiTurnLastSpyCaught.size(), (int)readFrom.m_aiTurnLastSpyKilled.size(), (int)readFrom.m_aiTurnLastSpyDied.size(),
+		(int)readFrom.m_bUNCountdownStarted, readFrom.m_iTurnEspionageStarted); }
 
 	return saveTo;
 }

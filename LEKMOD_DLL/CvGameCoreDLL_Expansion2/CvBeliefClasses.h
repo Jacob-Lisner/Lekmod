@@ -124,6 +124,13 @@ public:
 	int GetCityYieldChange(int i) const;
 	int GetHolyCityYieldChange(int i) const;
 	int GetYieldChangePerForeignCity(int i) const;
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+	int GetYieldChangePerFollowingCity(int i) const;
+	int GetPlayerYieldModifier(int i) const;
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+	int GetYieldChangePerXFollowers(int i) const;
+#endif
 	int GetYieldChangePerXForeignFollowers(int i) const;
 	int GetResourceQuantityModifier(int i) const;
 	int GetImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes eIndex2) const;
@@ -139,6 +146,14 @@ public:
 	int GetResourceHappiness(int i) const;
 	int GetYieldChangeAnySpecialist(int i) const;
 	int GetYieldChangeTradeRoute(int i) const;
+#if defined(TRADE_REFACTOR)
+	// Yield for SENDER if creating a Trade Route from a city with this belief
+	int GetTradeConnectionOriginLandYieldChange(int i, int j) const;
+	int GetTradeConnectionOriginSeaYieldChange(int i, int j) const;
+	// Yield for the SENDER if they send a Trade Route to a city with this belief, if international, else to RECEIVER city.
+	int GetIncomingTradeConnectionLandYieldChange(int i, int j) const;
+	int GetIncomingTradeConnectionSeaYieldChange(int i, int j) const;
+#endif
 	int GetYieldChangeNaturalWonder(int i) const;
 	int GetYieldChangeWorldWonder(int i) const;
 	int GetYieldModifierNaturalWonder(int i) const;
@@ -244,6 +259,13 @@ protected:
 	int* m_paiCityYieldChange;
 	int* m_paiHolyCityYieldChange;
 	int* m_paiYieldChangePerForeignCity;
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+	int* m_paiYieldChangePerFollowingCity;
+	int* m_paiPlayerYieldModifier;
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+	int* m_paiYieldChangePerXFollowers;
+#endif
 	int* m_paiYieldChangePerXForeignFollowers;
 	int* m_piResourceQuantityModifiers;
 #ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
@@ -273,6 +295,12 @@ protected:
 	int* m_piResourceHappiness;
 	int* m_piYieldChangeAnySpecialist;
 	int* m_piYieldChangeTradeRoute;
+#if defined(TRADE_REFACTOR)
+	int** m_ppiTradeConnectionOriginLandYieldChange;
+	int** m_ppiTradeConnectionOriginSeaYieldChange;
+	int** m_ppiIncomingTradeConnectionLandYieldChange;
+	int** m_ppiIncomingTradeConnectionSeaYieldChange;
+#endif
 	int* m_piYieldChangeNaturalWonder;
 	int* m_piYieldChangeWorldWonder;
 	int* m_piYieldModifierNaturalWonder;
@@ -515,6 +543,13 @@ public:
 	int GetCityYieldChange(int iPopulation, YieldTypes eYield) const;
 	int GetHolyCityYieldChange(YieldTypes eYield) const;
 	int GetYieldChangePerForeignCity(YieldTypes eYield) const;
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+	int GetYieldChangePerFollowingCity(YieldTypes eYield) const;
+	int GetPlayerYieldModifier(YieldTypes eYield, bool bAtPeace) const;
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+	int GetYieldChangePerXFollowers(YieldTypes eYield) const;
+#endif
 	int GetYieldChangePerXForeignFollowers(YieldTypes eYield) const;
 	int GetResourceQuantityModifier(ResourceTypes eResource) const;
 	int GetImprovementYieldChange(ImprovementTypes eImprovement, YieldTypes eYield) const;
@@ -530,6 +565,14 @@ public:
 	int GetResourceHappiness(ResourceTypes eResource) const;
 	int GetYieldChangeAnySpecialist(YieldTypes eYieldType) const;
 	int GetYieldChangeTradeRoute(YieldTypes eYieldType) const;
+#if defined(TRADE_REFACTOR)
+	// Yield for SENDER if creating a Trade Route from a city with this belief
+	int GetTradeConnectionOriginLandYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const;
+	int GetTradeConnectionOriginSeaYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const;
+	// Yield for the SENDER if they send a Trade Route to a city with this belief, if international, else to RECEIVER city.
+	int GetIncomingTradeConnectionLandYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const;
+	int GetIncomingTradeConnectionSeaYieldChange(TradeConnectionType eConnection, YieldTypes eYield) const;
+#endif
 	int GetYieldChangeNaturalWonder(YieldTypes eYieldType) const;
 	int GetYieldChangeWorldWonder(YieldTypes eYieldType) const;
 	int GetYieldModifierNaturalWonder(YieldTypes eYieldType) const;
