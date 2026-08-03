@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -207,6 +207,9 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(YIELD_FAITH);
 #if defined(LEKMOD_v34)
 	RegisterEnum(YIELD_GOLDEN_AGE_POINTS);
+#endif
+#if defined(LEK_YIELD_TOURISM)
+	RegisterEnum(YIELD_TOURISM);
 #endif
 	RegisterEnum(NUM_YIELD_TYPES);
 	EnumEnd(L);

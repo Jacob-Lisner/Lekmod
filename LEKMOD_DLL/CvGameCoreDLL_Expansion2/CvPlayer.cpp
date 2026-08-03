@@ -753,6 +753,9 @@ void CvPlayer::init(PlayerTypes eID)
 #if defined(LEKMOD_FIX_PATRO_FOOD)
 		ChangeCityStateBonusModifier(GetPlayerTraits()->GetCityStateBonusModifier()); // Siam Trait. Still directly referenced in several places, just put here for stacking with patro finisher.
 #endif
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+		ChangeGreatGeneralCombatBonus(GetPlayerTraits()->GetGreatGeneralExtraBonus()); // China Trait
+#endif
 		for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 		{
 			YieldTypes eYield = static_cast<YieldTypes>(iJ);
@@ -807,8 +810,11 @@ void CvPlayer::init(PlayerTypes eID)
 		{
 			changeFreeBuildingCount(eFreeBuilding, 1);
 		}
-
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 		SetGreatGeneralCombatBonus(GC.getGREAT_GENERAL_STRENGTH_MOD());
+#else
+		ChangeGreatGeneralCombatBonus(GC.getGREAT_GENERAL_STRENGTH_MOD());
+#endif
 	}
 
 	m_aiPlots.clear();
@@ -13428,7 +13434,7 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, C
 #endif
 	if (pkKilledUnitInfo)
 	{
-		int iCombatStrength = max(pkKilledUnitInfo->GetCombat(), pkKilledUnitInfo->GetRangedCombat());
+		int iCombatStrength = max(pKilledUnit->GetBaseCombatStrength(), pKilledUnit->GetBaseRangedCombatStrength());
 		if (iCombatStrength > 0)
 		{
 			int iPolicyValue = 0;
@@ -13597,8 +13603,14 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, C
 					ChangeGoldenAgeProgressMeter(iTotalValue);
 					// Consider making this push us into a GA if we reach the Threshold, but Currently that is just worse than waiting.
 					break;
-				}
 #endif
+#if defined(LEK_YIELD_TOURISM)
+				case YIELD_TOURISM:
+					GetCulture()->ChangeInfluenceOn(pKilledUnit->getOwner(), iTotalValue);
+					break;
+#endif
+				}
+
 				iNumBonuses++;
 				ReportYieldFromKill(eYield, iTotalValue, iX, iY, iNumBonuses);
 			}
@@ -13724,8 +13736,14 @@ void CvPlayer::DoYieldBonusFromConversion(YieldTypes eYield, CvUnit* pConverting
 			ChangeGoldenAgeProgressMeter(iTotalValue);
 			// Consider making this push us into a GA if we reach the Threshold, but Currently that is just worse than waiting.
 			break;
-		}
 #endif
+#if defined(LEK_YIELD_TOURISM)
+		case YIELD_TOURISM:
+			GetCulture()->ChangeInfluenceOn(pPressuredCity->getOwner(), iTotalValue);
+			break;
+#endif
+		}
+
 		iNumBonuses++;
 		ReportYieldFromKill(eYield, iTotalValue, iX, iY, iNumBonuses);
 #if defined(LEKMOD_PROMO_CONVERSION_MAJORITY_ONLY_ONCE)
@@ -13818,9 +13836,14 @@ void CvPlayer::ReportYieldFromKill(YieldTypes eYield, int iValue, int iX, int iY
 		case YIELD_SCIENCE:
 			yieldString = "[COLOR_BLUE]+%d[ENDCOLOR][ICON_RESEARCH]";
 			break;
-#if defined(FULL_YIELD_FROM_KILLS) // Add Golden Age points for Kills
+#if defined(FULL_YIELD_FROM_KILLS) && defined(LEKMOD_v34) // Add Golden Age points for Kills, GAP is only a Yield if v34 is defined
 		case YIELD_GOLDEN_AGE_POINTS:
 			yieldString = "[COLOR_WHITE]+%d[ENDCOLOR][ICON_GOLDEN_AGE]";
+			break;
+#endif
+#if defined(LEK_YIELD_TOURISM)
+			case YIELD_TOURISM:
+			yieldString = "[COLOR_CYAN]+%d[ENDCOLOR][ICON_TOURISM]";
 			break;
 #endif
 		default:
@@ -18064,8 +18087,13 @@ void CvPlayer::SetGreatGeneralCombatBonus(int iValue)
 {
 	m_iGreatGeneralCombatBonus = iValue;
 }
-
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+//////////////////////////////////////////////////////////////////////////
+void CvPlayer::ChangeGreatGeneralCombatBonus(int iChange)
+{
+	SetGreatGeneralCombatBonus(GetGreatGeneralCombatBonus() + iChange);
+}
+#endif
 //////////////////////////////////////////////////////////////////////////
 // ***** Great People Spawning *****
 //////////////////////////////////////////////////////////////////////////
@@ -22017,7 +22045,12 @@ int CvPlayer::getYieldTimes100(YieldTypes eYield, bool bForReligion) const
 		return yield;
 	yield += getYieldFromReligionTimes100(eYield, yield);
 
-	// Modifiers
+	if (GetCultureBonusTurns() > 0 && YIELD_CULTURE == eYield) // World's Fair
+	{
+		yield *= (100 + GC.getTEMPORARY_CULTURE_BOOST_MOD());
+		yield /= 100;
+	}
+
 	int iModifier = 100;
 	if (isGoldenAge())
 	{
@@ -22026,12 +22059,6 @@ int CvPlayer::getYieldTimes100(YieldTypes eYield, bool bForReligion) const
 #else
 		iModifier += GC.getGOLDEN_AGE_CULTURE_MODIFIER();
 #endif
-		iModifier += GetPlayerTraits()->GetGoldenAgeYieldModifier(eYield);
-	}
-	// Temporary Congress Mods
-	if (GetCultureBonusTurns() > 0 && YIELD_CULTURE == eYield) // World's Fair
-	{
-		iModifier += GC.getTEMPORARY_CULTURE_BOOST_MOD();
 	}
 	yield *= iModifier;
 	yield /= 100;
@@ -28740,13 +28767,10 @@ void CvPlayer::Read(FDataStream& kStream)
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourceUsed.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourceTotal.dirtyGet());
 #ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
-	
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiMinorStrategicResourceFromBuildings.dirtyGet());
 #else
-	
 	std::vector<int> vDiscardMinorStrategicFromBuildings;
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, vDiscardMinorStrategicFromBuildings);
-	
 #endif
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceGiftedToMinors.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceExport.dirtyGet());
@@ -28812,13 +28836,21 @@ void CvPlayer::Read(FDataStream& kStream)
 	m_pBuilderTaskingAI->Read(kStream);
 	m_pCityConnections->Read(kStream);
 	m_pDangerPlots->Read(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: before Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pTraits->Read(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pEspionage;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Espionage used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pEspionageAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after EspionageAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pTrade;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Trade used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pTradeAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after TradeAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pLeagueAI->Read(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after LeagueAI used=%u, about to read Culture", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pCulture;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Culture used=%u", GetID(), kStream.GetSizeLeft()); }
 
 	bool bReadNotifications;
 	kStream >> bReadNotifications;
@@ -29413,13 +29445,21 @@ void CvPlayer::Write(FDataStream& kStream) const
 	m_pBuilderTaskingAI->Write(kStream);
 	m_pCityConnections->Write(kStream);
 	m_pDangerPlots->Write(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: before Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pTraits->Write(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pEspionage;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Espionage used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pEspionageAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after EspionageAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pTrade;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Trade used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pTradeAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after TradeAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pLeagueAI->Write(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after LeagueAI used=%u, about to write Culture", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pCulture;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Culture used=%u", GetID(), kStream.GetSizeLeft()); }
 
 	if(m_pNotifications)
 	{

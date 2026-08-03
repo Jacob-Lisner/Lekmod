@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -630,7 +630,15 @@ public:
 	bool IsArchaeologyTriggered() const;
 	int GetNumArchaeologySites() const;
 	int GetNumHiddenArchaeologySites() const;
-	
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	void getCombatDamage(CvCombatInfo& kInfo);
+	void BuildCombatModHelpText(CvCombatModifierList& kModifierList, const char* strTextKey, int iMod, const char* strExtraKey = "") const;
+	void BuildCombatModHelpText(CvCombatModifierList& kModifierList, const char* strTextKey, int iMod, int iExtraValue) const;
+	void BuildCombatStrengthHelpText(CvCombatModifierList& kModifierList, const char* szTextKey, int iStrength, const char* szExtraKey = "") const;
+	void BuildCombatStrengthHelpText(CvCombatModifierList& kModifierList, const char* szTextKey, int iStrength, int iExtraValue) const;
+	int getCombatModListLength() const { return m_iCombatModListLength; }
+	void setCombatModListLength(int iNewValue) { m_iCombatModListLength = iNewValue; }
+#endif
 #if defined (CAN_PARADROP_HALF_TIMER) || defined (CAN_SET_INTERCEPT_HALF_TIMER)
 	FTimer  m_endTurnTimer;
 	int     m_endTurnTimerSemaphore;
@@ -659,7 +667,9 @@ private:
 	const static unsigned int ms_aiSizes[10];
 
 protected:
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	int m_iCombatModListLength;
+#endif
 	int m_iEndTurnMessagesSent;
 	int m_iElapsedGameTurns;
 	int m_iStartTurn;

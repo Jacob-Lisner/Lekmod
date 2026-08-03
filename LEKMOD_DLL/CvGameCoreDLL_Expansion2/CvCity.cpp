@@ -13940,144 +13940,164 @@ void CvCity::updateStrengthValue()
 {
 	VALIDATE_OBJECT
 	AI_PERF_FORMAT("City-AI-perf.csv", ("CvCity::updateStrengthValue, Turn %03d, %s, %s", GC.getGame().getElapsedGameTurns(), GetPlayer()->getCivilizationShortDescription(), getName().c_str()) );
-	// Default Strength
-	int iStrengthValue = /*600*/ GC.getCITY_STRENGTH_DEFAULT();
 
-	// Population mod
-	iStrengthValue += getPopulation() * /*25*/ GC.getCITY_STRENGTH_POPULATION_CHANGE();
-
-	// Building Defense
-	int iBuildingDefense = m_pCityBuildings->GetBuildingDefense();
-#ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
-	// add in defense per citizen here
-	iBuildingDefense += (m_pCityBuildings->GetBuildingDefensePerCitizen() * getPopulation());
-#endif
-
-	iBuildingDefense *= (100 + m_pCityBuildings->GetBuildingDefenseMod());
-	iBuildingDefense /= 100;
-
-	iStrengthValue += iBuildingDefense;
-
-	// Garrisoned Unit
-	CvUnit* pGarrisonedUnit = GetGarrisonedUnit();
-	int iStrengthFromUnits = 0;
-	if(pGarrisonedUnit)
-	{
-		int iMaxHits = GC.getMAX_HIT_POINTS();
-#if defined(LEKMOD_GARRISON_YIELD_EFFECTS) // Add a raw amount of strength from garrisoned units, if the city has a building that does that
-		int iRawStrengthFromGarrison = m_pCityBuildings->GetGarrisonStrengthBonus();
-		if (iRawStrengthFromGarrison > 0)
-		{
-			// Add directly to the strength value, to skip the getCITY_STRENGTH_UNIT_DIVISOR calculation
-			iStrengthValue += iRawStrengthFromGarrison;
-		}
-#endif
-		iStrengthFromUnits = pGarrisonedUnit->GetBaseCombatStrength() * 100 * (iMaxHits - pGarrisonedUnit->getDamage()) / iMaxHits;
-
-	}
-
-	iStrengthValue += ((iStrengthFromUnits * 100) / /*300*/ GC.getCITY_STRENGTH_UNIT_DIVISOR());
-
-	// Tech Progress increases City Strength
-	int iTechProgress = GET_TEAM(getTeam()).GetTeamTechs()->GetNumTechsKnown() * 100 / GC.getNumTechInfos();
-
-	// Want progress to be a value between 0 and 5
-	double fTechProgress = iTechProgress / 100.0 * /*5*/ GC.getCITY_STRENGTH_TECH_BASE();
-	double fTechExponent = /*2.0f*/ GC.getCITY_STRENGTH_TECH_EXPONENT();
-	int iTechMultiplier = /*2*/ GC.getCITY_STRENGTH_TECH_MULTIPLIER();
-
-	// The way all of this adds up...
-	// 25% of the way through the game provides an extra 3.12
-	// 50% of the way through the game provides an extra 12.50
-	// 75% of the way through the game provides an extra 28.12
-	// 100% of the way through the game provides an extra 50.00
-
-	double fTechMod = pow(fTechProgress, fTechExponent);
-	fTechMod *= iTechMultiplier;
-
-	fTechMod *= 100;	// Bring it back into hundreds
-	iStrengthValue += (int)(fTechMod + 0.005);	// Adding a small amount to prevent small fp accuracy differences from generating a different integer result on the Mac and PC. Assuming fTechMod is positive, round to nearest hundredth
-
-	int iStrengthMod = 0;
-
-	// Player-wide strength mod (Policies, etc.)
-	iStrengthMod += GET_PLAYER(getOwner()).GetCityStrengthMod();
-
-	// Apply Mod
-	iStrengthValue *= (100 + iStrengthMod);
-	iStrengthValue /= 100;
-
-	m_iStrengthValue = iStrengthValue;
-
-	// Terrain mod
-	if(plot()->isHills())
-	{
-		m_iStrengthValue += /*3*/ GC.getCITY_STRENGTH_HILL_CHANGE();
-	}
+	m_iStrengthValue = calculateStrengthValue();
 
 	DLLUI->setDirty(CityInfo_DIRTY_BIT, true);
 }
 
 //	--------------------------------------------------------------------------------
-int CvCity::getStrengthValue(bool bForRangeStrike, CvString* tooltipSink) const
+int CvCity::getStrengthValue(bool bForRangeStrike, CvCombatModifierList* kModifierList) const
 {
 	VALIDATE_OBJECT
-	// Strike strikes are weaker
-	if(bForRangeStrike)
+	
+	if (!bForRangeStrike && kModifierList == NULL)
+		return m_iStrengthValue;
+
+	return calculateStrengthValue(bForRangeStrike, kModifierList);
+}
+int CvCity::calculateStrengthValue(bool bForRangeStrike, CvCombatModifierList* kModifierList) const
+{
+	int iBaseStrength = GC.getCITY_STRENGTH_DEFAULT();
+
+	// Hills are part of the base value, not a separate displayed effect.
+	if (plot()->isHills())
+		iBaseStrength += GC.getCITY_STRENGTH_HILL_CHANGE();
+
+	int iStrengthValue = iBaseStrength;
+
+	if (kModifierList)
+		GC.getGame().BuildCombatStrengthHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_BASE_STRENGTH", iBaseStrength);
+
+	int iPopulationStrength = getPopulation() * GC.getCITY_STRENGTH_POPULATION_CHANGE();
+	int iBuildingStrength = 0;
+
+	if (!bForRangeStrike)
 	{
-		int iValue = m_iStrengthValue;
+		const int iBuildingDefenseMod = m_pCityBuildings->GetBuildingDefenseMod();
+		const int iRawBuildingDefense = m_pCityBuildings->GetBuildingDefense();
 
-		iValue -= m_pCityBuildings->GetBuildingDefense();
+		int iCitizenDefense = 0;
+
 #ifdef NQ_BUILDING_DEFENSE_FROM_CITIZENS
-		// subtract defense per citizen here as well (city strikes don't use defense values)
-		iValue -= (m_pCityBuildings->GetBuildingDefensePerCitizen() * getPopulation());
+		iCitizenDefense = m_pCityBuildings->GetBuildingDefensePerCitizen() * getPopulation();
 #endif
-#if defined(LEKMOD_GARRISON_YIELD_EFFECTS) // Subtract the raw amount of strength from garrisoned units, (city strikes don't use defense values)
-		if (GetGarrisonedUnit()) // a bit of a duplication, but I wanted to subtract it above getCITY_RANGED_ATTACK_STRENGTH_MULTIPLIER for consistency
-		{
-			iValue -= m_pCityBuildings->GetGarrisonStrengthBonus();
-		}
+		const int iCombinedDefense = (iRawBuildingDefense + iCitizenDefense) * (100 + iBuildingDefenseMod) / 100;
+		const int iModifiedCitizenDefense = iCitizenDefense * (100 + iBuildingDefenseMod) / 100;
+
+		iPopulationStrength += iModifiedCitizenDefense;
+		iBuildingStrength = iCombinedDefense - iModifiedCitizenDefense;
+
+#if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
+		if (GetGarrisonedUnit())
+			iBuildingStrength += m_pCityBuildings->GetGarrisonStrengthBonus();
 #endif
+	}
 
-		CvAssertMsg(iValue > 0, "City strength should always be greater than zero. Please show Jon this and send your last 5 autosaves.");
+	iStrengthValue += iPopulationStrength;
+	iStrengthValue += iBuildingStrength;
 
-		iValue *= /*40*/ GC.getCITY_RANGED_ATTACK_STRENGTH_MULTIPLIER();
-		iValue /= 100;
+	if (kModifierList)
+	{
+		GC.getGame().BuildCombatStrengthHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_POPULATION", iPopulationStrength , getPopulation());
+		GC.getGame().BuildCombatStrengthHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_BUILDINGS", iBuildingStrength);
+	}
 
-		if(GetGarrisonedUnit())
+	CvUnit* pGarrisonedUnit = GetGarrisonedUnit();
+
+	if (pGarrisonedUnit)
+	{
+		const int iMaxHits = GC.getMAX_HIT_POINTS();
+
+		int iGarrisonStrength = pGarrisonedUnit->GetBaseCombatStrength() * 100;
+		iGarrisonStrength *= iMaxHits - pGarrisonedUnit->getDamage();
+		iGarrisonStrength /= iMaxHits;
+		iGarrisonStrength *= 100;
+		iGarrisonStrength /= GC.getCITY_STRENGTH_UNIT_DIVISOR();
+
+		iStrengthValue += iGarrisonStrength;
+
+		if (kModifierList)
+			GC.getGame().BuildCombatStrengthHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_GARRISON", iGarrisonStrength, pGarrisonedUnit->getName());
+	}
+
+	// Technology contribution.
+	const int iTechProgress = GET_TEAM(getTeam()).GetTeamTechs()->GetNumTechsKnown() * 100 / GC.getNumTechInfos();
+	const double fTechProgress = static_cast<double>(iTechProgress) / 100.0 * static_cast<double>(GC.getCITY_STRENGTH_TECH_BASE());
+	const double fTechExponent = static_cast<double>(GC.getCITY_STRENGTH_TECH_EXPONENT());
+
+	double fTechMod = pow(fTechProgress, fTechExponent);
+	fTechMod *= static_cast<double>(GC.getCITY_STRENGTH_TECH_MULTIPLIER());
+	fTechMod *= 100.0;
+
+	const int iTechStrength = static_cast<int>(fTechMod + 0.005);
+	iStrengthValue += iTechStrength;
+
+	if (kModifierList)
+		GC.getGame().BuildCombatStrengthHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_TECHNOLOGY", iTechStrength, iTechProgress);
+
+	const int iCityStrengthMod = GET_PLAYER(getOwner()).GetCityStrengthMod();
+	if (iCityStrengthMod != 0)
+	{
+		if (kModifierList)
+			GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_PLAYER_MODIFIER", iCityStrengthMod);
+
+		iStrengthValue *= 100 + iCityStrengthMod;
+		iStrengthValue /= 100;
+	}
+
+	if (bForRangeStrike)
+	{
+		// Base city ranged-strike multiplier.
+		const int iRangeStrikeMultiplier = GC.getCITY_RANGED_ATTACK_STRENGTH_MULTIPLIER();
+		const int iRangeStrikeModifier = iRangeStrikeMultiplier - 100;
+
+		if (kModifierList && iRangeStrikeModifier != 0)
+			GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_RANGE_STRIKE", iRangeStrikeModifier);
+
+		iStrengthValue *= iRangeStrikeMultiplier;
+		iStrengthValue /= 100;
+
+		if (pGarrisonedUnit)
 		{
-			iValue *= (100 + GET_PLAYER(m_eOwner).GetGarrisonedCityRangeStrikeModifier());
-			iValue /= 100;
-		}
-
-		// Religion city strike mod
-		int iReligionCityStrikeMod = 0;
-		ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
-		if(eMajority != NO_RELIGION)
-		{
-			const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eMajority, getOwner());
-			if(pReligion)
+			const int iGarrisonStrikeMod = GET_PLAYER(m_eOwner).GetGarrisonedCityRangeStrikeModifier();
+			if (iGarrisonStrikeMod != 0)
 			{
-				iReligionCityStrikeMod = pReligion->m_Beliefs.GetCityRangeStrikeModifier();
-				BeliefTypes eSecondaryPantheon = GetCityReligions()->GetSecondaryReligionPantheonBelief();
-				if (eSecondaryPantheon != NO_BELIEF)
-				{
-					iReligionCityStrikeMod += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetCityRangeStrikeModifier();
-				}
-				if(iReligionCityStrikeMod > 0)
-				{
-					iValue *= (100 + iReligionCityStrikeMod);
-					iValue /= 100;
-				}
+				if (kModifierList)
+					GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_GARRISON_RANGE_STRIKE", iGarrisonStrikeMod);
+
+				iStrengthValue *= 100 + iGarrisonStrikeMod;
+				iStrengthValue /= 100;
 			}
 		}
 
-		return iValue;
+		int iReligionMod = 0;
+		const ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
+
+		if (eMajority != NO_RELIGION)
+		{
+			const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eMajority, getOwner());
+			if (pReligion)
+			{
+				iReligionMod = pReligion->m_Beliefs.GetCityRangeStrikeModifier();
+				const BeliefTypes eSecondaryPantheon = GetCityReligions()->GetSecondaryReligionPantheonBelief();
+				if (eSecondaryPantheon != NO_BELIEF)
+					iReligionMod += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetCityRangeStrikeModifier();
+			}
+		}
+
+		if (iReligionMod > 0)
+		{
+			if (kModifierList)
+				GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_COMBATMOD_CITY_RELIGION_RANGE_STRIKE", iReligionMod);
+
+			iStrengthValue *= 100 + iReligionMod;
+			iStrengthValue /= 100;
+		}
 	}
 
-	return m_iStrengthValue;
+	return std::max(1, iStrengthValue);
 }
-
 //	--------------------------------------------------------------------------------
 int CvCity::GetPower() const
 {
@@ -19176,17 +19196,10 @@ bool CvCity::IsHasBuildingThatAllowsRangeStrike() const
 }
 
 //	--------------------------------------------------------------------------------
-#ifdef DEL_RANGED_COUNTERATTACKS
-bool CvCity::canRangeStrikeAt(int iX, int iY, bool bOnlyCheckForEverPossible) const
-{
-	VALIDATE_OBJECT
-	if ((!bOnlyCheckForEverPossible || IsResistance() || IsRazing() || getDamage() == GetMaxHitPoints()) && !canRangeStrike())
-#else
 bool CvCity::canRangeStrikeAt(int iX, int iY) const
 {
 	VALIDATE_OBJECT
 	if(!canRangeStrike())
-#endif
 	{
 		return false;
 	}
@@ -19226,9 +19239,13 @@ bool CvCity::canRangeStrikeAt(int iX, int iY) const
 			return false;
 		}
 	}
-	else // I don't want cities attacking each other directly
+	else // Cities can bombard other cities too, provided it's a valid enemy target.
 	{
-		return false;
+		CvCity* pTargetCity = pTargetPlot->getPlotCity();
+		if(pTargetCity == NULL || pTargetCity->getOwner() == getOwner() || !GET_TEAM(getTeam()).isAtWar(pTargetCity->getTeam()))
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -19264,7 +19281,10 @@ CityTaskResult CvCity::rangeStrike(int iX, int iY)
 		if(!pDefender) return TASK_ABORTED;
 
 		CvCombatInfo kCombatInfo;
-		CvUnitCombat::GenerateRangedCombatInfo(*this, pDefender, *pPlot, &kCombatInfo);
+		kCombatInfo.setCity(BATTLE_UNIT_ATTACKER, this);
+		kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pDefender);
+		kCombatInfo.setPlot(pPlot);
+		CvUnitCombat::GenerateRangedCombatInfo(&kCombatInfo);
 
 		uint uiParentEventID = 0;
 		if(!CvPreGame::quickCombat())
@@ -19285,6 +19305,46 @@ CityTaskResult CvCity::rangeStrike(int iX, int iY)
 			// Set the combat units so that other missions do not continue until combat is over.
 			pDefender->setCombatCity(this);
 			setCombatUnit(pDefender);
+			eResult = TASK_QUEUED;
+		}
+		else
+		{
+			eResult = TASK_COMPLETED;
+		}
+
+		CvUnitCombat::ResolveCombat(kCombatInfo, uiParentEventID);
+	}
+	else // City target
+	{
+		CvCity* pTargetCity = pPlot->getPlotCity();
+
+		CvAssert(pTargetCity != NULL);
+		if(!pTargetCity) return TASK_ABORTED;
+
+		CvCombatInfo kCombatInfo;
+		kCombatInfo.setCity(BATTLE_UNIT_ATTACKER, this);
+		kCombatInfo.setCity(BATTLE_UNIT_DEFENDER, pTargetCity);
+		kCombatInfo.setPlot(pPlot);
+		CvUnitCombat::GenerateRangedCombatInfo(&kCombatInfo);
+
+		uint uiParentEventID = 0;
+		if(!CvPreGame::quickCombat())
+		{
+			// Center camera here!
+			bool isTargetVisibleToActivePlayer = pPlot->isActiveVisible(false);
+			if(isTargetVisibleToActivePlayer)
+			{
+				auto_ptr<ICvPlot1> pDllPlot = GC.WrapPlotPointer(pPlot);
+				DLLUI->lookAt(pDllPlot.get(), CAMERALOOKAT_NORMAL);
+			}
+
+			kCombatInfo.setVisualizeCombat(pPlot->isActiveVisible(false));
+
+			auto_ptr<ICvCombatInfo1> pDllCombatInfo(new CvDllCombatInfo(&kCombatInfo));
+			uiParentEventID = gDLL->GameplayCityCombat(pDllCombatInfo.get());
+
+			// Unlike a unit defender, there's no per-target combat lock to set here -- a city bombardment
+			// resolves immediately rather than blocking on an animated duel.
 			eResult = TASK_QUEUED;
 		}
 		else
@@ -19329,8 +19389,8 @@ int CvCity::rangeCombatUnitDefense(_In_ const CvUnit* pDefender) const
 int CvCity::rangeCombatUnitDefense(const CvUnit* pDefender) const
 #endif
 {
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 	int iDefenderStrength = 0;
-
 	// Use Ranged combat value for defender, UNLESS it's a boat
 	if (pDefender->isEmbarked())
 	{
@@ -19349,7 +19409,20 @@ int CvCity::rangeCombatUnitDefense(const CvUnit* pDefender) const
 	{
 		iDefenderStrength = pDefender->GetMaxDefenseStrength(pDefender->plot(), NULL, /*bFromRangedAttack*/ true);
 	}
-
+#else
+	CvCombatInfo kCombatInfo;
+	kCombatInfo.setCity(BATTLE_UNIT_ATTACKER, const_cast<CvCity*>(this));
+	kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, const_cast<CvUnit*>(pDefender));
+	kCombatInfo.setPlot(pDefender->plot());
+	kCombatInfo.setAttackIsRanged(true);
+	int iDefenderStrength = pDefender->GetMaxDefenseStrength(kCombatInfo);
+	if (pDefender->isRanged() && !pDefender->isRangedSupportFire() && !pDefender->getDomainType() == DOMAIN_SEA)
+	{
+		// Ranged units take less damage from one another
+		iDefenderStrength *= /*125*/ GC.getRANGE_ATTACK_RANGED_DEFENDER_MOD();
+		iDefenderStrength /= 100;
+	}
+#endif
 	return iDefenderStrength;
 }
 
@@ -19448,7 +19521,16 @@ int CvCity::rangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bIncl
 //	--------------------------------------------------------------------------------
 int CvCity::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand) const
 {
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 	int iAttackerStrength = pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, false);
+#else
+	CvCombatInfo kCombatInfo;
+	kCombatInfo.setCity(BATTLE_UNIT_DEFENDER, const_cast<CvCity*>(this));
+	kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, const_cast<CvUnit*>(pAttacker));
+	kCombatInfo.setPlot(plot());
+	kCombatInfo.setAttackIsBombingMission(true);
+	int iAttackerStrength = pAttacker->GetMaxAttackStrength(kCombatInfo);
+#endif
 	int iDefenderStrength = getStrengthValue(false);
 
 	// The roll will vary damage between 2 and 3 (out of 10) for two units of identical strength
@@ -20262,7 +20344,34 @@ bool CvCity::isFighting() const
 {
 	return getCombatUnit() != NULL;
 }
-
+int CvCity::getMaxXPValue() const
+{
+	CvPlayer& kPlayer = GET_PLAYER(getOwner());
+	if (isBarbarian() || kPlayer.isMinorCiv())
+		return GC.getBARBARIAN_MAX_XP_VALUE();
+#if defined(LEKMOD_AI_XP_CAP)
+	if (GC.getGame().isOption("GAMEOPTION_AI_XP_CAP"))
+	{
+		if (!kPlayer.isHuman())
+			return GC.getBARBARIAN_MAX_XP_VALUE();
+	}
+#endif
+	return INT_MAX;
+}
+bool CvCity::canEarnGlobalXP() const
+{
+	CvPlayer& kPlayer = GET_PLAYER(getOwner());
+	if (isBarbarian() || kPlayer.isMinorCiv())
+		return false;
+#if defined(LEKMOD_AI_XP_CAP)
+	if (GC.getGame().isOption("GAMEOPTION_AI_XP_CAP"))
+	{
+		if (!kPlayer.isHuman())
+			return false;
+	}
+#endif
+	return true;
+}
 /* Error Hunting Attempt
 bool CvCity::HasBuildingClass() const
 {

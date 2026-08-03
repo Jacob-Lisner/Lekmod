@@ -39,7 +39,6 @@ typedef FFastSmallFixedList< MissionQueueNode, 12, true, c_eCiv5GameplayDLL > Mi
 
 typedef FObjectHandle<CvUnit> UnitHandle;
 typedef FStaticVector<CvPlot*, 20, true, c_eCiv5GameplayDLL, 0> UnitMovementQueue;
-
 struct CvUnitCaptureDefinition
 {
 	PlayerTypes eOriginalOwner;		// Who first created the unit
@@ -182,7 +181,10 @@ public:
 #endif
 
 	bool IsAngerFreeUnit() const;
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	CvCombatDamageRange getCombatDamageRange(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bAttackerIsCity, bool bDefenderIsCity) const;
+	int getWoundedRatio(int iAssumeExtraDamage = 0) const;
+#endif
 	int getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bIncludeRand, bool bAttackerIsCity, bool bDefenderIsCity) const;
 	void fightInterceptor(const CvPlot& pPlot);
 	void move(CvPlot& pPlot, bool bShow);
@@ -480,7 +482,7 @@ public:
 	bool IsWork() const;
 	bool isGoldenAge() const;
 #ifdef NQ_COMBAT_STRENGTH_NEAR_FRIENDLY_MINOR
-	bool IsNearFriendlyMinor() const;
+	bool IsNearFriendlyMinor(PlayerTypes* eMinor) const;
 #endif
 	bool isGivesPolicies() const;
 	bool isBlastTourism() const;
@@ -509,17 +511,27 @@ public:
 
 	void SetBaseCombatStrength(int iCombat);
 	int GetBaseCombatStrength(bool bIgnoreEmbarked = false) const;
-	int GetBaseCombatStrengthConsideringDamage() const;
+	void ChangeBaseCombatStrength(int iChange);
 
+	int GetBaseCombatStrengthConsideringDamage() const;
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 	int GetGenericMaxStrengthModifier(const CvUnit* pOtherUnit, const CvPlot* pBattlePlot, bool bIgnoreUnitAdjacency) const;
 	int GetMaxAttackStrength(const CvPlot* pFromPlot, const CvPlot* pToPlot, const CvUnit* pDefender) const;
 	int GetMaxDefenseStrength(const CvPlot* pInPlot, const CvUnit* pAttacker, bool bFromRangedAttack = false) const;
+	int GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* pCity, bool bAttacking, bool bForRangedAttack) const;
+#else
+	// Change to CvCombatInfo based parameters
+	int GetGenericMaxStrengthModifier(const CvCombatInfo& kInfo, CvCombatModifierList* kModifierList = NULL) const;
+	int GetMaxAttackStrength(const CvCombatInfo& kInfo, CvCombatModifierList* kModifierList = NULL) const;
+	int GetMaxDefenseStrength(const CvCombatInfo& kInfo, CvCombatModifierList* kModifierList = NULL) const;
+	int GetMaxRangedCombatStrength(const CvCombatInfo& kInfo, CvCombatModifierList* kModifierList = NULL) const;
+#endif
 	int GetEmbarkedUnitDefense() const;
 
 	bool canSiege(TeamTypes eTeam) const;
 
-	int GetBaseRangedCombatStrength() const;
-	int GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* pCity, bool bAttacking, bool bForRangedAttack) const;
+	int GetBaseRangedCombatStrength(bool bRangedSupportFire = false) const;
+	void ChangeBaseRangedCombatStrength(int iChange);
 
 	int GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bIncludeRand, int iAssumeExtraDamage = 0) const;
 	int GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bIncludeRand, int iAssumeExtraDamage = 0) const;
@@ -529,8 +541,8 @@ public:
 
 	int GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand = true) const;
 
-	CvUnit* GetBestInterceptor(const CvPlot& pPlot, CvUnit* pkDefender = NULL, bool bLandInterceptorsOnly=false, bool bVisibleInterceptorsOnly=false) const;
-	int GetInterceptorCount(const CvPlot& pPlot, CvUnit* pkDefender = NULL, bool bLandInterceptorsOnly=false, bool bVisibleInterceptorsOnly=false) const;
+	CvUnit* GetBestInterceptor(const CvPlot& pPlot, CvUnit* pkDefender = NULL, bool bLandInterceptorsOnly = false, bool bVisibleInterceptorsOnly = false, bool bIgnoreInterceptionState = false) const;
+	int GetInterceptorCount(const CvPlot& pPlot, CvUnit* pkDefender = NULL, bool bLandInterceptorsOnly = false, bool bVisibleInterceptorsOnly = false, bool bIgnoreInterceptionState = false) const;
 	int GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand = true) const;
 
 	int GetCombatLimit() const;
@@ -967,7 +979,7 @@ public:
 	int GetLandUnitStackMovement() const;
 #endif
 	int GetReverseGreatGeneralModifier() const;
-	int GetNearbyImprovementModifier() const;
+	int GetNearbyImprovementModifier(ImprovementTypes* pImprovement = NULL) const;
 
 	bool IsGreatGeneral() const;
 	int GetGreatGeneralCount() const;
@@ -1330,6 +1342,7 @@ public:
 	CvPlot* GetPathLastPlot() const;
 	const CvPathNodeArray& GetPathNodeArray() const;
 	CvPlot* GetPathEndTurnPlot() const;
+	CvPlot* GetPathAttackFromPlot(const CvPlot* pTargetPlot) const;
 
 	bool isBusyMoving() const;
 	void setBusyMoving(bool bState);
@@ -1382,11 +1395,7 @@ public:
 
 	// Ported in from old CvUnitAI class
 	int SearchRange(int iRange) const;
-#if defined(AUI_CONSTIFY) || defined(DEL_RANGED_COUNTERATTACKS)
-	bool PlotValid(const CvPlot* pPlot) const;
-#else
 	bool PlotValid(CvPlot* pPlot) const;
-#endif
 
 	CvUnitReligion* GetReligionData() const
 	{
@@ -1547,6 +1556,8 @@ protected:
 	FAutoVariable<int, CvUnit> m_iExtraNavalMoves;
 	FAutoVariable<int, CvUnit> m_iKamikazePercent;
 	FAutoVariable<int, CvUnit> m_iBaseCombat;
+	FAutoVariable<int, CvUnit> m_iBaseRangedCombat;
+
 	FAutoVariable<DirectionTypes, CvUnit> m_eFacingDirection;
 	FAutoVariable<int, CvUnit> m_iArmyId;
 
@@ -1737,26 +1748,16 @@ protected:
 
 	CvUnit* airStrikeTarget(CvPlot& pPlot, bool bNoncombatAllowed) const;
 
-#ifndef AUI_SCOPE_FIXES
 #ifdef AUI_UNIT_FIX_NO_RETREAT_ON_CIVILIAN_GUARD
 	bool CanWithdrawFromMelee(const CvUnit& pAttacker, const CvCombatInfo* pCombatInfo = NULL) const;
-#elif defined(AUI_CONSTIFY)
-	bool CanWithdrawFromMelee(const CvUnit& pAttacker) const;
 #else
-	bool CanWithdrawFromMelee(CvUnit& pAttacker);
+	bool CanWithdrawFromMelee(const CvUnit& pAttacker) const;
 #endif
 	bool DoWithdrawFromMelee(CvUnit& pAttacker);
 
 	// these are do to a unit using Heavy Charge against you
-#ifdef AUI_UNIT_FIX_HEAVY_CHARGE_BONUS_INTEGRATED_INTO_STACKS
-	bool CanFallBackFromMelee(const CvUnit& kAttacker, const CvPlot* pFromPlot = NULL) const;
-#elif defined(AUI_CONSTIFY)
 	bool CanFallBackFromMelee(const CvUnit& pAttacker) const;
-#else
-	bool CanFallBackFromMelee(CvUnit& pAttacker);
-#endif
 	bool DoFallBackFromMelee(CvUnit& pAttacker);
-#endif
 
 private:
 

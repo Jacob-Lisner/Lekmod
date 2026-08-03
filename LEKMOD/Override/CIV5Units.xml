@@ -10,6 +10,81 @@
 
 <GameData>
 	<!-- START v35 new tables -->
+	<Table name="Unit_EraStrengthChanges">
+		<Column name="UnitType" type="text" reference="Units(Type)"/>
+		<Column name="EraType" type="text" reference="Eras(Type)"/>
+		<Column name="StrengthChange" type="integer" default="0"/>
+		<Column name="RangedStrengthChange" type="integer" default="0"/>
+		<Column name="MovesChange" type="integer" default="0"/>
+		<Column name="StartingExperienceChange" type="integer" default="0"/>
+	</Table>
+	<!-- Cumulative -->
+	<Unit_EraStrengthChanges>
+		<Delete />
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_ANCIENT</EraType>
+			<StrengthChange>2</StrengthChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_CLASSICAL</EraType>
+			<StrengthChange>4</StrengthChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_MEDIEVAL</EraType>
+			<StrengthChange>7</StrengthChange>
+			<StartingExperienceChange>15</StartingExperienceChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_RENAISSANCE</EraType>
+			<StrengthChange>7</StrengthChange>
+			<StartingExperienceChange>15</StartingExperienceChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_INDUSTRIAL</EraType>
+			<StrengthChange>10</StrengthChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_MODERN</EraType>
+			<StrengthChange>25</StrengthChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_POSTMODERN</EraType>
+			<StrengthChange>15</StrengthChange>
+			<MovesChange>1</MovesChange>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_FUTURE</EraType>
+			<StrengthChange>20</StrengthChange>
+			<StartingExperienceChange>30</StartingExperienceChange>
+		</Row>
+	</Unit_EraStrengthChanges>
+	
+	<Table name="Unit_FreePromotionEras">
+		<Column name="UnitType" type="text" reference="Units(Type)"/>
+		<Column name="EraType" type="text" reference="Eras(Type)"/>
+		<Column name="PromotionType" type="text" reference="UnitPromotions(Type)"/>
+	</Table>
+	<Unit_FreePromotionEras>
+		<Delete />
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_INDUSTRIAL</EraType>
+			<PromotionType>PROMOTION_MARCH</PromotionType>
+		</Row>
+		<Row>
+			<UnitType>UNIT_HETAIROI</UnitType>
+			<EraType>ERA_MODERN</EraType>
+			<PromotionType>PROMOTION_ARMOR_VS_LAND</PromotionType>
+		</Row>
+	</Unit_FreePromotionEras>
 	<Table name="Belief_TradeConnectionOriginYieldChanges">
 		<Column name="BeliefType" type="text" reference="Beliefs(Type)"/>
 		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)"/>
@@ -33669,17 +33744,6 @@
 			<Monument>false</Monument> 
 		</Row>
 		<Row>
-			<ID>156</ID> 
-			<Type>BUILDINGCLASS_MONGOLIA_TRAIT</Type>
-			<DefaultBuilding>BUILDING_TOGTVORTOI</DefaultBuilding>
-			<MaxGlobalInstances>-1</MaxGlobalInstances> 
-			<MaxTeamInstances>-1</MaxTeamInstances> 
-			<MaxPlayerInstances>-1</MaxPlayerInstances> 
-			<ExtraPlayerInstances>0</ExtraPlayerInstances> 
-			<NoLimit>false</NoLimit> 
-			<Monument>false</Monument> 
-		</Row>
-		<Row>
 			<ID>157</ID> 
 			<Type>BUILDINGCLASS_BOLIVIA_TRAIT_FOOD</Type>
 			<DefaultBuilding>BUILDING_BOLIVIA_TRAIT_FOOD</DefaultBuilding>
@@ -46600,24 +46664,6 @@
 			<GreatWorkCount>-1</GreatWorkCount> 
 			<PortraitIndex>2</PortraitIndex> 
 			<IconAtlas>LEKMOD_AKKAD_ATLAS</IconAtlas> 
-		</Row>
-		<Row> 
-			<ID>259</ID> 
-			<Type>BUILDING_TOGTVORTOI</Type> 
-			<BuildingClass>BUILDINGCLASS_MONGOLIA_TRAIT</BuildingClass> 
-			<Description>Trait Mongol HorseRev</Description> 
-			<Civilopedia>Trait</Civilopedia> 
-			<Strategy>Trait</Strategy> 
-			<Help>Trait</Help> 
-			<NeverCapture>true</NeverCapture> 
-			<NukeImmune>true</NukeImmune> 
-			<Cost>-1</Cost> 
-			<HurryCostModifier>-1</HurryCostModifier>
-			<MaliTreasury>true</MaliTreasury>
-			<ArtDefineTag>MONUMENT</ArtDefineTag> 
-			<GreatWorkCount>-1</GreatWorkCount> 
-			<PortraitIndex>8</PortraitIndex> 
-			<IconAtlas>AM_BUILDING_ATLAS</IconAtlas> 
 		</Row>
 		<!-- Wales -->
 		<Row> 
@@ -204642,6 +204688,7 @@
 		<Column name="FirstProphetCostMod" type="integer" default="0"/>
 		<Column name="EmbarkedUnitsFullStrength" type="boolean" default="false"/>
 		<Column name="CityStateUnitGiftExtraExperience" type="integer"  default="0"/>
+		<Column name="GreatGeneralSiegeBonus" type="integer"  default="0"/>
 	</Table> 
 	<Traits>
 		<Delete />
@@ -205309,7 +205356,7 @@
 			<Description>TXT_KEY_TRAIT_AKKAD</Description>
 			<ShortDescription>TXT_KEY_TRAIT_AKKAD_SHORT</ShortDescription>
 			<FreeBuildingOnConquest>BUILDING_UA_AKKAD</FreeBuildingOnConquest>
-			<!-- Has code in Lua\Civilizations\Lekmod_akkad.lua -->
+			<GreatGeneralSiegeBonus>15</GreatGeneralSiegeBonus>
 		</Row>
 		<Row> 
 			<ID>80</ID> 
@@ -264543,7 +264590,7 @@
 		<Column name="FreePolicies" type="integer"  default="0"/>
 		<Column name="OneShotTourism" type="integer"  default="0"/>
 		<Column name="OneShotTourismPercentOthers" type="integer"  default="0"/>
-		<Column name="IgnoreBuildingDefense" type="boolean"  default="false"/> <!-- Seems to do Nothing anymore. -->
+		<Column name="IgnoreBuildingDefense" type="boolean" default="false"/> <!-- Seems to do Nothing anymore. -->
 		<Column name="PrereqResources" type="boolean"  default="false"/> <!-- Only Active for Workboat, seems unnessessary but w/e -->
 		<Column name="Mechanized" type="boolean"  default="false"/> <!-- Does Nothing -->
 		<Column name="Suicide" type="boolean"  default="false"/> <!-- Kills itself when it attacks -->
@@ -264941,7 +264988,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_ROBOTICS</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
@@ -264977,7 +265023,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_TELECOM</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
@@ -265013,7 +265058,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_ELECTRONICS</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
@@ -265048,7 +265092,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_ELECTRONICS</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
@@ -265081,7 +265124,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_REFRIGERATION</PrereqTech>
 			<ObsoleteTech>TECH_TELECOM</ObsoleteTech>
@@ -265115,7 +265157,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_COMBUSTION</PrereqTech>
 			<ObsoleteTech>TECH_LASERS</ObsoleteTech>
@@ -265148,7 +265189,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_STEAM_POWER</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
@@ -265312,7 +265352,6 @@
 			<DefaultUnitAI>UNITAI_ATTACK</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_NUCLEAR_FUSION</PrereqTech>
 			<AdvancedStartCost>80</AdvancedStartCost>
@@ -265343,7 +265382,6 @@
 			<DefaultUnitAI>UNITAI_ICBM</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<Suicide>true</Suicide>
 			<PrereqTech>TECH_ADVANCED_BALLISTICS</PrereqTech>
@@ -265381,7 +265419,6 @@
 			<DefaultUnitAI>UNITAI_ATTACK_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_STEALTH</PrereqTech>
 			<AdvancedStartCost>70</AdvancedStartCost>
@@ -265416,7 +265453,6 @@
 			<DefaultUnitAI>UNITAI_DEFENSE_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_LASERS</PrereqTech>
 			<AdvancedStartCost>70</AdvancedStartCost>
@@ -265451,7 +265487,6 @@
 			<DefaultUnitAI>UNITAI_MISSILE_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<Suicide>true</Suicide>
 			<PrereqTech>TECH_ADVANCED_BALLISTICS</PrereqTech>
@@ -265487,7 +265522,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_LASERS</PrereqTech>
 			<AdvancedStartCost>70</AdvancedStartCost>
@@ -265519,7 +265553,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_COMPUTERS</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
 			<XPValueAttack>3</XPValueAttack>
@@ -265551,7 +265584,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_ROCKETRY</PrereqTech>
 			<AdvancedStartCost>50</AdvancedStartCost>
 			<AirInterceptRange>2</AirInterceptRange>
@@ -265586,7 +265618,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_ROCKETRY</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
@@ -265618,7 +265649,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MOBILE_TACTICS</PrereqTech>
 			<AdvancedStartCost>50</AdvancedStartCost>
 			<XPValueAttack>3</XPValueAttack>
@@ -265650,7 +265680,6 @@
 			<DefaultUnitAI>UNITAI_ATTACK_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_RADAR</PrereqTech>
 			<AdvancedStartCost>50</AdvancedStartCost>
@@ -265685,7 +265714,6 @@
 			<DefaultUnitAI>UNITAI_ATTACK_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_RADAR</PrereqTech>
 			<AdvancedStartCost>50</AdvancedStartCost>
@@ -265720,7 +265748,6 @@
 			<DefaultUnitAI>UNITAI_DEFENSE_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_RADAR</PrereqTech>
 			<AdvancedStartCost>50</AdvancedStartCost>
@@ -265756,7 +265783,6 @@
 			<DefaultUnitAI>UNITAI_DEFENSE_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_RADAR</PrereqTech>
 			<AdvancedStartCost>50</AdvancedStartCost>
@@ -265792,7 +265818,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_RADAR</PrereqTech>
 			<ObsoleteTech>TECH_NANOTECHNOLOGY</ObsoleteTech>
 			<AdvancedStartCost>40</AdvancedStartCost>
@@ -265824,7 +265849,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_COMBINED_ARMS</PrereqTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MODERN_ARMOR</GoodyHutUpgradeUnitClass>
@@ -265857,7 +265881,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_COMBINED_ARMS</PrereqTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MODERN_ARMOR</GoodyHutUpgradeUnitClass>
@@ -265892,7 +265915,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_DYNAMITE</PrereqTech>
 			<ObsoleteTech>TECH_ROCKETRY</ObsoleteTech>
@@ -265927,7 +265949,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BALLISTICS</PrereqTech>
 			<ObsoleteTech>TECH_ROCKETRY</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MOBILE_SAM</GoodyHutUpgradeUnitClass>
@@ -265962,7 +265983,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_COMBINED_ARMS</PrereqTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_HELICOPTER_GUNSHIP</GoodyHutUpgradeUnitClass>
 			<AdvancedStartCost>35</AdvancedStartCost>
@@ -265995,7 +266015,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_ELECTRONICS</PrereqTech>
 			<ObsoleteTech>TECH_MOBILE_TACTICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MECHANIZED_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -266027,7 +266046,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
 			<AdvancedStartCost>35</AdvancedStartCost>
@@ -266060,7 +266078,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -266093,7 +266110,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -266126,7 +266142,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_RIFLING</PrereqTech>
 			<ObsoleteTech>TECH_REPLACEABLE_PARTS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_GREAT_WAR_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -266159,7 +266174,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_METALLURGY</PrereqTech>
 			<ObsoleteTech>TECH_RAILROAD</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ANTI_TANK_RIFLE</GoodyHutUpgradeUnitClass>
@@ -266192,7 +266206,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_PRINTING_PRESS</PrereqTech>
 			<ObsoleteTech>TECH_BALLISTICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ANTI_TANK_GUN</GoodyHutUpgradeUnitClass>
@@ -266227,7 +266240,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_CHEMISTRY</PrereqTech>
 			<ObsoleteTech>TECH_DYNAMITE</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ARTILLERY</GoodyHutUpgradeUnitClass>
@@ -266260,7 +266272,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_GUNPOWDER</PrereqTech>
 			<ObsoleteTech>TECH_RIFLING</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_RIFLEMAN</GoodyHutUpgradeUnitClass>
@@ -266293,7 +266304,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_GUNPOWDER</PrereqTech>
 			<ObsoleteTech>TECH_RIFLING</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_RIFLEMAN</GoodyHutUpgradeUnitClass>
@@ -266326,7 +266336,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_GUNPOWDER</PrereqTech>
 			<ObsoleteTech>TECH_RIFLING</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_RIFLEMAN</GoodyHutUpgradeUnitClass>
@@ -266359,7 +266368,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_GUNPOWDER</PrereqTech>
 			<ObsoleteTech>TECH_RIFLING</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_RIFLEMAN</GoodyHutUpgradeUnitClass>
@@ -267679,7 +267687,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_RIFLING</PrereqTech>
 			<ObsoleteTech>TECH_COMBINED_ARMS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_GREAT_WAR_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -267977,7 +267984,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -268010,7 +268016,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_RIFLING</PrereqTech>
 			<ObsoleteTech>TECH_REPLACEABLE_PARTS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_GREAT_WAR_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -268227,7 +268232,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<ObsoleteTech>TECH_ELECTRONICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -268259,7 +268263,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_PENICILIN</PrereqTech>
 			<AdvancedStartCost>40</AdvancedStartCost>
 			<XPValueAttack>3</XPValueAttack>
@@ -268289,7 +268292,6 @@
 			<DefaultUnitAI>UNITAI_DEFENSE_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_FLIGHT</PrereqTech>
 			<ObsoleteTech>TECH_RADAR</ObsoleteTech>
@@ -268326,7 +268328,6 @@
 			<DefaultUnitAI>UNITAI_ATTACK_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_FLIGHT</PrereqTech>
 			<ObsoleteTech>TECH_RADAR</ObsoleteTech>
@@ -268362,7 +268363,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_COMBUSTION</PrereqTech>
 			<ObsoleteTech>TECH_COMBINED_ARMS</ObsoleteTech>
@@ -268398,7 +268398,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BALLISTICS</PrereqTech>
 			<ObsoleteTech>TECH_NUCLEAR_FISSION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_BAZOOKA</GoodyHutUpgradeUnitClass>
@@ -268607,7 +268606,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_METALLURGY</PrereqTech>
 			<ObsoleteTech>TECH_COMBINED_ARMS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ANTI_TANK_GUN</GoodyHutUpgradeUnitClass>
@@ -268814,7 +268812,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_ELECTRONICS</PrereqTech>
 			<ObsoleteTech>TECH_MOBILE_TACTICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MECHANIZED_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -268881,7 +268878,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -268978,7 +268974,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -269013,7 +269008,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_NUCLEAR_FISSION</PrereqTech>
 			<AdvancedStartCost>30</AdvancedStartCost>
 			<XPValueAttack>3</XPValueAttack>
@@ -269198,7 +269192,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<ObsoleteTech>TECH_ELECTRONICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -269230,7 +269223,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<ObsoleteTech>TECH_ELECTRONICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -269352,7 +269344,6 @@
 			<DefaultUnitAI>UNITAI_ATTACK_AIR</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_CHIVALRY</PrereqTech>
 			<ObsoleteTech>TECH_FLIGHT</ObsoleteTech>
@@ -269488,7 +269479,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_ELECTRONICS</PrereqTech>
 			<ObsoleteTech>TECH_MOBILE_TACTICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MECHANIZED_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -269762,7 +269752,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_GUNPOWDER</PrereqTech>
 			<ObsoleteTech>TECH_RIFLING</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_RIFLEMAN</GoodyHutUpgradeUnitClass>
@@ -269918,7 +269907,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_INDUSTRIALIZATION</PrereqTech>
 			<ObsoleteTech>TECH_REPLACEABLE_PARTS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_GREAT_WAR_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -270047,7 +270035,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -270252,7 +270239,6 @@
 			<DefaultUnitAI>UNITAI_FAST_ATTACK</DefaultUnitAI>
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_STEAM_POWER</PrereqTech>
 			<ObsoleteTech>TECH_COMPUTERS</ObsoleteTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
@@ -270284,7 +270270,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<ObsoleteTech>TECH_ELECTRONICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -270316,7 +270301,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_REPLACEABLE_PARTS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_GREAT_WAR_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -270379,7 +270363,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_GUNPOWDER</PrereqTech>
 			<ObsoleteTech>TECH_RIFLING</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_RIFLEMAN</GoodyHutUpgradeUnitClass>
@@ -270502,7 +270485,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_RAILROAD</PrereqTech>
 			<ObsoleteTech>TECH_COMBINED_ARMS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ANTI_TANK_GUN</GoodyHutUpgradeUnitClass>
@@ -270538,7 +270520,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BALLISTICS</PrereqTech>
 			<ObsoleteTech>TECH_NUCLEAR_FISSION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_BAZOOKA</GoodyHutUpgradeUnitClass>
@@ -270570,7 +270551,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BRONZE_WORKING</PrereqTech>
 			<ObsoleteTech>TECH_CIVIL_SERVICE</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_PIKEMAN</GoodyHutUpgradeUnitClass>
@@ -270603,7 +270583,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_IRON_WORKING</PrereqTech>
 			<ObsoleteTech>TECH_STEEL</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_LONGSWORDSMAN</GoodyHutUpgradeUnitClass>
@@ -270637,7 +270616,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_CHIVALRY</PrereqTech>
 			<ObsoleteTech>TECH_MILITARY_SCIENCE</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_CAVALRY</GoodyHutUpgradeUnitClass>
@@ -270898,7 +270876,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_RIFLING</PrereqTech>
 			<ObsoleteTech>TECH_REPLACEABLE_PARTS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_GREAT_WAR_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -270931,7 +270908,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<ObsoleteTech>TECH_ELECTRONICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -271027,7 +271003,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_ELECTRONICS</PrereqTech>
 			<ObsoleteTech>TECH_MOBILE_TACTICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MECHANIZED_INFANTRY</GoodyHutUpgradeUnitClass>
@@ -271058,7 +271033,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_STEAM_POWER</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
@@ -271220,7 +271194,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_COMPUTERS</PrereqTech>
 			<AdvancedStartCost>60</AdvancedStartCost>
 			<XPValueAttack>3</XPValueAttack>
@@ -271251,7 +271224,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_DYNAMITE</PrereqTech>
 			<ObsoleteTech>TECH_COMBINED_ARMS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ANTI_TANK_GUN</GoodyHutUpgradeUnitClass>
@@ -271314,7 +271286,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<ObsoleteTech>TECH_ELECTRONICS</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
 			<AdvancedStartCost>30</AdvancedStartCost>
@@ -271414,7 +271385,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_METALLURGY</PrereqTech>
 			<ObsoleteTech>TECH_RAILROAD</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ANTI_TANK_RIFLE</GoodyHutUpgradeUnitClass>
@@ -271477,7 +271447,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BIOLOGY</PrereqTech>
 			<ObsoleteTech>TECH_PENICILIN</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MARINE</GoodyHutUpgradeUnitClass>
@@ -271511,7 +271480,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_DYNAMITE</PrereqTech>
 			<ObsoleteTech>TECH_ROCKETRY</ObsoleteTech>
@@ -271568,7 +271536,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_COMBUSTION</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_WWI_TANK</GoodyHutUpgradeUnitClass>
@@ -271695,7 +271662,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<Mechanized>true</Mechanized>
 			<PrereqTech>TECH_COMBINED_ARMS</PrereqTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MODERN_ARMOR</GoodyHutUpgradeUnitClass>
@@ -271759,7 +271725,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BIOLOGY</PrereqTech>
 			<ObsoleteTech>TECH_PENICILIN</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MARINE</GoodyHutUpgradeUnitClass>
@@ -271791,7 +271756,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_REPLACEABLE_PARTS</PrereqTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_INFANTRY</GoodyHutUpgradeUnitClass>
 			<AdvancedStartCost>35</AdvancedStartCost>
@@ -271825,7 +271789,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_CHEMISTRY</PrereqTech>
 			<ObsoleteTech>TECH_DYNAMITE</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_ARTILLERY</GoodyHutUpgradeUnitClass>
@@ -271948,7 +271911,6 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<IgnoreBuildingDefense>true</IgnoreBuildingDefense>
 			<PrereqTech>TECH_BIOLOGY</PrereqTech>
 			<ObsoleteTech>TECH_PENICILIN</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MARINE</GoodyHutUpgradeUnitClass>

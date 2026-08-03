@@ -657,9 +657,6 @@
 /// When calculating the founding value of a tile, tailor the SiteEvaluation function to the current player instead of the first one
 #define AUI_STARTPOSITIONER_FLAVORED_STARTS
 
-// Weird stuff
-/// Adds ranged counterattacks to the game, toggleable for now via in-game option
-#define DEL_RANGED_COUNTERATTACKS
 */
 
 // GlobalDefines (GD) wrappers
@@ -1193,20 +1190,8 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 
 /* v35 Changes
 todo:
-- fully account for all sources of yields for wonders in the new city-level cache for wonder yields.
--
-- Make sure the city level tourism stuff is sorted properly.
-- Finish Standardizing Yields on the player level.
-	- Hook into CvTreasury for the gold
-	- hook into CvCultureClasses for the Tourism aspect
-
 refactor CS entirely to be less asinine.
 	- as a start, just the ally and friend yields. those shouldnt be collected like they are now. instead the CS should push the yield into a player cache for it.
-
-pull traderefactor into this branch and finalize it.
-	- Part of that is redoing the assumption that is made about domain modifiers
-
-fully traitify things
 
 romania and brazil traits are double counted
 
@@ -1236,6 +1221,11 @@ romania and brazil traits are double counted
 #define LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT
 // Refactor and Expand Trade Routes.
 #define TRADE_REFACTOR
+
+#define LEKMOD_UNIT_STRENGTH_PROMOTION_ERA
+
+#define LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS
+#define GAMEOPTION_NO_COMBAT_RANDOMNESS "GAMEOPTION_LEKMOD_NO_COMBAT_RANDOMNESS"
 
 #define BEE
 /*

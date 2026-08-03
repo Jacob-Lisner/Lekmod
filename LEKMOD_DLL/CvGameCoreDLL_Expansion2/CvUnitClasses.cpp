@@ -124,15 +124,20 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_paszMiddleArtDefineTags(NULL),
 	m_paszUnitNames(NULL),
 	m_paeGreatWorks(NULL),
-#ifdef AUI_WARNING_FIXES
 	m_piProductionModifierBuildings(NULL),
 	m_piYieldFromKills(NULL),
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+	m_piEraStrengthChanges(NULL),
+	m_piEraRangedStrengthChanges(NULL),
+	m_piEraMovesChanges(NULL),
+	m_piEraStartingExperienceChanges(NULL),
+#endif
 	m_iLeaderExperience(0),
 	m_iProjectPrereq(0),
 	m_iSpaceshipProject(0),
 	m_iLeaderPromotion(0),
 	m_iCachedPower(0),
-#endif
+
 	m_bUnitArtInfoEraVariation(false),
 	m_bUnitArtInfoCulturalVariation(false),
 	m_iUnitFlagIconOffset(0),
@@ -161,9 +166,13 @@ CvUnitEntry::~CvUnitEntry(void)
 	SAFE_DELETE_ARRAY(m_paszMiddleArtDefineTags);
 	SAFE_DELETE_ARRAY(m_paszUnitNames);
 	SAFE_DELETE_ARRAY(m_paeGreatWorks);
-#ifdef AUI_WARNING_FIXES
 	SAFE_DELETE_ARRAY(m_piProductionModifierBuildings);
 	SAFE_DELETE_ARRAY(m_piYieldFromKills);
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+	SAFE_DELETE_ARRAY(m_piEraStrengthChanges);
+	SAFE_DELETE_ARRAY(m_piEraRangedStrengthChanges);
+	SAFE_DELETE_ARRAY(m_piEraMovesChanges);
+	SAFE_DELETE_ARRAY(m_piEraStartingExperienceChanges);
 #endif
 }
 
@@ -335,7 +344,67 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	kUtility.PopulateArrayByExistence(m_pbGreatPeoples, "Specialists", "Unit_GreatPersons", "GreatPersonType", "UnitType", szUnitType);
 	kUtility.PopulateArrayByExistence(m_pbBuildings, "Buildings", "Unit_Buildings", "BuildingType", "UnitType", szUnitType);
 	kUtility.PopulateArrayByExistence(m_pbBuildingClassRequireds, "BuildingClasses", "Unit_BuildingClassRequireds", "BuildingClassType", "UnitType", szUnitType);
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+	{
+		kUtility.InitializeArray(m_piEraStrengthChanges, "Eras", 0);
+		kUtility.InitializeArray(m_piEraRangedStrengthChanges, "Eras", 0);
+		kUtility.InitializeArray(m_piEraMovesChanges, "Eras", 0);
+		kUtility.InitializeArray(m_piEraStartingExperienceChanges, "Eras", 0);
+		std::string key = "Unit_EraStrengthChanges";
+		Database::Results* results = kUtility.GetResults(key);
+		if (results == NULL)
+		{
+			const char* szSQL =
+				"SELECT Eras.ID, StrengthChange, RangedStrengthChange, MovesChange, StartingExperienceChange FROM Unit_EraStrengthChanges "
+				"INNER JOIN Eras ON EraType = Eras.Type "
+				"WHERE UnitType = ?";
+			results = kUtility.PrepareResults(key, szSQL);
+		}
+		results->Bind(1, szUnitType);
+		while (results->Step())
+		{
+			const int iEra = results->GetInt(0);
+			const int iStrengthChange = results->GetInt(1);
+			const int iRangedStrengthChange = results->GetInt(2);
+			const int iMovesChange = results->GetInt(3);
+			const int iStartingExperienceChange = results->GetInt(4);
 
+			m_piEraStrengthChanges[iEra] = iStrengthChange;
+			m_piEraRangedStrengthChanges[iEra] = iRangedStrengthChange;
+			m_piEraMovesChanges[iEra] = iMovesChange;
+			m_piEraStartingExperienceChanges[iEra] = iStartingExperienceChange;
+		}
+		results->Reset();
+	}
+	{
+		std::string key = "Unit_FreePromotionEras";
+		Database::Results* results = kUtility.GetResults(key);
+		if (results == NULL)
+		{
+			const char* query = 
+				"SELECT UnitPromotions.ID, Eras.ID FROM Unit_FreePromotionEras "
+				"INNER JOIN UnitPromotions ON PromotionType = UnitPromotions.Type "
+				"INNER JOIN Eras ON EraType = Eras.Type "
+				"WHERE UnitType = ?";
+			results = kUtility.PrepareResults(key, query);
+		}
+			
+		results->Bind(1, szUnitType);
+
+		while (results->Step())
+		{
+			const int unitPromotionID = results->GetInt(0);
+			const int eraID = results->GetInt(1);
+
+			m_FreePromotionEras.insert(std::pair<int, int>(unitPromotionID, eraID));
+		}
+
+		results->Reset();
+
+		//Trim extra memory off container since this is mostly read-only.
+		std::multimap<int, int>(m_FreePromotionEras).swap(m_FreePromotionEras);
+	}
+#endif
 	//TechTypes
 	{
 		//Initialize array to NO_TECH
@@ -455,7 +524,7 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	}
 
 	// Calculate military Power and cache it
-	DoUpdatePower();
+	DoUpdatePower(GetCombat(), GetRangedCombat());
 
 	return true;
 }
@@ -1149,7 +1218,27 @@ bool CvUnitEntry::GetFreePromotions(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_pbFreePromotions ? m_pbFreePromotions[i] : false;
 }
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+bool CvUnitEntry::IsFreePromotionEra(int iPromotion, int iEra) const
+{
+	std::multimap<int, int>::const_iterator it = m_FreePromotionEras.find(iPromotion);
+	if (it != m_FreePromotionEras.end())
+	{
+		// get an iterator to the element that is one past the last element associated with key
+		std::multimap<int, int>::const_iterator lastElement = m_FreePromotionEras.upper_bound(iPromotion);
+		// for each element in the sequence [itr, lastElement)
+		for (; it != lastElement; ++it)
+		{
+			if (it->second == iEra)
+			{
+				return true;
+			}
+		}
+	}
 
+	return false;
+}
+#endif
 /// Project required to train this unit?
 int CvUnitEntry::GetProjectPrereq() const
 {
@@ -1259,7 +1348,7 @@ int CvUnitEntry::GetPower() const
 }
 
 /// Update military Power
-void CvUnitEntry::DoUpdatePower()
+void CvUnitEntry::DoUpdatePower(int iMeleeStrength, int iRangedStrength)
 {
 	int iPower;
 
@@ -1268,21 +1357,21 @@ void CvUnitEntry::DoUpdatePower()
 // ***************
 
 	// We want a Unit that has twice the strength to be roughly worth 3x as much with regards to Power
-	iPower = int(pow((double) GetCombat(), 1.5));
+	iPower = int(pow((double)iMeleeStrength, 1.5));
 
 	// Ranged Strength
-	int iRangedStrength = int(pow((double) GetRangedCombat(), 1.45));
+	int iRangedPower = int(pow((double) iRangedStrength, 1.45));
 
 	// Naval ranged attacks are less useful
 	if(GetDomainType() == DOMAIN_SEA)
 	{
-		iRangedStrength *= 3;
-		iRangedStrength /= 4;
+		iRangedPower *= 3;
+		iRangedPower /= 4;
 	}
 
-	if(iRangedStrength > iPower)
+	if(iRangedPower > iPower)
 	{
-		iPower = iRangedStrength;
+		iPower = iRangedPower;
 	}
 
 	// We want Movement rate to be important, but not a dominating factor; a Unit with double the moves of a similarly-strengthed Unit should be ~1.5x as Powerful

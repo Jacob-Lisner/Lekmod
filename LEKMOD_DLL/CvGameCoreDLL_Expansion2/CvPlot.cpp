@@ -242,7 +242,7 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 	m_bRoughFeature = false;
 	m_bResourceLinkedCityActive = false;
 	m_bImprovedByGiftFromMajor = false;
-#if defined(LEKMOD_BUGANDA_LAKE)
+#if !defined(LEKMOD_BUGANDA_LAKE)
 	m_bPseudoLake = false;
 #endif
 	m_bIsAdjacentToLand = false;
@@ -1116,7 +1116,11 @@ bool CvPlot::isLake() const
 bool CvPlot::isPseudoLake() const
 {
 	// this is for new buganda lake and lake victoria
-	return m_bPseudoLake || (getFeatureType() == static_cast<FeatureTypes>(GC.getInfoTypeForString("FEATURE_LAKE_VICTORIA")));
+	if (getImprovementType() != NO_IMPROVEMENT)
+	{
+		return GC.getImprovementInfo(getImprovementType())->IsFreshWaterSource();
+	}
+	return (getFeatureType() == static_cast<FeatureTypes>(GC.getInfoTypeForString("FEATURE_LAKE_VICTORIA")));
 }
 void CvPlot::setPseudoLake(bool bValue)
 {
@@ -1124,7 +1128,7 @@ void CvPlot::setPseudoLake(bool bValue)
 	{
 		return;
 	}
-	m_bPseudoLake = bValue;
+	//m_bPseudoLake = bValue;
 	updateYield();
 }
 #endif
@@ -10818,7 +10822,7 @@ void CvPlot::read(FDataStream& kStream)
 	m_bBarbCampNotConverting = bitPackWorkaround;
 	kStream >> bitPackWorkaround;
 	m_bRoughFeature = bitPackWorkaround;
-#if defined(LEKMOD_BUGANDA_LAKE)
+#if !defined(LEKMOD_BUGANDA_LAKE)
 	kStream >> bitPackWorkaround;
 	m_bPseudoLake = bitPackWorkaround;
 #endif
@@ -11040,7 +11044,7 @@ void CvPlot::write(FDataStream& kStream) const
 #endif
 	kStream << m_bBarbCampNotConverting;
 	kStream << m_bRoughFeature;
-#if defined(LEKMOD_BUGANDA_LAKE)
+#if !defined(LEKMOD_BUGANDA_LAKE)
 	kStream << m_bPseudoLake;
 #endif
 	kStream << m_bResourceLinkedCityActive;

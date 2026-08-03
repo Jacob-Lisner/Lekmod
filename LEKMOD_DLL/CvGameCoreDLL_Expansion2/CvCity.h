@@ -814,17 +814,8 @@ public:
 	int GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const;
 #endif
 	void updateStrengthValue();
-	int getStrengthValue(bool bForRangeStrike = false, CvString* toolTipSink = NULL) const;
-#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
-	int getBaseStrengthValue() const;
-	void SetBaseStrengthValue(int iValue);
-	int getStrengthFromBuildings() const;
-	void SetStrengthFromBuildings(int iValue);
-	int getStrengthFromTechnology() const;
-	void SetStrengthFromTechnology(int iValue);
-	int getStrengthFromGarrison() const;
-	void SetStrengthFromGarrison(int iValue);
-#endif
+	int getStrengthValue(bool bForRangeStrike = false, CvCombatModifierList* kModifierList = NULL) const;
+	int calculateStrengthValue(bool bForRangeStrike = false, CvCombatModifierList* kModifierList = NULL) const;
 	int GetPower() const;
 
 	int getDamage() const;
@@ -838,11 +829,7 @@ public:
 	bool CanRangeStrikeNow() const;
 	bool IsHasBuildingThatAllowsRangeStrike() const;
 
-#ifdef DEL_RANGED_COUNTERATTACKS
-	bool canRangeStrikeAt(int iX, int iY, bool bOnlyCheckForEverPossible = false) const;
-#else
 	bool canRangeStrikeAt(int iX, int iY) const;
-#endif
 	CityTaskResult rangeStrike(int iX, int iY);
 	CvUnit* rangedStrikeTarget(CvPlot* pPlot);
 	bool canRangedStrikeTarget(const CvPlot& targetPlot) const;
@@ -1002,6 +989,7 @@ public:
 	bool			isFighting() const;
 	int				getMaxXPValue() const;
 	bool			canEarnGlobalXP() const;
+
 	///
 	bool HasBuilding(BuildingTypes iBuildingType) const;
 	bool HasBuildingClass(BuildingClassTypes iBuildingClassType) const;

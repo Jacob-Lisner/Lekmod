@@ -980,7 +980,7 @@ protected:
 	char m_cContinentType;
 	char m_cRiverCrossing;	// bit field
 #endif
-#if defined(LEKMOD_BUGANDA_LAKE)
+#if !defined(LEKMOD_BUGANDA_LAKE)
 	bool m_bPseudoLake : 1;
 #endif
 	bool m_bImprovementPillaged:1;

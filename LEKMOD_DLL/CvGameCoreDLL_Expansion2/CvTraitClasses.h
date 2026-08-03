@@ -151,6 +151,7 @@ public:
 #if defined(v35_TRAITIFY)
 	bool IsEmbarkedUnitsFullStrength() const { return m_bEmbarkedUnitsFullStrength; }
 	int GetCityStateUnitGiftExtraExperience() const { return m_iCityStateUnitGiftExtraExperience; }
+	int GetGreatGeneralSiegeBonus() const { return m_iGreatGeneralSiegeBonus; }
 #endif
 #if defined(LEKMOD_v34)
 	bool IsReligionEnhanceReformation() const;
@@ -432,6 +433,7 @@ protected:
 #if defined(v35_TRAITIFY)
 	bool m_bEmbarkedUnitsFullStrength;
 	int m_iCityStateUnitGiftExtraExperience;
+	int m_iGreatGeneralSiegeBonus;
 #endif
 #if defined(LEKMOD_v34)
 	bool m_bReligionEnhanceReformation;
@@ -927,6 +929,7 @@ public:
 #if defined(v35_TRAITIFY)
 	bool IsEmbarkedUnitsFullStrength() const { return m_bEmbarkedUnitsFullStrength; }
 	int GetCityStateUnitGiftExtraExperience() const { return m_iCityStateUnitGiftExtraExperience; }
+	int GetGreatGeneralSiegeBonus() const { return m_iGreatGeneralSiegeBonus; }
 #endif
 #if defined(LEKMOD_v34)
 	bool IsReligionEnhanceReformation() const
@@ -1487,6 +1490,7 @@ private:
 #if defined(v35_TRAITIFY)
 	bool m_bEmbarkedUnitsFullStrength;
 	int m_iCityStateUnitGiftExtraExperience;
+	int m_iGreatGeneralSiegeBonus;
 #endif
 #if defined(LEKMOD_v34)
 	bool m_bReligionEnhanceReformation;

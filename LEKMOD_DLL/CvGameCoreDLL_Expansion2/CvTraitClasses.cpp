@@ -94,6 +94,7 @@ CvTraitEntry::CvTraitEntry() :
 #if defined(v35_TRAITIFY)
 	m_bEmbarkedUnitsFullStrength(false),
 	m_iCityStateUnitGiftExtraExperience(0),
+	m_iGreatGeneralSiegeBonus(0),
 #endif
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation(false),
@@ -1746,6 +1747,7 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 #if defined(v35_TRAITIFY)
 	m_bEmbarkedUnitsFullStrength			= kResults.GetBool("EmbarkedUnitsFullStrength");
 	m_iCityStateUnitGiftExtraExperience		= kResults.GetInt("CityStateUnitGiftExtraExperience");
+	m_iGreatGeneralSiegeBonus				= kResults.GetInt("GreatGeneralSiegeBonus");
 #endif
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation			= kResults.GetBool("ReligionEnhanceReformation");
@@ -3273,8 +3275,9 @@ void CvPlayerTraits::InitPlayerTraits()
 			m_iFriendlyLandsCitizenMoveChange += trait->GetFriendlyLandsCitizenMoveChange();
 #endif
 #if defined(v35_TRAITIFY)
-			m_bEmbarkedUnitsFullStrength += trait->IsEmbarkedUnitsFullStrength();
+			m_bEmbarkedUnitsFullStrength = trait->IsEmbarkedUnitsFullStrength();
 			m_iCityStateUnitGiftExtraExperience += trait->GetCityStateUnitGiftExtraExperience();
+			m_iGreatGeneralSiegeBonus += trait->GetGreatGeneralSiegeBonus();
 #endif
 #if defined(LEKMOD_v34)
 			m_bReligionEnhanceReformation = trait->IsReligionEnhanceReformation();
@@ -3958,6 +3961,7 @@ void CvPlayerTraits::Reset()
 #if defined(v35_TRAITIFY)
 	m_bEmbarkedUnitsFullStrength = false;
 	m_iCityStateUnitGiftExtraExperience = 0;
+	m_iGreatGeneralSiegeBonus = 0;
 #endif
 #if defined(LEKMOD_v34)
 	m_bReligionEnhanceReformation = false;
@@ -5579,6 +5583,7 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion; // 19
 	kStream >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvPlayerTraits::Read] uiVersion=%u (expected 19)", uiVersion); }
 
 	// precompute the traits our leader has
 	m_vPotentiallyActiveLeaderTraits.clear();
@@ -5693,6 +5698,7 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #if defined(v35_TRAITIFY)
 	kStream >> m_bEmbarkedUnitsFullStrength;
 	kStream >> m_iCityStateUnitGiftExtraExperience;
+	kStream >> m_iGreatGeneralSiegeBonus;
 #endif
 #if defined(LEKMOD_v34)
 	kStream >> m_bReligionEnhanceReformation;
@@ -6227,6 +6233,7 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 #if defined(v35_TRAITIFY)
 	kStream << m_bEmbarkedUnitsFullStrength;
 	kStream << m_iCityStateUnitGiftExtraExperience;
+	kStream << m_iGreatGeneralSiegeBonus;
 #endif
 #if defined(LEKMOD_v34)
 	kStream << m_bReligionEnhanceReformation;

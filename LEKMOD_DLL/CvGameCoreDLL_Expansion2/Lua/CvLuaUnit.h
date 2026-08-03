@@ -37,6 +37,7 @@ protected:
 	static int lDoCommand(lua_State* L);
 
 	static int lGetPathEndTurnPlot(lua_State* L);
+	static int lGetPathAttackFromPlot(lua_State* L);
 	static int lGeneratePath(lua_State* L);
 
 	static int lCanEnterTerritory(lua_State* L);
@@ -85,10 +86,6 @@ protected:
 
 	static int lCanRangeStrike(lua_State* L);
 	static int lCanRangeStrikeAt(lua_State* L);
-#ifdef DEL_RANGED_COUNTERATTACKS
-	static int lCanEverRangeStrikeAt(lua_State* L);
-	static int lPlotValid(lua_State* L);
-#endif
 
 	static int lCanParadrop(lua_State* L);
 	static int lCanParadropAt(lua_State* L);
@@ -204,6 +201,10 @@ protected:
 	static int lGetMaxAttackStrength(lua_State* L);
 	static int lGetMaxDefenseStrength(lua_State* L);
 	static int lGetEmbarkedUnitDefense(lua_State* L);
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	static int lGetAttackModifierList(lua_State* L);
+	static int lGetDefenseModifierList(lua_State* L);
+#endif
 
 	static int lIsCombatUnit(lua_State* L);
 	static int lIsCanDefend(lua_State* L);

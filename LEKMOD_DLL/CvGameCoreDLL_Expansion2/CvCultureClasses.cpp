@@ -4196,7 +4196,9 @@ FDataStream& operator>>(FDataStream& loadFrom, CvPlayerCulture& writeTo)
 {
 	uint uiVersion;
 
-	loadFrom >> uiVersion;
+	unsigned char aRawVersionBytes[4] = {0,0,0,0};
+	loadFrom.ReadIt(4, aRawVersionBytes);
+	memcpy(&uiVersion, aRawVersionBytes, 4);
 
 	int iEntriesToRead;
 	int iTempX;
@@ -4204,11 +4206,23 @@ FDataStream& operator>>(FDataStream& loadFrom, CvPlayerCulture& writeTo)
 	CvPlot *pPlot;
 
 	writeTo.m_aDigCompletePlots.clear();
-	loadFrom >> iEntriesToRead;
+	unsigned char aRawCountBytes[4] = {0,0,0,0};
+	loadFrom.ReadIt(4, aRawCountBytes);
+	memcpy(&iEntriesToRead, aRawCountBytes, 4);
+	{
+		FILogFile* pDebugLog = LOGFILEMGR.GetLog("CultureReadDebug.log", FILogFile::kDontTimeStamp);
+		pDebugLog->Msg("RAW version bytes: %02X %02X %02X %02X -> uiVersion=%u", aRawVersionBytes[0],aRawVersionBytes[1],aRawVersionBytes[2],aRawVersionBytes[3], uiVersion);
+		pDebugLog->Msg("RAW count bytes: %02X %02X %02X %02X -> iEntriesToRead=%d", aRawCountBytes[0],aRawCountBytes[1],aRawCountBytes[2],aRawCountBytes[3], iEntriesToRead);
+		pDebugLog->Msg("CvPlayerCulture::Read uiVersion=%u iEntriesToRead=%d (map width=%d height=%d)", uiVersion, iEntriesToRead, GC.getMap().getGridWidth(), GC.getMap().getGridHeight());
+	}
 	for(int iI = 0; iI < iEntriesToRead; iI++)
 	{
 		loadFrom >> iTempX;
 		loadFrom >> iTempY;
+		{
+			FILogFile* pDebugLog = LOGFILEMGR.GetLog("CultureReadDebug.log", FILogFile::kDontTimeStamp);
+			pDebugLog->Msg("  entry %d: X=%d Y=%d", iI, iTempX, iTempY);
+		}
 		pPlot = GC.getMap().plot(iTempX, iTempY);
 		writeTo.m_aDigCompletePlots.push_back(pPlot);
 	}

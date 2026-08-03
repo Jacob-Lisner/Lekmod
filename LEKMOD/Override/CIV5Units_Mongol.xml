@@ -34,6 +34,373 @@
 		</Row>
 		<!-- END VERSION -->
 		<!-- Start v35 -->
+		<!-- Combat Predictor Improvements -->
+		<!-- City Combat Panel Text Keys -->
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_BASE_STRENGTH">
+			<Text>
+				Base Strength
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_POPULATION">
+			<Text>
+				Population ({1_Population})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_BUILDINGS">
+			<Text>
+				Buildings
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_GARRISON">
+			<Text>
+				{1_GarrisonUnitName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_TECHNOLOGY">
+			<Text>
+				Technological Progress ({1_NumTechs})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_PLAYER_MODIFIER">
+			<Text>
+				Empire Strength Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_RANGE_STRIKE">
+			<Text>
+				Range Strike Penalty
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_GARRISON_RANGE_STRIKE">
+			<Text>
+				Garrison Ranged Strike Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_RELIGION_RANGE_STRIKE">
+			<Text>
+				Religion Ranged Strike Bonus
+			</Text>
+		</Row>
+		<!-- Attacker TextKeys look like  text : Modifier  -->
+		<Row Tag="TXT_KEY_COMBATPANEL_FREEDOM">
+			<Text>
+				[ICON_IDEOLOGY_FREEDOM] Freedom
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATPANEL_ORDER">
+			<Text>
+				[ICON_IDEOLOGY_ORDER] Order
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATPANEL_AUTOCRACY">
+			<Text>
+				[ICON_IDEOLOGY_AUTOCRACY] Autocracy
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_MISCELLANEOUS">
+			<Text>
+				Miscellaneous ({1_NumMiscBonuses})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_GENERIC">
+			<Text>
+				[ICON_STRENGTH] Strength Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_UNHAPPY">
+			<Text>
+				[ICON_HAPPINESS_4] Unhappiness Penalty ({1_Unhappiness})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_STRATEGIC_RESOURCE_PENALTY">
+			<Text>
+				Strategic Resource Deficit
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_GREAT_GENERAL">
+			<Text>
+				Nearby [ICON_GREAT_GENERAL] Great General
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_GREAT_ADMIRAL">
+			<Text>
+				Nearby [ICON_GREAT_ADMIRAL] Great Admiral
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_REVERSE_GREAT_GENERAL">
+			<Text>
+				Nearby Reverse [ICON_GREAT_GENERAL] Great General
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_IMPROVEMENT">
+			<Text>
+				Nearby {1_ImprovementName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_ADJACENT_FRIENDLY_UNIT">
+			<Text>
+				Adjacent Friendly Unit
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_GOLDEN_AGE">
+			<Text>
+				[ICON_GOLDEN_AGE] Golden Age
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_FRIENDLY_LANDS">
+			<Text>
+				Friendly Lands
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_OUTSIDE_FRIENDLY_LANDS">
+			<Text>
+				Foreign Lands
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CAPITAL_DEFENSE">
+			<Text>
+				[ICON_CAPITAL] Capital Proximity ({1_CapitalDistance})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_FRIENDLY_MINOR">
+			<Text>
+				Nearby Friendly [ICON_CITY_STATE] City-State ({1_CityStateName})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_FLANKING">
+			<Text>
+				Flanking Bonus ({1_NumFlankers})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_UNIT_CLASS">
+			<Text>
+				Bonus VS {1_UnitClassName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_UNIT_COMBAT_TYPE">
+			<Text>
+				Bonus VS {1_UnitCombatTypeName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_DOMAIN">
+			<Text>
+				Bonus VS {1_DomainTypeName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_LARGER_CIV">
+			<Text>
+				Bonus VS Larger Civs ({1_LargerCivName})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_SMALLER_CIV">
+			<Text>
+				Bonus VS Smaller Civs ({1_SmallerCivName})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_DIFFERENT_IDEOLOGY">
+			<Text>
+				Bonus VS {1_IdeologyName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_TOURISM_INFLUENCE">
+			<Text>
+				[ICON_TOURISM] Tourism Influence
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_STATE">
+			<Text>
+				Bonus VS {1_CityStateName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_BARBARIANS">
+			<Text>
+				Bonus VS Barbarians
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_HIGHER_TECH">
+			<Text>
+				Bonus VS Higher Tech Units
+			</Text>
+		</Row>
+		<!-- Attack Modifiers -->
+		<Row Tag="TXT_KEY_ATTACKMOD_ATTACK_MODIFIER">
+			<Text>
+				Attack Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_KAMIKAZE">
+			<Text>
+				Kamikaze Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_CLAUZWITZ">
+			<Text>
+				Temporary Attack Bonus ({1_TurnsLeft})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_HEAVY_CHARGE_DOWNHILL">
+			<Text>
+				Attacking From Higher Elevation
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_GOLDEN_AGE_FOREIGN">
+			<Text>
+				[ICON_GOLDEN_AGE] Golden Age Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_CITY">
+			<Text>
+				City Attack Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_SAPPER">
+			<Text>
+				Nearby Sapper
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_NEAR_GREAT_GENERAL_SIEGE">
+			<Text>
+				Nearby [ICON_GREAT_GENERAL] Great General VS City
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_BARBARIAN_PENALTY_VS_CITY">
+			<Text>
+				Barbarian Penalty VS Cities
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_HILLS">
+			<Text>
+				Hill Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_OPEN">
+			<Text>
+				Open Ground Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_ROUGH">
+			<Text>
+				Rough Ground Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_FEATURE">
+			<Text>
+				{1_FeatureName} Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_TERRAIN">
+			<Text>
+				{1_TerrainName} Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_FRIENDLY_LANDS">
+			<Text>
+				Friendly Lands Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_RIVER_ATTACK_PENALTY">
+			<Text>
+				River Crossing
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_AMPHIB_ATTACK_PENALTY">
+			<Text>
+				Amphibious Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_UNIT_CLASS">
+			<Text>
+				Attack VS {1_UnitClassName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_FORTIFIED">
+			<Text>
+				Fortified Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_WOUNDED">
+			<Text>
+				Wounded Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_HEAVY_CHARGE">
+			<Text>
+				Heavy Charge
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_AIR_SWEEP">
+			<Text>
+				Bonus Performing Air Sweep
+			</Text>
+		</Row>
+		<!-- Defense Modifiers -->
+		<Row Tag="TXT_KEY_DEFENSEMOD_GENERIC">
+			<Text>
+				Defense Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_RANGED">
+			<Text>
+				Ranged Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_TERRAIN">
+			<Text>
+				Terrain Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_FORTIFICATION">
+			<Text>
+				[ICON_MISSION_FORTIFY] Fortification Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_HILLS">
+			<Text>
+				Hill Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_OPEN_GROUND">
+			<Text>
+				Open Ground Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_ROUGH_GROUND">
+			<Text>
+				Rough Ground Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_FEATURE">
+			<Text>
+				{1_FeatureName} Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_TERRAIN_EXTRA">
+			<Text>
+				{1_TerrainName} Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_UNIT_CLASS">
+			<Text>
+				Defense VS {1_UnitClassName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_CITY">
+			<Text>
+				City Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_EMBARKED">
+			<Text>
+				[ICON_MISSION_EMBARK] Embarked Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_INTERCEPTION">
+			<Text>
+				Interception Bonus
+			</Text>
+		</Row>
+		
+
 		<Row Tag="TXT_KEY_YIELD_TOURISM">
 			<Text>
 				Tourism
@@ -133,12 +500,12 @@
 		</Row>
 		<!-- Buganda Civ -->
 		<!-- Kabaka Muteesa I -->
-		<Row Tag="TXT_KEY_LEADER_MALI">
+		<Row Tag="TXT_KEY_LEADER_BUGANDA">
 			<Text>
 				Kabaka Muteesa I
 			</Text>
 		</Row>
-		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA">
+		<Row Tag="TXT_KEY_LEADER_BUGANDA_PEDIA">
 			<Text>
 				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Muteesa_I_of_Buganda[ENDCOLOR][NEWLINE][NEWLINE]Muteesa I Mukaabya Walugembe Kayiira (c. 1837–9 October 1884) was the 30th Kabaka of the Kingdom of Buganda, from 1856 until 1884. In Ugandan historiography, Muteesa left a mixed legacy, with some regarding him as the most important of the kings of Buganda because of his vision and diplomatic skills, while others are more critical and believe he welcomed foreign influence that ultimately undermined Buganda's sovereignty.
 			</Text>
@@ -76484,7 +76851,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_INTERFACEMODE_AIRSTRIKE"> 
 			<Text>
-				Air Strike Mode
+				Air Strike
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_INTERFACEMODE_AIRSTRIKE_HELP"> 

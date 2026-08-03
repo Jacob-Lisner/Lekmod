@@ -8258,6 +8258,7 @@ void CvLeagueAI::Read(FDataStream& kStream)
 {
 	uint uiVersion;
 	kStream >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvLeagueAI::Read] uiVersion=%u (expected 2)", uiVersion); }
 
 	if (uiVersion >= 2)
 	{

@@ -168,10 +168,18 @@ public:
 	bool GetBuildingClassRequireds(int i) const;
 	bool GetFreePromotions(int i) const;
 
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+	int GetEraStrengthChanges(int i) const { return m_piEraStrengthChanges ? m_piEraStrengthChanges[i] : 0; }
+	int GetEraRangedStrengthChanges(int i) const { return m_piEraRangedStrengthChanges ? m_piEraRangedStrengthChanges[i] : 0; }
+	int GetEraMovesChanges(int i) const { return m_piEraMovesChanges ? m_piEraMovesChanges[i] : 0; }
+	int GetEraStartingExperienceChanges(int i) const { return m_piEraStartingExperienceChanges ? m_piEraStartingExperienceChanges[i] : 0; }
+	bool IsFreePromotionEra(int iPromotion, int iEra) const;
+#endif
+
 	// Derived fields (not in XML)
 	int GetCargoSpace() const;  // (from free promotions)
 	int GetPower() const;
-	void DoUpdatePower();
+	void DoUpdatePower(int iMeleeStrength, int iRangedStrength);
 
 	UnitMoveRate GetMoveRate(int numHexes) const;
 
@@ -312,6 +320,13 @@ private:
 	bool* m_pbBuildings;
 	bool* m_pbBuildingClassRequireds;
 	bool* m_pbFreePromotions;
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+	int* m_piEraStrengthChanges;
+	int* m_piEraRangedStrengthChanges;
+	int* m_piEraMovesChanges;
+	int* m_piEraStartingExperienceChanges;
+	std::multimap<int, int> m_FreePromotionEras;
+#endif
 
 	CvString* m_paszEarlyArtDefineTags;
 	CvString* m_paszLateArtDefineTags;

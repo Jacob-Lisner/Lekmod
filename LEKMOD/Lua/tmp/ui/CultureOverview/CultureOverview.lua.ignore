@@ -773,7 +773,7 @@ function RefreshYourCulture()
     
 		cityData.Culture = city:GetJONSCulturePerTurn();
 		cityData.Tourism = city:GetBaseTourism();
-		cityData.TourismToolTip = city:GetTourismTooltip();
+		cityData.TourismToolTip = GetTourismTooltip(city);
 		cityData.GreatWorks = city:GetNumGreatWorks();
 		cityData.GreatWorksToolTip = city:GetTotalSlotsTooltip();
         

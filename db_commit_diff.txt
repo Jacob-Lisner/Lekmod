@@ -1,0 +1,1975 @@
+commit 6d5921263c4574da086946f9e9d01fb2bcabf848
+Author: Vironsusi <119101349+Vironsusi@users.noreply.github.com>
+Date:   Sun Jul 19 00:58:23 2026 -0400
+
+    add database and trim redundant lua
+
+diff --git a/LEKMOD/Override/CIV5Units.xml b/LEKMOD/Override/CIV5Units.xml
+index 563b347a..2483e8dd 100644
+--- a/LEKMOD/Override/CIV5Units.xml
++++ b/LEKMOD/Override/CIV5Units.xml
+@@ -10,6 +10,1630 @@
+ 
+ <GameData>
+ 	<!-- START v35 new tables -->
++	<Table name="Belief_TradeConnectionOriginYieldChanges">
++		<Column name="BeliefType" type="text" reference="Beliefs(Type)"/>
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)"/>
++		<Column name="DomainType" type="text" reference="Domains(Type)"/>
++		<Column name="YieldType" type="text" reference="Yields(Type)"/>
++		<Column name="YieldTimes100" type="integer" default="0"/>
++	</Table>
++	<Belief_TradeConnectionOriginYieldChanges>
++		<Delete />
++		<Row>
++			<BeliefType>BELIEF_TROUBADOURS</BeliefType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FAITH</YieldType>
++			<YieldTimes100>300</YieldTimes100>
++		</Row>
++		<Row>
++			<BeliefType>BELIEF_TROUBADOURS</BeliefType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FAITH</YieldType>
++			<YieldTimes100>300</YieldTimes100>
++		</Row>
++	</Belief_TradeConnectionOriginYieldChanges>
++
++	<Table name="Belief_IncomingTradeConnectionYieldChanges">
++		<Column name="BeliefType" type="text" reference="Beliefs(Type)"/>
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)"/>
++		<Column name="DomainType" type="text" reference="Domains(Type)"/>
++		<Column name="YieldType" type="text" reference="Yields(Type)"/>
++		<Column name="YieldTimes100" type="integer" default="0"/>
++	</Table>
++	<Belief_IncomingTradeConnectionYieldChanges>
++		<Delete />
++	</Belief_IncomingTradeConnectionYieldChanges>
++
++	<Table name="Resource_TradeConnectionYieldBonus">
++		<Column name="ResourceType" type="text" reference="Resources(Type)"/>
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)"/>
++		<Column name="DomainType" type="text" reference="Domains(Type)"/>
++		<Column name="YieldType" type="text" reference="Yields(Type)"/>
++		<Column name="YieldTimes100" type="integer" default="0"/>
++	</Table>
++	<!-- Bonuses that when either the Origin City and Destination City have one of these resources locally, and the other does not. Benefits the Sender. -->
++	<Resource_TradeConnectionYieldBonus>
++		<Delete />
++		<!-- Strategics -->
++		<Row>
++			<ResourceType>RESOURCE_IRON</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_IRON</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_HORSE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_HORSE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COAL</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COAL</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_OIL</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_OIL</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++			<Row>
++			<ResourceType>RESOURCE_ALUMINUM</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_ALUMINUM</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_URANIUM</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_URANIUM</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<!-- Luxuries -->
++		<Row>
++			<ResourceType>RESOURCE_WHALE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_WHALE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PEARLS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PEARLS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_GOLD</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_GOLD</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SILVER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SILVER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_GEMS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_GEMS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_MARBLE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_MARBLE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_IVORY</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_IVORY</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_FUR</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_FUR</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_DYE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_DYE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SPICES</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SPICES</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SILK</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SILK</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SUGAR</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SUGAR</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COTTON</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COTTON</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_WINE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_WINE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_INCENSE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_INCENSE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_JEWELRY</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_JEWELRY</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PORCELAIN</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PORCELAIN</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COPPER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COPPER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SALT</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_SALT</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CRAB</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CRAB</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_TRUFFLES</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_TRUFFLES</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CITRUS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CITRUS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_NUTMEG</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>150</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_NUTMEG</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>150</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CLOVES</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>150</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CLOVES</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>150</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PEPPER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>150</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PEPPER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>150</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COCOA</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COCOA</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COFFEE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COFFEE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_TEA</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_TEA</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_TOBACCO</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_TOBACCO</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_AMBER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_AMBER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_JADE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_JADE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_OLIVE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_OLIVE</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PERFUME</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_PERFUME</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CORAL</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_CORAL</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_LAPIS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_LAPIS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_GLASS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_GLASS</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_OBSIDIAN</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_OBSIDIAN</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_RUBBER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_RUBBER</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COCONUT</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<ResourceType>RESOURCE_COCONUT</ResourceType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++	</Resource_TradeConnectionYieldBonus>
++	
++	<Table name="Building_TradeConnectionOriginYieldChanges">
++		<Column name="BuildingType" type="text" reference="Buildings(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" notnull="true" />
++	</Table>
++	<!-- Building in the Origin City that benefits the Sender -->
++	<Building_TradeConnectionOriginYieldChanges>
++		<Delete />
++		<Row>
++			<BuildingType>BUILDING_PANAMA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<!-- Harbor -->
++		<Row>
++			<BuildingType>BUILDING_HARBOR</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_TRADE_HARBOUR</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_FEITORIA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<!-- Oman -->
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_OMANI_MINAA</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<!-- Caravansary -->
++		<Row>
++			<BuildingType>BUILDING_CARAVANSARY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_SERAI</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_HORDE_YAM_ROUTE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MUGHALS_CARAVANSARY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<!-- Nabataea -->
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>50</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MC_KOKH</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++	</Building_TradeConnectionOriginYieldChanges>
++
++	<Table name="Building_TradeConnectionDestinationYieldChanges">
++		<Column name="BuildingType" type="text" reference="Buildings(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" notnull="true" />
++	</Table>
++	<!-- Building in the Destination City that benefits the Destination Owner -->
++	<Building_TradeConnectionDestinationYieldChanges>
++		<Delete /><Row>
++			<BuildingType>BUILDING_MARKET</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MARKET</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_KNYAZ</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_KNYAZ</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BAZAAR</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BAZAAR</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BANK</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BANK</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_CANTON</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_CANTON</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_SATRAPS_COURT</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_SATRAPS_COURT</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_HANSE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_HANSE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_STOCK_EXCHANGE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_STOCK_EXCHANGE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_TIMMYS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_TIMMYS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_COLOSSUS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_COLOSSUS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MALI_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MALI_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++	</Building_TradeConnectionDestinationYieldChanges>
++
++	<Table name="Building_IncomingTradeConnectionYieldChanges">
++		<Column name="BuildingType" type="text" reference="Buildings(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" notnull="true" />
++	</Table>
++	<!-- Building in the Destination City that benefits the Sender -->
++	<Building_IncomingTradeConnectionYieldChanges>
++		<Delete />
++		<Row>
++			<BuildingType>BUILDING_MARKET</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MARKET</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_KNYAZ</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_KNYAZ</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BAZAAR</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BAZAAR</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BANK</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_BANK</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_CANTON</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_CANTON</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_SATRAPS_COURT</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_SATRAPS_COURT</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_HANSE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_HANSE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_STOCK_EXCHANGE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_STOCK_EXCHANGE</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_TIMMYS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_TIMMYS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_COLOSSUS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_COLOSSUS</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MALI_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<BuildingType>BUILDING_MALI_NATIONAL_TREASURY</BuildingType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++	</Building_IncomingTradeConnectionYieldChanges>
++
++	<Table name="Policy_TradeRouteYieldModifiers">
++		<Column name="PolicyType" type="text" reference="Policies(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldModifier" type="integer" notnull="true" />
++	</Table> 
++	<Policy_TradeRouteYieldModifiers>
++		<Delete />
++		<Row>
++			<PolicyType>POLICY_IRON_CURTAIN</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldModifier>200</YieldModifier>
++		</Row>
++		<Row>
++			<PolicyType>POLICY_IRON_CURTAIN</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldModifier>200</YieldModifier>
++		</Row>
++		<Row>
++			<PolicyType>POLICY_IRON_CURTAIN</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldModifier>200</YieldModifier>
++		</Row>
++		<Row>
++			<PolicyType>POLICY_IRON_CURTAIN</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldModifier>200</YieldModifier>
++		</Row>
++	</Policy_TradeRouteYieldModifiers>
++
++	<Table name="Policy_TradeRouteYieldChanges">
++		<Column name="PolicyType" type="text" reference="Policies(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" notnull="true" />
++		<Column name="CityStateOnly" type="boolean" default="false" />
++	</Table> 
++	<!-- if CityStateOnly is true, then TradeConnectionType can be left alone as INTERNATIONAL is assumed -->
++	<Policy_TradeRouteYieldChanges>
++		<Delete />
++		<Row>
++			<PolicyType>POLICY_MERCHANT_CONFEDERACY</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<CityStateOnly>true</CityStateOnly>
++		</Row>
++		<Row>
++			<PolicyType>POLICY_MERCHANT_CONFEDERACY</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<CityStateOnly>true</CityStateOnly>
++		</Row>
++		<Row>
++			<PolicyType>POLICY_MERCHANT_CONFEDERACY</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<CityStateOnly>true</CityStateOnly>
++		</Row>
++		<Row>
++			<PolicyType>POLICY_MERCHANT_CONFEDERACY</PolicyType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<CityStateOnly>true</CityStateOnly>
++		</Row>
++	</Policy_TradeRouteYieldChanges>
++
++	<Table name="Trait_TradeConnectionYieldChange">
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" notnull="true" />
++	</Table> 
++	<Trait_TradeConnectionYieldChange>
++		<Delete />
++		<Row>
++			<TraitType>TRAIT_MERCHANTS</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_MERCHANTS</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_MERCHANTS</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_MERCHANTS</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++		</Row>
++	</Trait_TradeConnectionYieldChange>
++
++	<Table name="Trait_IncomingTradeConnectionYieldChange">
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" notnull="true" />
++	</Table> 
++	<Trait_IncomingTradeConnectionYieldChange>
++		<Delete />
++		<Row>
++			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>100</YieldTimes100>
++		</Row>
++	</Trait_IncomingTradeConnectionYieldChange>
++
++	<Table name="Trait_YieldChangesPerTradePartner">
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldTimes100" type="integer" />
++		<Column name="EraIncreaseTimes100" type="integer" />
++	</Table> 
++	<!-- Since Morocco is kinda Janky to put on the Trade Route directly, this is for visuals, the DOMAIN_LAND numbers are used in the calculation. -->
++	<Trait_YieldChangesPerTradePartner>
++		<Delete />
++		<Row>
++			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>400</YieldTimes100>
++			<EraIncreaseTimes100>100</EraIncreaseTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<EraIncreaseTimes100>50</EraIncreaseTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_CULTURE</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<EraIncreaseTimes100>100</EraIncreaseTimes100>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_CULTURE</YieldType>
++			<YieldTimes100>200</YieldTimes100>
++			<EraIncreaseTimes100>100</EraIncreaseTimes100>
++		</Row>
++	</Trait_YieldChangesPerTradePartner>
++
++	<Table name="Trait_TradeConnectionYieldModifier">
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Domains(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="YieldModifier" type="integer" notnull="true" />
++	</Table> 
++	<Trait_TradeConnectionYieldModifier>
++		<Delete />
++		<!-- Prussia -->
++		<Row>
++			<TraitType>TRAIT_PRUSSIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldModifier>50</YieldModifier>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_PRUSSIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldModifier>50</YieldModifier>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_PRUSSIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldModifier>50</YieldModifier>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_PRUSSIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldModifier>50</YieldModifier>
++		</Row>
++		<!-- Tunisia -->
++		<Row>
++			<TraitType>TRAIT_TUNISIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<YieldModifier>100</YieldModifier>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_TUNISIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<YieldModifier>100</YieldModifier>
++		</Row>
++		<Row>
++			<TraitType>TRAIT_TUNISIA</TraitType>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_LAND</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<YieldModifier>100</YieldModifier>
++		</Row>
++	</Trait_TradeConnectionYieldModifier>
++	<Table name="TradeConnections_DomainYieldModifiers">
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="DomainType" type="text" reference="Yields(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="Modifier" type="integer" notnull="true" />
++	</Table>
++	<TradeConnections_DomainYieldModifiers>
++		<Delete />
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<Modifier>100</Modifier>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<Modifier>100</Modifier>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<DomainType>DOMAIN_SEA</DomainType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<Modifier>100</Modifier>
++		</Row>
++	</TradeConnections_DomainYieldModifiers>
++	<Table name="TradeConnections_Yields">
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="OriginBaseValue" type="integer" default="0" />
++		<Column name="DestinationBaseValue" type="integer" default="0" />
++	</Table>
++	<TradeConnections_Yields>
++		<Delete />
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_INTERNATIONAL</TradeConnectionType>
++			<YieldType>YIELD_GOLD</YieldType>
++			<OriginBaseValue>100</OriginBaseValue>
++			<DestinationBaseValue>100</DestinationBaseValue>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBaseValue>300</DestinationBaseValue>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBaseValue>300</DestinationBaseValue>
++		</Row>
++	</TradeConnections_Yields>
++	<Table name="TradeConnections_BaseYieldEraBonus">
++		<Column name="TradeConnectionType" type="text" reference="TradeConnections(Type)" />
++		<Column name="EraType" type="integer" reference="Eras(Type)" />
++		<Column name="YieldType" type="text" reference="Yields(Type)" />
++		<Column name="OriginBonus" type="integer" />
++		<Column name="DestinationBonus" type="integer" />
++	</Table>
++	<TradeConnections_BaseYieldEraBonus>
++		<Delete />
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_CLASSICAL</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>50</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_CLASSICAL</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>50</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_MEDIEVAL</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>100</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_MEDIEVAL</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>100</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_RENAISSANCE</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>150</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_RENAISSANCE</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>150</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_INDUSTRIAL</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>200</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_INDUSTRIAL</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>200</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_MODERN</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>250</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_MODERN</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>250</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_POSTMODERN</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>300</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_POSTMODERN</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>300</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_FOOD</TradeConnectionType>
++			<EraType>ERA_FUTURE</EraType>
++			<YieldType>YIELD_FOOD</YieldType>
++			<DestinationBonus>350</DestinationBonus>
++		</Row>
++		<Row>
++			<TradeConnectionType>TRADE_CONNECTION_PRODUCTION</TradeConnectionType>
++			<EraType>ERA_MODERN</EraType>
++			<YieldType>YIELD_PRODUCTION</YieldType>
++			<DestinationBonus>350</DestinationBonus>
++		</Row>
++	</TradeConnections_BaseYieldEraBonus>
++	<Table name="TradeConnections">
++		<Column name="ID" type="integer"  primarykey="true" autoincrement="true" />
++		<Column name="Type" type="text"  unique="true" notnull="true" />
++	</Table> 
++	<TradeConnections>
++		<Delete />
++		<!-- DO NOT CHANGE THIS. THIS IS ORDERED TO MATCH AN EXISTING INTERNAL ENUM. -->
++		<Row>
++			<ID>0</ID> 
++			<Type>TRADE_CONNECTION_INTERNATIONAL</Type> 
++		</Row>
++		<Row> 
++			<ID>1</ID> 
++			<Type>TRADE_CONNECTION_FOOD</Type> 
++		</Row>
++		<Row> 
++			<ID>2</ID> 
++			<Type>TRADE_CONNECTION_PRODUCTION</Type> 
++		</Row>
++	</TradeConnections>
+ 	
+ 	<Table name="Trait_EmbarkAllowMissions">
+ 		<Column name="TraitType" type="text" reference="Traits(Type)" />
+@@ -1027,10 +2651,6 @@
+ 			<Type>CIVILIZATION_MAORI</Type>
+ 			<PolicyType>POLICY_DUMMY_MAORI</PolicyType>
+ 		</Row>
+-		<Row>
+-			<Type>CIVILIZATION_KILWA</Type>
+-			<PolicyType>POLICY_DUMMY_KILWA</PolicyType>
+-		</Row>
+ 	</Civilization_Dummy_Policies>
+ 
+ 	<!-- New table to easily handle Dummy Buildings that should never dissapear -->
+@@ -29471,7 +31091,6 @@
+ 			<ShortDescription>TXT_KEY_BELIEF_TROUBADOURS_SHORT</ShortDescription>
+ 			<Enhancer>true</Enhancer>
+ 			<ExtraTradeRoutes>1</ExtraTradeRoutes>
+-			<FaithPerForeignTradeRoute>3</FaithPerForeignTradeRoute>
+ 		</Row>
+ 		<Row>
+ 			<ID>93</ID>
+@@ -40604,7 +42223,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<TradeRouteLandDistanceModifier>50</TradeRouteLandDistanceModifier> 
+-			<TradeRouteLandGoldBonus>200</TradeRouteLandGoldBonus> 
+ 			<ArtDefineTag>ART_DEF_BUILDING_CARAVANSARY</ArtDefineTag> 
+ 			<PrereqTech>TECH_HORSEBACK_RIDING</PrereqTech> 
+ 			<PortraitIndex>8</PortraitIndex> 
+@@ -40625,7 +42243,6 @@
+ 			<Airlift>true</Airlift> 
+ 			<AirModifier>1</AirModifier> 
+ 			<TradeRouteLandDistanceModifier>50</TradeRouteLandDistanceModifier> 
+-			<TradeRouteLandGoldBonus>200</TradeRouteLandGoldBonus> 
+ 			<PrereqTech>TECH_HORSEBACK_RIDING</PrereqTech> 
+ 			<ArtDefineTag>ART_DEF_BUILDING_CARAVANSARY</ArtDefineTag> 
+ 			<PortraitIndex>17</PortraitIndex> 
+@@ -40644,7 +42261,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<TradeRouteLandDistanceModifier>50</TradeRouteLandDistanceModifier> 
+-			<TradeRouteLandGoldBonus>200</TradeRouteLandGoldBonus> 
+ 			<PrereqTech>TECH_HORSEBACK_RIDING</PrereqTech>
+ 			<ArtDefineTag>ART_DEF_BUILDING_CARAVANSARY</ArtDefineTag>  
+ 			<PortraitIndex>3</PortraitIndex> 
+@@ -40663,7 +42279,6 @@
+ 			<ConquestProb>66</ConquestProb>
+ 			<Airlift>true</Airlift> 
+ 			<TradeRouteLandDistanceModifier>50</TradeRouteLandDistanceModifier> 
+-			<TradeRouteLandGoldBonus>200</TradeRouteLandGoldBonus> 
+ 			<PrereqTech>TECH_THE_WHEEL</PrereqTech> 
+ 			<ArtDefineTag>ART_DEF_BUILDING_CARAVANSARY</ArtDefineTag>  
+ 			<PortraitIndex>0</PortraitIndex>
+@@ -40682,7 +42297,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<TradeRouteLandDistanceModifier>50</TradeRouteLandDistanceModifier> 
+-			<TradeRouteLandGoldBonus>200</TradeRouteLandGoldBonus> 
+ 			<GarrisonStrengthBonus>500</GarrisonStrengthBonus> 
+ 			<GarrisonMaintenceFree>true</GarrisonMaintenceFree> 
+ 			<PrereqTech>TECH_CURRENCY</PrereqTech> 
+@@ -41045,8 +42659,6 @@
+ 			<Cost>100</Cost> 
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<FreeStartEra>ERA_INDUSTRIAL</FreeStartEra> 
+ 			<PrereqTech>TECH_CURRENCY</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -41067,8 +42679,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<Happiness>1</Happiness> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<FreeStartEra>ERA_INDUSTRIAL</FreeStartEra> 
+ 			<PrereqTech>TECH_CURRENCY</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -41088,8 +42698,6 @@
+ 			<Cost>100</Cost> 
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<FreeStartEra>ERA_INDUSTRIAL</FreeStartEra> 
+ 			<PrereqTech>TECH_CURRENCY</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -41325,7 +42933,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<TradeRouteSeaDistanceModifier>50</TradeRouteSeaDistanceModifier> 
+-			<TradeRouteSeaGoldBonus>100</TradeRouteSeaGoldBonus> 
+ 			<PrereqTech>TECH_COMPASS</PrereqTech> 
+ 			<DisplayPosition>16</DisplayPosition> 
+ 			<ArtDefineTag>HARBOR</ArtDefineTag> 
+@@ -41347,7 +42954,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<TradeRouteSeaDistanceModifier>50</TradeRouteSeaDistanceModifier> 
+-			<TradeRouteSeaGoldBonus>100</TradeRouteSeaGoldBonus> 
+ 			<PrereqTech>TECH_COMPASS</PrereqTech> 
+ 			<DisplayPosition>16</DisplayPosition> 
+ 			<ArtDefineTag>HARBOR</ArtDefineTag> 
+@@ -41370,7 +42976,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<TradeRouteSeaDistanceModifier>50</TradeRouteSeaDistanceModifier> 
+-			<TradeRouteSeaGoldBonus>100</TradeRouteSeaGoldBonus> 
+ 			<PrereqTech>TECH_COMPASS</PrereqTech> 
+ 			<DisplayPosition>16</DisplayPosition> 
+ 			<ArtDefineTag>HARBOR</ArtDefineTag> 
+@@ -41395,7 +43000,6 @@
+ 			<Airlift>true</Airlift> 
+ 			<Defense>500</Defense> 
+ 			<TradeRouteSeaDistanceModifier>50</TradeRouteSeaDistanceModifier> 
+-			<TradeRouteSeaGoldBonus>100</TradeRouteSeaGoldBonus> 
+ 			<PrereqTech>TECH_COMPASS</PrereqTech> 
+ 			<DisplayPosition>16</DisplayPosition> 
+ 			<ArtDefineTag>HARBOR</ArtDefineTag> 
+@@ -41754,8 +43358,6 @@
+ 			<Cost>200</Cost> 
+ 			<HurryCostModifier>15</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus>  
+ 			<FreeStartEra>ERA_FUTURE</FreeStartEra> 
+ 			<PrereqTech>TECH_BANKING</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -41776,8 +43378,6 @@
+ 			<HurryCostModifier>15</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<Happiness>2</Happiness> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<FreeStartEra>ERA_FUTURE</FreeStartEra> 
+ 			<PrereqTech>TECH_BANKING</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -41797,8 +43397,6 @@
+ 			<Cost>200</Cost> 
+ 			<HurryCostModifier>15</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<CityStateTradeRouteProductionModifier>5</CityStateTradeRouteProductionModifier> 
+ 			<FreeStartEra>ERA_FUTURE</FreeStartEra> 
+ 			<PrereqTech>TECH_BANKING</PrereqTech> 
+@@ -41819,8 +43417,6 @@
+ 			<Cost>100</Cost> 
+ 			<HurryCostModifier>15</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<FreeStartEra>ERA_FUTURE</FreeStartEra> 
+ 			<PrereqTech>TECH_BANKING</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -42367,8 +43963,6 @@
+ 			<HurryCostModifier>25</HurryCostModifier>
+ 			<ConquestProb>66</ConquestProb> 
+ 			<Happiness>2</Happiness> 
+-			<TradeRouteRecipientBonus>1</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<PrereqTech>TECH_ELECTRICITY</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+ 			<SpecialistCount>2</SpecialistCount> 
+@@ -43091,8 +44685,6 @@
+ 			<Cost>125</Cost> 
+ 			<NumCityCostMod>30</NumCityCostMod> 
+ 			<HurryCostModifier>-1</HurryCostModifier>
+-			<TradeRouteRecipientBonus>4</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>2</TradeRouteTargetBonus> 
+ 			<NumTradeRouteBonus>1</NumTradeRouteBonus> 
+ 			<PrereqTech>TECH_GUILDS</PrereqTech> 
+ 			<ArtDefineTag>ART_DEF_BUILDING_NATIONAL_TREASURY</ArtDefineTag> 
+@@ -43669,8 +45261,6 @@
+ 			<Cost>185</Cost> 
+ 			<HurryCostModifier>-1</HurryCostModifier>
+ 			<ConquestProb>100</ConquestProb> 
+-			<TradeRouteRecipientBonus>2</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>1</TradeRouteTargetBonus> 
+ 			<NumTradeRouteBonus>1</NumTradeRouteBonus> 
+ 			<MaxStartEra>ERA_MEDIEVAL</MaxStartEra> 
+ 			<PrereqTech>TECH_IRON_WORKING</PrereqTech> 
+@@ -44398,7 +45988,6 @@
+ 			<Cost>1060</Cost> 
+ 			<HurryCostModifier>-1</HurryCostModifier>
+ 			<ConquestProb>100</ConquestProb> 
+-			<TradeRouteSeaGoldBonus>400</TradeRouteSeaGoldBonus> 
+ 			<MaxStartEra>ERA_MODERN</MaxStartEra> 
+ 			<PrereqTech>TECH_RAILROAD</PrereqTech> 
+ 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
+@@ -45189,8 +46778,6 @@
+ 			<Cost>125</Cost> 
+ 			<NumCityCostMod>30</NumCityCostMod> 
+ 			<HurryCostModifier>-1</HurryCostModifier>
+-			<TradeRouteRecipientBonus>4</TradeRouteRecipientBonus> 
+-			<TradeRouteTargetBonus>2</TradeRouteTargetBonus> 
+ 			<NumTradeRouteBonus>1</NumTradeRouteBonus> 
+ 			<FirstPurchaseDiscount>25</FirstPurchaseDiscount>
+ 			<PrereqTech>TECH_GUILDS</PrereqTech> 
+@@ -180580,7 +182167,6 @@
+ 			<GridY>1</GridY>
+ 			<Level>0</Level>
+ 			<ProtectedMinorPerTurnInfluence>100</ProtectedMinorPerTurnInfluence>
+-			<CityStateTradeChange>200</CityStateTradeChange>
+ 			<PortraitIndex>41</PortraitIndex>
+ 			<IconAtlas>POLICY_ATLAS</IconAtlas>
+ 			<IconAtlasAchieved>POLICY_A_ATLAS</IconAtlasAchieved>
+@@ -181768,21 +183354,6 @@
+ 			<IconAtlas>POLICY_ATLAS</IconAtlas>
+ 			<IconAtlasAchieved>POLICY_A_ATLAS</IconAtlasAchieved>
+ 		</Row>
+-		<Row>
+-			<ID>120</ID>
+-			<Type>POLICY_DUMMY_KILWA</Type>
+-			<Description>Dummy</Description>
+-			<Civilopedia>TXT_KEY_CIV5_POLICY_LIBERTY_TEXT</Civilopedia>
+-			<Help>NotVisible</Help>
+-			<CultureCost>-1</CultureCost>
+-			<GridX>0</GridX>
+-			<GridY>0</GridY>
+-			<Level>0</Level>
+-			<PortraitIndex>24</PortraitIndex>
+-			<IconAtlas>POLICY_ATLAS</IconAtlas>
+-			<IconAtlasAchieved>POLICY_A_ATLAS</IconAtlasAchieved>
+-			<InternalTradeRouteGoldChange>400</InternalTradeRouteGoldChange>
+-		</Row>
+ 		<Row>
+ 			<ID>122</ID>
+ 			<Type>POLICY_DUMMY_MAORI</Type>
+@@ -201359,7 +202930,7 @@
+ 	<Table name="Trait_YieldChanges">
+ 		<Column name="TraitType" type="text" reference="Traits(Type)" />
+ 		<Column name="YieldType" type="text" reference="Yields(Type)" />
+-		<Column name="Yield" type="integer"  />
++		<Column name="Yield" type="integer" default="0" />
+ 	</Table> 
+ 	<!-- NOTE: This table is City Yield Changes, just named dumbly -->
+ 	<Trait_YieldChanges>
+@@ -201367,9 +202938,9 @@
+ 	</Trait_YieldChanges> 
+ 
+ 	<Table name="Trait_ExtraYieldThresholds">
+-		<Column name="TraitType" type="text"  />
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
+ 		<Column name="YieldType" type="text" reference="Yields(Type)" />
+-		<Column name="Yield" type="integer"  />
++		<Column name="Yield" type="integer" default="0" />
+ 	</Table> 
+ 	<Trait_ExtraYieldThresholds>
+ 		<Delete />
+@@ -201377,9 +202948,9 @@
+ 	</Trait_ExtraYieldThresholds> 
+ 
+ 	<Table name="Trait_YieldChangesIncomingTradeRoute">
+-		<Column name="TraitType" type="text"  />
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
+ 		<Column name="YieldType" type="text" reference="Yields(Type)" />
+-		<Column name="Yield" type="integer"  />
++		<Column name="Yield" type="integer" default="0" />
+ 	</Table> 
+ 	<Trait_YieldChangesIncomingTradeRoute>
+ 		<Delete />
+@@ -201393,9 +202964,9 @@
+ 
+ 
+ 	<Table name="Trait_YieldChangesNaturalWonder">
+-		<Column name="TraitType" type="text"  />
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
+ 		<Column name="YieldType" type="text" reference="Yields(Type)" />
+-		<Column name="Yield" type="integer"  />
++		<Column name="Yield" type="integer" default="0" />
+ 	</Table> 
+ 	<Trait_YieldChangesNaturalWonder>
+ 		<Delete />
+@@ -201407,31 +202978,10 @@
+ 		 </Row>
+ 	</Trait_YieldChangesNaturalWonder> 
+ 
+-	<Table name="Trait_YieldChangesPerTradePartner">
+-		<Column name="TraitType" type="text"  />
+-		<Column name="YieldType" type="text" reference="Yields(Type)" />
+-		<Column name="Yield" type="integer"  />
+-	</Table> 
+-	<!-- NOTE: Any Yield put into this table will scale with each Era passed by 1 -->
+-	<Trait_YieldChangesPerTradePartner>
+-		<Delete />
+-		<!-- Morocco -->
+-		<Row> 
+-			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType> 
+-			<YieldType>YIELD_GOLD</YieldType> 
+-			<Yield>4</Yield> 
+-		</Row>
+-		<Row> 
+-			<TraitType>TRAIT_GATEWAY_AFRICA</TraitType> 
+-			<YieldType>YIELD_CULTURE</YieldType> 
+-			<Yield>2</Yield> 
+-		</Row>
+-	</Trait_YieldChangesPerTradePartner> 
+-
+ 	<Table name="Trait_YieldModifiers">
+-		<Column name="TraitType" type="text"  />
++		<Column name="TraitType" type="text" reference="Traits(Type)" />
+ 		<Column name="YieldType" type="text" reference="Yields(Type)" />
+-		<Column name="Yield" type="integer"  />
++		<Column name="Yield" type="integer" default="0" />
+ 	</Table> 
+ 	<!-- Not really sure. Unused however -->
+ 	<Trait_YieldModifiers>
+@@ -203716,7 +205266,7 @@
+ 			<Type>TRAIT_PRUSSIA</Type> 
+ 			<Description>TXT_KEY_TRAIT_PRUSSIA</Description> 
+ 			<ShortDescription>TXT_KEY_TRAIT_PRUSSIA_SHORT</ShortDescription> 
+-			<InternalTradeRouteYieldModifier>50</InternalTradeRouteYieldModifier>
++			<!-- Trait_TradeConnectionYieldModifier -->
+ 			<!-- Trait_FreePromotionUnitCombats NOTE: Does not effect Helicopters.  -->
+ 		</Row>
+ 		<Row> 
+@@ -203838,7 +205388,7 @@
+ 			<Type>TRAIT_MERCHANTS</Type>
+ 			<Description>TXT_KEY_TRAIT_MERCHANTS</Description>
+ 			<ShortDescription>TXT_KEY_TRAIT_MERCHANTS_SHORT</ShortDescription>
+-			<!-- Uses a dummy Policy "POLICY_DUMMY_KILWA" -->
++			<!-- Trait_TradeConnectionYieldChange -->
+ 			<!-- Uses a dummy building "BUILDING_KILWA_TRAIT"-->
+ 		</Row>
+ 		<Row> 
+@@ -204027,7 +205577,7 @@
+ 			<Type>TRAIT_TUNISIA</Type> 
+ 			<Description>TXT_KEY_TRAIT_TUNISIA_DESC</Description> 
+ 			<ShortDescription>TXT_KEY_TRAIT_TUNISIA_SHORT_DESC</ShortDescription> 
+-			<LandTradeRouteYieldBonus>100</LandTradeRouteYieldBonus>
++			<!-- Trait_TradeConnectionYieldModifier -->
+ 			<!-- Trait_FreePromotionUnitCombats -->
+ 		</Row>
+ 		<Row>

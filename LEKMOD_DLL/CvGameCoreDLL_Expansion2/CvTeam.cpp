@@ -7007,7 +7007,7 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 								}
 							}
 							pLoopCity->clearOrderQueue();
-							for (int old = 0; old < oldQueue.size(); old++)
+							for (uint old = 0; old < oldQueue.size(); old++)
 							{
 								OrderData order = oldQueue[old];
 								if (order.eOrderType == ORDER_TRAIN && order.iData1 == eUnit && pLoopCity->canTrain(eUpgradeUnitType))
@@ -7634,6 +7634,28 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 				{
 					kPlayer.ChangeNumFreePolicies(iNumFreePolicies);
 				}
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+				int iLoop;
+				CvUnit* pLoopUnit;
+				for (pLoopUnit = kPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kPlayer.nextUnit(&iLoop))
+				{
+					CvUnitEntry pUnitInfo = pLoopUnit->getUnitInfo();
+					for (int jJ = 0; jJ < GC.getNumPromotionInfos(); jJ++)
+					{
+						PromotionTypes ePromotion = static_cast<PromotionTypes>(jJ);
+						if (pUnitInfo.IsFreePromotionEra(ePromotion, eNewValue))
+						{
+							if (!pLoopUnit->isHasPromotion(ePromotion))
+							{
+								pLoopUnit->setHasPromotion(ePromotion, true);
+							}
+						}
+					}
+					pLoopUnit->ChangeBaseCombatStrength(pUnitInfo.GetEraStrengthChanges(eNewValue));
+					pLoopUnit->ChangeBaseRangedCombatStrength(pUnitInfo.GetEraRangedStrengthChanges(eNewValue));
+					pLoopUnit->changeExtraMoves(pUnitInfo.GetEraMovesChanges(eNewValue));
+				}
+#endif
 			}
 		}
 #if defined(LEKMOD_ERA_ENHANCED_YIELDS)

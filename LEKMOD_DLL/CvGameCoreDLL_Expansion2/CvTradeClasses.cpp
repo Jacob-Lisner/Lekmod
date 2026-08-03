@@ -5394,8 +5394,9 @@ FDataStream& operator>>(FDataStream& loadFrom, CvPlayerTrade& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvPlayerTrade::Read] uiVersion=%u (expected 2)", uiVersion); }
 
-	if (uiVersion >= 1) 
+	if (uiVersion >= 1)
 	{
 		int iNum = 0;
 		loadFrom >> iNum;
@@ -6295,6 +6296,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvTradeAI& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("  [CvTradeAI::Read] uiVersion=%u (expected 0)", uiVersion); }
 
 	loadFrom >> writeTo.m_iRemovableValue;
 

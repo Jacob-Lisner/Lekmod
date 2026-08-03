@@ -39,6 +39,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(DoCommand);
 
 	Method(GetPathEndTurnPlot);
+	Method(GetPathAttackFromPlot);
 	Method(GeneratePath);
 
 	Method(CanEnterTerritory);
@@ -85,10 +86,6 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 
 	Method(CanRangeStrike);
 	Method(CanRangeStrikeAt);
-#ifdef DEL_RANGED_COUNTERATTACKS
-	Method(CanEverRangeStrikeAt);
-	Method(PlotValid);
-#endif
 
 	Method(CanParadrop);
 	Method(CanParadropAt);
@@ -198,6 +195,12 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetMaxAttackStrength);
 	Method(GetMaxDefenseStrength);
 	Method(GetEmbarkedUnitDefense);
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	Method(GetAttackModifierList);
+	Method(GetDefenseModifierList);
+#else
+	Method(GetMaxRangedCombatStrength);
+#endif
 
 	Method(IsCombatUnit);
 	Method(IsCanDefend);
@@ -211,7 +214,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IsTrade);
 
 	Method(GetBaseRangedCombatStrength);
-	Method(GetMaxRangedCombatStrength);
+	
 	Method(GetCombatLimit);
 	Method(GetRangedCombatLimit);
 	Method(CanAirAttack);
@@ -599,6 +602,18 @@ int CvLuaUnit::lGetPathEndTurnPlot(lua_State* L)
 	CvUnit* pkUnit = GetInstance(L);
 
 	CvPlot* pkPlot = pkUnit->GetPathEndTurnPlot();
+	CvLuaPlot::Push(L, pkPlot);
+
+	return 1;
+}
+//------------------------------------------------------------------------------
+//CyPlot* getPathAttackFromPlot(CyPlot* pTargetPlot);
+int CvLuaUnit::lGetPathAttackFromPlot(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pkTargetPlot = CvLuaPlot::GetInstance(L, 2, false);
+
+	CvPlot* pkPlot = pkUnit->GetPathAttackFromPlot(pkTargetPlot);
 	CvLuaPlot::Push(L, pkPlot);
 
 	return 1;
@@ -1104,34 +1119,6 @@ int CvLuaUnit::lCanRangeStrikeAt(lua_State* L)
 
 	//return BasicLuaMethod(L, &CvUnit::canRangeStrikeAt);
 }
-#ifdef DEL_RANGED_COUNTERATTACKS
-int CvLuaUnit::lCanEverRangeStrikeAt(lua_State* L)
-{
-	CvUnit* pkUnit = GetInstance(L);
-	const int x = lua_tointeger(L, 2);
-	const int y = lua_tointeger(L, 3);
-
-	const bool bResult = pkUnit->canRangeStrikeAt(x, y);
-
-	lua_pushboolean(L, bResult);
-	return 1;
-
-	//return BasicLuaMethod(L, &CvUnit::canEverRangeStrikeAt);
-}
-
-int CvLuaUnit::lPlotValid(lua_State* L)
-{
-	CvUnit* pkUnit = GetInstance(L);
-	CvPlot* pkPlot = CvLuaPlot::GetInstance(L, 2);
-
-	const bool bResult = pkUnit->PlotValid(pkPlot);
-
-	lua_pushboolean(L, bResult);
-	return 1;
-
-	//return BasicLuaMethod(L, &CvUnit::canEverRangeStrikeAt);
-}
-#endif
 //------------------------------------------------------------------------------
 //bool canParadrop(CyPlot* pPlot);
 int CvLuaUnit::lCanParadrop(lua_State* L)
@@ -1910,9 +1897,11 @@ int CvLuaUnit::lIsGoldenAge(lua_State* L)
 int CvLuaUnit::lIsNearFriendlyMinor(lua_State* L)
 {
 	CvUnit* pkUnit = GetInstance(L);
-	const bool bResult = pkUnit->IsNearFriendlyMinor();
+	PlayerTypes eMinor = (PlayerTypes)lua_tointeger(L, 2);
+	const bool bResult = pkUnit->IsNearFriendlyMinor(&eMinor);
 
 	lua_pushboolean(L, bResult);
+	lua_pushinteger(L, eMinor);
 	return 1;
 }
 #endif
@@ -2107,7 +2096,7 @@ int CvLuaUnit::lIsCanAttackWithMoveNow(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 //------------------------------------------------------------------------------
 //int GetMaxAttackStrength(const CvPlot* pFromPlot, const CvPlot* pToPlot, const CvUnit* pDefender);
 int CvLuaUnit::lGetMaxAttackStrength(lua_State* L)
@@ -2135,7 +2124,209 @@ int CvLuaUnit::lGetMaxDefenseStrength(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+//------------------------------------------------------------------------------
+//int airMaxCombatStr(CyUnit* pOther, bool bAttacking);
+int CvLuaUnit::lGetMaxRangedCombatStrength(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvUnit* pkOther = GetInstance(L, 2, false);
+	CvCity* pkCity = CvLuaCity::GetInstance(L, 3, false);
+	const bool bAttacking = lua_toboolean(L, 4);
+	const bool bForRangedAttack = lua_toboolean(L, 5);
 
+	const int iResult = pkUnit->GetMaxRangedCombatStrength(pkOther, pkCity, bAttacking, bForRangedAttack);
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+#else
+//------------------------------------------------------------------------------
+//int GetMaxAttackStrength(const CvPlot* pFromPlot, const CvPlot* pToPlot, const CvUnit* pDefender);
+int CvLuaUnit::lGetMaxAttackStrength(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pToPlot = CvLuaPlot::GetInstance(L, 2, false);
+	CvUnit* pkDefender = GetInstance(L, 3, false);
+	CvCity* pkDefenderCity = CvLuaCity::GetInstance(L, 4, false);
+	CvUnit* pkInterceptor = GetInstance(L, 5, false);
+	const bool bRangedAttack = lua_toboolean(L, 6);
+	const bool bBombingMission = lua_toboolean(L, 7);
+	const bool bAirSweep = lua_toboolean(L, 8);
+	CvPlot* pkFromPlot = CvLuaPlot::GetInstance(L, 9, false);
+
+	CvCombatInfo kCombatInfo;
+	kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pkUnit);
+	kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pkDefender);
+	kCombatInfo.setCity(BATTLE_UNIT_DEFENDER, pkDefenderCity);
+	kCombatInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pkInterceptor);
+	kCombatInfo.setPlot(pToPlot);
+	kCombatInfo.setFromPlot(pkFromPlot);
+	// This binding is only ever used for UI preview/prediction, never real combat resolution, so when the
+	// caller doesn't know the attacker's origin (pkFromPlot is NULL), skip origin-plot checks (river
+	// crossing, amphibious, elevation) instead of falling back to the attacker's current, possibly
+	// unrelated, live position.
+	kCombatInfo.setUseLiveOriginPlot(false);
+	kCombatInfo.setAttackIsRanged(bRangedAttack);
+	kCombatInfo.setAttackIsBombingMission(bBombingMission);
+	kCombatInfo.setAttackIsAirSweep(bAirSweep);
+	kCombatInfo.setDefenderRetaliates(bRangedAttack);
+
+	const int iResult = pkUnit->GetMaxAttackStrength(kCombatInfo);
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+int CvLuaUnit::lGetAttackModifierList(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pToPlot = CvLuaPlot::GetInstance(L, 2, false);
+	CvUnit* pkDefender = GetInstance(L, 3, false);
+	CvCity* pkDefenderCity = CvLuaCity::GetInstance(L, 4, false);
+	CvUnit* pkInterceptor = GetInstance(L, 5, false);
+	const bool bRangedAttack = lua_toboolean(L, 6);
+	const bool bBombingMission = lua_toboolean(L, 7);
+	const bool bAirSweep = lua_toboolean(L, 8);
+	const int iMaxLines = luaL_optint(L, 9, 0);
+	CvPlot* pkFromPlot = CvLuaPlot::GetInstance(L, 10, false);
+
+	CvCombatInfo kCombatInfo;
+	kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pkUnit);
+	kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pkDefender);
+	kCombatInfo.setCity(BATTLE_UNIT_DEFENDER, pkDefenderCity);
+	kCombatInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pkInterceptor);
+	kCombatInfo.setPlot(pToPlot);
+	kCombatInfo.setFromPlot(pkFromPlot);
+	// Same reasoning as lGetMaxAttackStrength: this is a preview-only binding, so an unknown origin should
+	// skip origin-plot checks rather than silently substitute the attacker's current live position.
+	kCombatInfo.setUseLiveOriginPlot(false);
+	kCombatInfo.setAttackIsRanged(bRangedAttack);
+	kCombatInfo.setAttackIsBombingMission(bBombingMission);
+	kCombatInfo.setAttackIsAirSweep(bAirSweep);
+
+	const bool bOrdinaryRangedAttack = bRangedAttack && !bBombingMission && !bAirSweep;
+
+	kCombatInfo.setDefenderRetaliates(!bOrdinaryRangedAttack);
+
+	CvCombatModifierList kModifierList(iMaxLines);
+	kModifierList.bAttackerSide = true;
+
+	pkUnit->GetMaxAttackStrength(kCombatInfo, &kModifierList);
+
+	const std::vector<CvCombatModifierEntry>& kEntries = kModifierList.m_kEntries;
+
+	lua_createtable(L, static_cast<int>(kEntries.size()), 0);
+
+	for (size_t i = 0; i < kEntries.size(); ++i)
+	{
+		const CvCombatModifierEntry& kEntry = kEntries[i];
+
+		lua_createtable(L, 0, 4);
+
+		lua_pushstring(L, kEntry.m_strText.c_str());
+		lua_setfield(L, -2, "Text");
+
+		lua_pushinteger(L, kEntry.m_iModifier);
+		lua_setfield(L, -2, "Value");
+
+		lua_pushboolean(L, kEntry.m_bPercent);
+		lua_setfield(L, -2, "IsPercent");
+
+		lua_pushboolean(L, kEntry.m_bMiscellaneous);
+		lua_setfield(L, -2, "IsMiscellaneous");
+
+		lua_rawseti(L, -2, static_cast<int>(i) + 1);
+	}
+
+	return 1;
+}
+//------------------------------------------------------------------------------
+//int GetMaxDefenseStrength(const CvPlot* pInPlot, const CvUnit* pAttacker);
+int CvLuaUnit::lGetMaxDefenseStrength(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pToPlot = CvLuaPlot::GetInstance(L, 2, false);
+	CvUnit* pkAttacker = GetInstance(L, 3, false);
+	CvCity* pkAttackerCity = CvLuaCity::GetInstance(L, 4, false);
+	CvUnit* pkInterceptor = GetInstance(L, 5, false);
+	const bool bRangedAttack = lua_toboolean(L, 6);
+	const bool bBombingMission = lua_toboolean(L, 7);
+	const bool bAirSweep = lua_toboolean(L, 8);
+
+	CvCombatInfo kCombatInfo;
+	kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pkAttacker);
+	kCombatInfo.setCity(BATTLE_UNIT_ATTACKER, pkAttackerCity);
+	kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pkUnit);
+	kCombatInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pkInterceptor);
+	kCombatInfo.setPlot(pToPlot);
+	kCombatInfo.setAttackIsRanged(bRangedAttack);
+	kCombatInfo.setAttackIsBombingMission(bBombingMission);
+	kCombatInfo.setAttackIsAirSweep(bAirSweep);
+	kCombatInfo.setDefenderRetaliates(bRangedAttack);
+
+	const int iResult = pkUnit->GetMaxDefenseStrength(kCombatInfo);
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+int CvLuaUnit::lGetDefenseModifierList(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pToPlot = CvLuaPlot::GetInstance(L, 2, false);
+	CvUnit* pkAttacker = GetInstance(L, 3, false);
+	CvCity* pkAttackerCity = CvLuaCity::GetInstance(L, 4, false);
+	CvUnit* pkInterceptor = GetInstance(L, 5, false);
+	const bool bRangedAttack = lua_toboolean(L, 6);
+	const bool bBombingMission = lua_toboolean(L, 7);
+	const bool bAirSweep = lua_toboolean(L, 8);
+	const int iMaxLines = luaL_optint(L, 9, 0);
+
+	CvCombatInfo kCombatInfo;
+	kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, pkAttacker);
+	kCombatInfo.setCity(BATTLE_UNIT_ATTACKER, pkAttackerCity);
+	kCombatInfo.setUnit(BATTLE_UNIT_DEFENDER, pkUnit);
+	kCombatInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pkInterceptor);
+	kCombatInfo.setPlot(pToPlot);
+	kCombatInfo.setAttackIsRanged(bRangedAttack);
+	kCombatInfo.setAttackIsBombingMission(bBombingMission);
+	kCombatInfo.setAttackIsAirSweep(bAirSweep);
+
+	const bool bOrdinaryRangedAttack = bRangedAttack && !bBombingMission && !bAirSweep;
+
+	kCombatInfo.setDefenderRetaliates(!bOrdinaryRangedAttack);
+
+	CvCombatModifierList kModifierList(iMaxLines);
+	kModifierList.bAttackerSide = false;
+
+	pkUnit->GetMaxDefenseStrength( kCombatInfo, &kModifierList);
+
+	const std::vector<CvCombatModifierEntry>& kEntries = kModifierList.m_kEntries;
+
+	lua_createtable(L, static_cast<int>(kEntries.size()), 0);
+
+	for (size_t i = 0; i < kEntries.size(); ++i)
+	{
+		const CvCombatModifierEntry& kEntry = kEntries[i];
+
+		lua_createtable(L, 0, 4);
+
+		lua_pushstring(L, kEntry.m_strText.c_str());
+		lua_setfield(L, -2, "Text");
+
+		lua_pushinteger(L, kEntry.m_iModifier);
+		lua_setfield(L, -2, "Value");
+
+		lua_pushboolean(L, kEntry.m_bPercent);
+		lua_setfield(L, -2, "IsPercent");
+
+		lua_pushboolean(L, kEntry.m_bMiscellaneous);
+		lua_setfield(L, -2, "IsMiscellaneous");
+
+		lua_rawseti(L, -2, static_cast<int>(i) + 1);
+	}
+
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //int GetEmbarkedUnitDefense();
 int CvLuaUnit::lGetEmbarkedUnitDefense(lua_State* L)
@@ -2184,20 +2375,6 @@ int CvLuaUnit::lGetBaseRangedCombatStrength(lua_State* L)
 	CvUnit* pkUnit = GetInstance(L);
 
 	const int iResult = pkUnit->GetBaseRangedCombatStrength();
-	lua_pushinteger(L, iResult);
-	return 1;
-}
-//------------------------------------------------------------------------------
-//int airMaxCombatStr(CyUnit* pOther, bool bAttacking);
-int CvLuaUnit::lGetMaxRangedCombatStrength(lua_State* L)
-{
-	CvUnit* pkUnit = GetInstance(L);
-	CvUnit* pkOther = GetInstance(L, 2, false);
-	CvCity* pkCity = CvLuaCity::GetInstance(L, 3, false);
-	const bool bAttacking = lua_toboolean(L, 4);
-	const bool bForRangedAttack = lua_toboolean(L, 5);
-
-	const int iResult = pkUnit->GetMaxRangedCombatStrength(pkOther, pkCity, bAttacking, bForRangedAttack);
 	lua_pushinteger(L, iResult);
 	return 1;
 }
@@ -2289,11 +2466,12 @@ int CvLuaUnit::lGetBestInterceptor(lua_State* L)
 	CvUnit* pkDefender = GetInstance(L, 3, false);
 	const bool bLandInterceptorsOnly = lua_toboolean(L, 4);
 	const bool bVisibleInterceptorsOnly = lua_toboolean(L, 5);
+	const bool bIgnoreInterceptionState = lua_toboolean(L, 6);
 
 	CvUnit* pkBestUnit = 0;
 	if(pkPlot)
 	{
-		pkBestUnit = pkUnit->GetBestInterceptor(*pkPlot, pkDefender, bLandInterceptorsOnly, bVisibleInterceptorsOnly);
+		pkBestUnit = pkUnit->GetBestInterceptor(*pkPlot, pkDefender, bLandInterceptorsOnly, bVisibleInterceptorsOnly, bIgnoreInterceptionState);
 	}
 
 	CvLuaUnit::Push(L, pkBestUnit);
@@ -2308,11 +2486,12 @@ int CvLuaUnit::lGetInterceptorCount(lua_State* L)
 	CvUnit* pkDefender = GetInstance(L, 3, false);
 	const bool bLandInterceptorsOnly = lua_toboolean(L, 4);
 	const bool bVisibleInterceptorsOnly = lua_toboolean(L, 5);
+	const bool bIgnoreInterceptionState = lua_toboolean(L, 6);
 
 	int iCount  = 0;
 	if(pkPlot)
 	{
-		iCount = pkUnit->GetInterceptorCount(*pkPlot, pkDefender, bLandInterceptorsOnly, bVisibleInterceptorsOnly);
+		iCount = pkUnit->GetInterceptorCount(*pkPlot, pkDefender, bLandInterceptorsOnly, bVisibleInterceptorsOnly, bIgnoreInterceptionState);
 	}
 
 	lua_pushinteger(L, iCount);
