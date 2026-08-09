@@ -1083,7 +1083,14 @@ public:
 
 	bool isOutOfAttacks() const;
 	void setMadeAttack(bool bNewValue);
-
+#if defined(v35_TRAITIFY)
+	bool madeAttackLastTurn() const { return m_bAttackedLastTurn; }
+	void setMadeAttackLastTurn(bool bNewValue) { m_bAttackedLastTurn = bNewValue; }
+	bool killedUnit() const { return m_bKilledUnit; }
+	void setKilledUnit(bool bNewValue) { m_bKilledUnit = bNewValue; }
+	bool killedUnitLastTurn() const { return m_bKilledUnitLastTurn; }
+	void setKilledUnitLastTurn(bool bNewValue) { m_bKilledUnitLastTurn = bNewValue; }
+#endif
 	int GetNumInterceptions() const;
 	void ChangeNumInterceptions(int iChange);
 
@@ -1383,7 +1390,19 @@ public:
 
 	void ChangeTradeMissionGoldModifier(int iValue);
 	int GetTradeMissionGoldModifier() const;
+#if defined(v35_TRAITIFY)
+	void ChangeNearbyWaterCombatModifier(int iValue) { m_iNearbyWaterCombatModifier += iValue; }
+	int GetNearbyWaterCombatModifier() const { return m_iNearbyWaterCombatModifier; }
 
+	void ChangeAttackExtraMoves(int iValue) { m_iAttackExtraMoves += iValue; }
+	int GetAttackExtraMoves() const { return m_iAttackExtraMoves; }
+
+	void ChangeKillRefreshMovesCount(int iValue) { m_iKillRefreshMovesCount += iValue; }
+	bool IsKillRefreshMoves() const { return m_iKillRefreshMovesCount > 0; }
+
+	void ChangeKillRefreshAttacksCount(int iValue) { m_iKillRefreshAttacksCount += iValue; }
+	bool IsKillRefreshAttacks() const { return m_iKillRefreshAttacksCount > 0; }
+#endif
 	bool IsHasBeenPromotedFromGoody() const;
 	void SetBeenPromotedFromGoody(bool bBeenPromoted);
 
@@ -1557,6 +1576,7 @@ protected:
 	FAutoVariable<int, CvUnit> m_iKamikazePercent;
 	FAutoVariable<int, CvUnit> m_iBaseCombat;
 	FAutoVariable<int, CvUnit> m_iBaseRangedCombat;
+	int m_iCachedPower;
 
 	FAutoVariable<DirectionTypes, CvUnit> m_eFacingDirection;
 	FAutoVariable<int, CvUnit> m_iArmyId;
@@ -1594,6 +1614,11 @@ protected:
 	FAutoVariable<int, CvUnit> m_iFlags;
 	FAutoVariable<int, CvUnit> m_iNumAttacks;
 	FAutoVariable<int, CvUnit> m_iAttacksMade;
+#if defined(v35_TRAITIFY)
+	FAutoVariable<bool, CvUnit> m_bAttackedLastTurn;
+	FAutoVariable<bool, CvUnit> m_bKilledUnit;
+	FAutoVariable<bool, CvUnit> m_bKilledUnitLastTurn;
+#endif
 	FAutoVariable<int, CvUnit> m_iGreatGeneralCount;
 	int m_iGreatAdmiralCount;
 	FAutoVariable<int, CvUnit> m_iGreatGeneralModifier;
@@ -1715,6 +1740,12 @@ protected:
 	int m_iReligiousStrengthLossRivalTerritory;
 	int m_iTradeMissionInfluenceModifier;
 	int m_iTradeMissionGoldModifier;
+#if defined(v35_TRAITIFY)
+	int m_iNearbyWaterCombatModifier;
+	int m_iAttackExtraMoves;
+	int m_iKillRefreshMovesCount;
+	int m_iKillRefreshAttacksCount;
+#endif
 	int m_iMapLayer;		// Which layer does the unit reside on for pathing/stacking/etc.
 	int m_iNumGoodyHutsPopped;
 	int m_iLastGameTurnAtFullHealth;

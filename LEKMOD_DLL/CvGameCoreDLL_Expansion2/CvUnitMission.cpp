@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -126,45 +126,61 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 						CvFeatureInfo* feature = GC.getFeatureInfo(eFeature);
 						MissionData removeMission;
 						removeMission.eMissionType = eMission;
-						if(iData1 != 15 && strcmp(feature->GetType(), "FEATURE_FOREST") == 0)
+						if(strcmp(feature->GetType(), "FEATURE_FOREST") == 0)
 						{
-							removeMission.iData1 = 15; // todo: future proof this
-							removeMission.iData2 = iData2;
-							removeMission.iFlags = iFlags;
-							removeMission.iPushTurn = GC.getGame().getGameTurn();
-							hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
-							InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
-							bAppend = true;
+							const int eRemoveForest = GC.getInfoTypeForString("BUILD_REMOVE_FOREST");
+							if(iData1 != eRemoveForest)
+							{
+								removeMission.iData1 = eRemoveForest;
+								removeMission.iData2 = iData2;
+								removeMission.iFlags = iFlags;
+								removeMission.iPushTurn = GC.getGame().getGameTurn();
+								hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
+								InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
+								bAppend = true;
+							}
 						}
-						else if(iData1 != 14 && strcmp(feature->GetType(), "FEATURE_JUNGLE") == 0)
+						else if(strcmp(feature->GetType(), "FEATURE_JUNGLE") == 0)
 						{
-							removeMission.iData1 = 14; // todo: future proof this
-							removeMission.iData2 = iData2;
-							removeMission.iFlags = iFlags;
-							removeMission.iPushTurn = GC.getGame().getGameTurn();
-							hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
-							InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
-							bAppend = true;
+							const int eRemoveJungle = GC.getInfoTypeForString("BUILD_REMOVE_JUNGLE");
+							if(iData1 != eRemoveJungle)
+							{
+								removeMission.iData1 = eRemoveJungle;
+								removeMission.iData2 = iData2;
+								removeMission.iFlags = iFlags;
+								removeMission.iPushTurn = GC.getGame().getGameTurn();
+								hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
+								InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
+								bAppend = true;
+							}
 						}
-						else if(iData1 != 16 && strcmp(feature->GetType(), "FEATURE_MARSH") == 0)
+						else if(strcmp(feature->GetType(), "FEATURE_MARSH") == 0)
 						{
-							removeMission.iData1 = 16; // todo: future proof this
-							removeMission.iData2 = iData2;
-							removeMission.iFlags = iFlags;
-							removeMission.iPushTurn = GC.getGame().getGameTurn();
-							hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
-							InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
-							bAppend = true;
+							const int eRemoveMarsh = GC.getInfoTypeForString("BUILD_REMOVE_MARSH");
+							if(iData1 != eRemoveMarsh)
+							{
+								removeMission.iData1 = eRemoveMarsh;
+								removeMission.iData2 = iData2;
+								removeMission.iFlags = iFlags;
+								removeMission.iPushTurn = GC.getGame().getGameTurn();
+								hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
+								InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
+								bAppend = true;
+							}
 						}
-						else if(iData1 != 17 && strcmp(feature->GetType(), "FEATURE_FALLOUT") == 0)
+						else if(strcmp(feature->GetType(), "FEATURE_FALLOUT") == 0)
 						{
-							removeMission.iData1 = 17; // todo: future proof this
-							removeMission.iData2 = iData2;
-							removeMission.iFlags = iFlags;
-							removeMission.iPushTurn = GC.getGame().getGameTurn();
-							hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
-							InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
-							bAppend = true;
+							const int eScrubFallout = GC.getInfoTypeForString("BUILD_SCRUB_FALLOUT");
+							if(iData1 != eScrubFallout)
+							{
+								removeMission.iData1 = eScrubFallout;
+								removeMission.iData2 = iData2;
+								removeMission.iFlags = iFlags;
+								removeMission.iPushTurn = GC.getGame().getGameTurn();
+								hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
+								InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
+								bAppend = true;
+							}
 						}
 					}
 				}

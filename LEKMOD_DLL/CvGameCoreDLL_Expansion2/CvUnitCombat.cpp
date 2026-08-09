@@ -756,14 +756,7 @@ void CvUnitCombat::ResolveRangedCityVsCityCombat(const CvCombatInfo& kCombatInfo
 
 	if(pkAttacker && pkDefender)
 	{
-		// Deliberately no chat/notification message here: TXT_KEY_MISC_YOUR_CITY_RANGE_ATTACK and
-		// TXT_KEY_MISC_YOU_ARE_ATTACKED_BY_CITY both use the {@N_EnUName}/{@N_UnitName} icon-embed tags,
-		// which expect a unit name-key, not a city one -- reusing them here for a city defender would
-		// misrender. Add a dedicated city-vs-city text key if/when this is user-facing.
-
 		pkDefender->changeDamage(iAttackerDamageDealt);
-		// Ranged attacks set DefenderRetaliates(false), so this is normally 0 -- applied anyway in case
-		// that's ever changed for city-vs-city specifically.
 		if(iDefenderDamageDealt > 0)
 			pkAttacker->changeDamage(iDefenderDamageDealt);
 
@@ -2935,6 +2928,21 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackNuclear(CvUnit& kAttacker, int i
 void CvUnitCombat::ApplyPostCombatTraitEffects(CvUnit* pkWinner, CvUnit* pkLoser)
 {
 	int iExistingDelay = 0;
+
+#if defined(v35_TRAITIFY)
+	if (!pkWinner->killedUnit())
+	{
+		pkWinner->setKilledUnit(true);
+		if (pkWinner->IsKillRefreshMoves())
+		{
+			pkWinner->setMoves(pkWinner->maxMoves() + GC.getMOVE_DENOMINATOR());
+		}
+		if (pkWinner->IsKillRefreshAttacks())
+		{
+			pkWinner->setMadeAttack(false);
+		}
+	}
+#endif
 
 	// "Heal if defeat enemy" promotion; doesn't apply if defeat a barbarian
 	if(pkWinner->getHPHealedIfDefeatEnemy() > 0 && (pkLoser->getOwner() != BARBARIAN_PLAYER || !(pkWinner->IsHealIfDefeatExcludeBarbarians())))

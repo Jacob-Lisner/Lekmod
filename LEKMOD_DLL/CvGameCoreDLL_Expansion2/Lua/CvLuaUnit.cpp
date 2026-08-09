@@ -2160,11 +2160,6 @@ int CvLuaUnit::lGetMaxAttackStrength(lua_State* L)
 	kCombatInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pkInterceptor);
 	kCombatInfo.setPlot(pToPlot);
 	kCombatInfo.setFromPlot(pkFromPlot);
-	// This binding is only ever used for UI preview/prediction, never real combat resolution, so when the
-	// caller doesn't know the attacker's origin (pkFromPlot is NULL), skip origin-plot checks (river
-	// crossing, amphibious, elevation) instead of falling back to the attacker's current, possibly
-	// unrelated, live position.
-	kCombatInfo.setUseLiveOriginPlot(false);
 	kCombatInfo.setAttackIsRanged(bRangedAttack);
 	kCombatInfo.setAttackIsBombingMission(bBombingMission);
 	kCombatInfo.setAttackIsAirSweep(bAirSweep);
@@ -2195,9 +2190,6 @@ int CvLuaUnit::lGetAttackModifierList(lua_State* L)
 	kCombatInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pkInterceptor);
 	kCombatInfo.setPlot(pToPlot);
 	kCombatInfo.setFromPlot(pkFromPlot);
-	// Same reasoning as lGetMaxAttackStrength: this is a preview-only binding, so an unknown origin should
-	// skip origin-plot checks rather than silently substitute the attacker's current live position.
-	kCombatInfo.setUseLiveOriginPlot(false);
 	kCombatInfo.setAttackIsRanged(bRangedAttack);
 	kCombatInfo.setAttackIsBombingMission(bBombingMission);
 	kCombatInfo.setAttackIsAirSweep(bAirSweep);

@@ -13469,63 +13469,66 @@ CvPlot* CvCity::addResourceLocally(CvPlot* pFromPlot, ResourceTypes eResource, i
 	if (iAmount < 0) // negative amount, nonsense.
 		return NULL;
 	// Scan every plot the city could ever own
-	CvPlot* pLoopPlot;
+	CvPlot* plot;
 	CvWeightedVector<CvPlot*, MAX_CITY_PLOTS> potentialPlots;
 	
 	for (int iJ = 0; iJ < MAX_CITY_PLOTS; iJ++)
 	{
-		int iWeight = 0;
-		pLoopPlot = plotCity(getX(), getY(), iJ);
-		if (pLoopPlot != NULL)
+		int weight = 0;
+		plot = plotCity(getX(), getY(), iJ);
+		if (plot != NULL)
 		{
 			// store off reused stuff
-			TerrainTypes ePlotTerrain = pLoopPlot->getTerrainType();
-			FeatureTypes ePlotFeature = pLoopPlot->getFeatureType();
-			ImprovementTypes ePlotImprovement = pLoopPlot->getImprovementType();
-			ResourceTypes ePlotResource = pLoopPlot->getResourceType();
+			TerrainTypes terrain = plot->getTerrainType();
+			FeatureTypes feature = plot->getFeatureType();
+			ImprovementTypes improvement = plot->getImprovementType();
+			ResourceTypes resource = plot->getResourceType();
 			// no overriding
-			if (ePlotResource != NO_RESOURCE)
+			if (resource != NO_RESOURCE)
 				continue;
 			// no giving to other players
-			if(pLoopPlot->getOwner() != NO_PLAYER && pLoopPlot->getOwner() != getOwner())
+			if(plot->getOwner() != NO_PLAYER && plot->getOwner() != getOwner())
 				continue;
 			// not placing on improvements that cannot be removed
-			if (ePlotImprovement != NO_IMPROVEMENT && GC.getImprovementInfo(ePlotImprovement)->IsPermanent())
+			if (improvement != NO_IMPROVEMENT && (GC.getImprovementInfo(improvement)->IsPermanent() || GC.getImprovementInfo(improvement)->IsGoody()))
 				continue;
 			// not in lakes, fake lakes, or mountains
-			if (pLoopPlot->isLake() || pLoopPlot->isPseudoLake() || pLoopPlot->isMountain())
+			if (plot->isLake() || plot->isPseudoLake() || plot->isMountain())
 				continue;
-			// not on plots that cannot be walked on or a natural wonder
-			if (pLoopPlot->isImpassable() || GC.getFeatureInfo(ePlotFeature)->IsNaturalWonder())
+			// not on plots that cannot be walked on
+			if (plot->isImpassable())
+				continue;
+			// not on natural wonders
+			if (feature != NO_FEATURE && GC.getFeatureInfo(feature)->IsNaturalWonder())
 				continue;
 			// Owned by us, +50
-			if (pLoopPlot->getOwner() == getOwner())
+			if (plot->getOwner() == getOwner())
 			{
-				iWeight += 50;
+				weight += 50;
 			}
 			// Closer to city center is better, so weight by distance
-			int iDistance = plotDistance(pLoopPlot->getX(), pLoopPlot->getY(), getX(), getY());
-			iWeight += 100 - (iDistance * 15);
+			int iDistance = plotDistance(plot->getX(), plot->getY(), getX(), getY());
+			weight += 100 - (iDistance * 15);
 
 			// Now look into the Parameters of the resource itself.
 			CvResourceInfo* info = GC.getResourceInfo(eResource);
 			TerrainTypes coast = static_cast<TerrainTypes>(GC.getInfoTypeForString("TERRAIN_COAST", false));
-			iWeight += info->isTerrain(ePlotTerrain) ? ePlotTerrain == coast ? 1000 : 40 : -20; // Preferred terrain, heavy emphasis on coast if that is a valid place, to not have land fish
-			if (ePlotFeature != NO_FEATURE) // If there's a feature, check if it's a preferred one or not.
+			weight += info->isTerrain(terrain) ? terrain == coast ? 1000 : 40 : -20; // Preferred terrain, heavy emphasis on coast if that is a valid place, to not have land fish
+			if (feature != NO_FEATURE) // If there's a feature, check if it's a preferred one or not.
 			{
-				iWeight += info->isFeature(ePlotFeature) ? 20 : 0;
-				iWeight += info->isFeatureTerrain(ePlotTerrain) ? 20 : 0;
+				weight += info->isFeature(feature) ? 20 : 0;
+				weight += info->isFeatureTerrain(terrain) ? 20 : 0;
 			}
-			iWeight += pLoopPlot->isHills() && info->isHills() ? 15 : -10; // Hills
-			iWeight += pLoopPlot->isRiver() && info->isNoRiverSide() ? -15 : 5; // River
-			iWeight += pLoopPlot->isFlatlands() && info->isFlatlands() ? 15 : -10; // Flatlands
-			potentialPlots.push_back(pLoopPlot, iWeight);
+			weight += plot->isHills() && info->isHills() ? 15 : -10; // Hills
+			weight += plot->isRiver() && info->isNoRiverSide() ? -15 : 5; // River
+			weight += plot->isFlatlands() && info->isFlatlands() ? 15 : -10; // Flatlands
+			potentialPlots.push_back(plot, weight);
 		}
 	}
 	if (potentialPlots.size() > 0)
 	{
 		potentialPlots.SortItems();
-		CvPlot* pBestPlot = potentialPlots.GetElement(0);
+		CvPlot* best = potentialPlots.GetElement(0);
 		if (eResource == static_cast<ResourceTypes>(GC.getInfoTypeForString("RESOURCE_HIDDEN_ARTIFACTS")))
 		{
 			// artifacts aren't generated until the tech is researched so this shouldn't come up very often
@@ -13533,16 +13536,16 @@ CvPlot* CvCity::addResourceLocally(CvPlot* pFromPlot, ResourceTypes eResource, i
 			if (pFromPlot != NULL)
 			{
 				CvArchaeologyData data = pFromPlot->GetArchaeologicalRecord();
-				pBestPlot->ClearArchaeologicalRecord();
-				pBestPlot->AddArchaeologicalRecord(data.m_eArtifactType, data.m_eEra, data.m_ePlayer1, data.m_ePlayer2);
-				pBestPlot->SetArtifactGreatWork(data.m_eWork);
+				best->ClearArchaeologicalRecord();
+				best->AddArchaeologicalRecord(data.m_eArtifactType, data.m_eEra, data.m_ePlayer1, data.m_ePlayer2);
+				best->SetArtifactGreatWork(data.m_eWork);
 				pFromPlot->ClearArchaeologicalRecord();
 			}
 		}
-		pBestPlot->setResourceType(eResource, iAmount);
-		pBestPlot->setLayoutDirty(true);
+		best->setResourceType(eResource, iAmount);
+		best->setLayoutDirty(true);
 
-		if (pBestPlot->getResourceType(getTeam()) != NO_RESOURCE)
+		if (best->getResourceType(getTeam()) != NO_RESOURCE)
 		{
 			Localization::String localizedText;
 			CvNotifications* pNotifications = GET_PLAYER(getOwner()).GetNotifications();
@@ -13564,10 +13567,10 @@ CvPlot* CvCity::addResourceLocally(CvPlot* pFromPlot, ResourceTypes eResource, i
 				}
 				localizedText = Localization::Lookup("TXT_KEY_RESOURCE_MOVED");
 				localizedText << GC.getResourceInfo(eResource)->GetTextKey() << getNameKey();
-				pNotifications->Add(eNotificationType, localizedText.toUTF8(), localizedText.toUTF8(), pBestPlot->getX(), pBestPlot->getY(), eResource);
+				pNotifications->Add(eNotificationType, localizedText.toUTF8(), localizedText.toUTF8(), best->getX(), best->getY(), eResource);
 			}
 		}
-		return pBestPlot;
+		return best;
 	}
 	return NULL;
 }

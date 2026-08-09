@@ -157,6 +157,12 @@ public:
 	
 	int GetTradeMissionInfluenceModifier() const;
 	int GetTradeMissionGoldModifier() const;
+#if defined(v35_TRAITIFY)
+	int GetNearbyWaterCombatModifier() const { return m_iNearbyWaterCombatModifier; }
+	int GetAttackExtraMoves() const { return m_iAttackExtraMoves; }
+	bool IsKillRefreshMove() const { return m_bKillRefreshMove; }
+	bool IsKillRefreshAttack() const { return m_bKillRefreshAttack; }
+#endif
 
 	bool IsCannotBeChosen() const;
 	bool IsLostWithUpgrade() const;
@@ -388,6 +394,12 @@ protected:
 	int m_iReligiousStrengthLossRivalTerritory;
 	int m_iTradeMissionInfluenceModifier;
 	int m_iTradeMissionGoldModifier;
+#if defined(v35_TRAITIFY)
+	int m_iNearbyWaterCombatModifier;
+	int m_iAttackExtraMoves;
+	bool m_bKillRefreshMove;
+	bool m_bKillRefreshAttack;
+#endif
 
 	bool m_bCannotBeChosen;
 	bool m_bLostWithUpgrade;

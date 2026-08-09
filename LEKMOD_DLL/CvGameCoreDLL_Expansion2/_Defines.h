@@ -1221,11 +1221,13 @@ romania and brazil traits are double counted
 #define LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT
 // Refactor and Expand Trade Routes.
 #define TRADE_REFACTOR
-
+// DLL adjustments for Units based on Era.
 #define LEKMOD_UNIT_STRENGTH_PROMOTION_ERA
 
 #define LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS
 #define GAMEOPTION_NO_COMBAT_RANDOMNESS "GAMEOPTION_LEKMOD_NO_COMBAT_RANDOMNESS"
+// Push out the hard coded culture classes aspects into the dll.
+#define LEKMOD_CULTURE_CLASSES_DATABASE
 
 #define BEE
 /*

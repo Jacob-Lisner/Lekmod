@@ -3275,7 +3275,7 @@ void CvPlayerTraits::InitPlayerTraits()
 			m_iFriendlyLandsCitizenMoveChange += trait->GetFriendlyLandsCitizenMoveChange();
 #endif
 #if defined(v35_TRAITIFY)
-			m_bEmbarkedUnitsFullStrength = trait->IsEmbarkedUnitsFullStrength();
+			m_iEmbarkedUnitFullStrengthCount += trait->IsEmbarkedUnitsFullStrength() ? 1 : 0;
 			m_iCityStateUnitGiftExtraExperience += trait->GetCityStateUnitGiftExtraExperience();
 			m_iGreatGeneralSiegeBonus += trait->GetGreatGeneralSiegeBonus();
 #endif
@@ -3959,7 +3959,7 @@ void CvPlayerTraits::Reset()
 	m_iFriendlyLandsCitizenMoveChange = 0;
 #endif
 #if defined(v35_TRAITIFY)
-	m_bEmbarkedUnitsFullStrength = false;
+	m_iEmbarkedUnitFullStrengthCount = 0;
 	m_iCityStateUnitGiftExtraExperience = 0;
 	m_iGreatGeneralSiegeBonus = 0;
 #endif
@@ -4319,7 +4319,7 @@ void CvPlayerTraits::Reset()
 	{
 #endif
 #if defined(v35_TRAITIFY) // mission loop
-		m_vbEmbarkedAllowedMissions[iMission] = true;
+		m_vbEmbarkedAllowedMissions[iMission] = false;
 #endif
 	}
 
@@ -4555,7 +4555,6 @@ bool CvPlayerTraits::IsBuildableByUnitCombat(BuildTypes eBuild, UnitCombatTypes 
 	return false;
 }
 #endif
-/// Do all new units get a specific promotion?
 bool CvPlayerTraits::HasFreePromotionUnitCombat(const int promotionID, const int unitCombatID) const
 {
 	CvAssertMsg((promotionID >= 0), "promotionID is less than zero");
@@ -5696,7 +5695,7 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	kStream >> m_iFriendlyLandsCitizenMoveChange;
 #endif
 #if defined(v35_TRAITIFY)
-	kStream >> m_bEmbarkedUnitsFullStrength;
+	kStream >> m_iEmbarkedUnitFullStrengthCount;
 	kStream >> m_iCityStateUnitGiftExtraExperience;
 	kStream >> m_iGreatGeneralSiegeBonus;
 #endif
@@ -6231,7 +6230,7 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_iFriendlyLandsCitizenMoveChange;
 #endif
 #if defined(v35_TRAITIFY)
-	kStream << m_bEmbarkedUnitsFullStrength;
+	kStream << m_iEmbarkedUnitFullStrengthCount;	
 	kStream << m_iCityStateUnitGiftExtraExperience;
 	kStream << m_iGreatGeneralSiegeBonus;
 #endif

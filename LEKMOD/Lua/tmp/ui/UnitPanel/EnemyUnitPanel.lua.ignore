@@ -9,9 +9,12 @@ local g_TheirCombatDataIM = InstanceManager:new( "ThemCombatInfo", "Root", Contr
 
 local g_NumButtons = 12;
 local g_lastUnitID = -1;		-- Used to determine if a different pUnit has been selected.
-local g_ModifierListLength = 15;
-
-local maxUnitHitPoints = GameDefines["MAX_HIT_POINTS"];
+local g_ModifierListLength;
+if OptionsManager.GetSmallUIAssets_Cached() then
+	g_ModifierListLength = 6;
+else
+	g_ModifierListLength = 10;
+end
 
 local defaultErrorTextureSheet = "TechAtlasSmall.dds";
 local nullOffset = Vector2( 0, 0 );
@@ -458,6 +461,9 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 		if ((bInterceptPossible) and (bBombing or bSweep)) then
 			if (bBombing) then
 				interceptor = attacker:GetBestInterceptor(battlePlot, defender, false, true, true);
+				if (interceptor == defender) then
+					interceptor = nil;
+				end
 			elseif (bSweep) then
 				interceptor = attacker:GetBestInterceptor(battlePlot, nil, false, true, true);
 			end
@@ -471,7 +477,7 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 		end
 
 		if (defender == nil) then
-			return; -- Sweep preview with no unit passed in and no resolvable interceptor (e.g. attacker cannot be intercepted).
+			return;
 		end
 
 		local fromPlot = nil;
@@ -496,12 +502,10 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 			interceptorModList = interceptor:GetDefenseModifierList(battlePlot, attacker, nil, interceptor, bRanged, bBombing, bSweep, g_ModifierListLength);
 		end
 
-		
 		local rangedSupportFireResults = nil;
 		if(rangedSupportFireStrength > 0) then
 			rangedSupportFireResults = Game.GetCombatDamage(attacker, nil, defender, nil, nil, battlePlot, true, false, false);
-		end
-		
+		end	
 
 		if (attackerStrength > 0) then
 			local CombatDamage = Game.GetCombatDamage(attacker, nil, defender, nil, interceptor, battlePlot, bRanged, bBombing, bSweep);
@@ -520,11 +524,13 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 				iInterceptionDamage = interceptorResults.DamageInflicted;
 			end
 
+			-- Clamped because this sums two independent combat sims (main attack + ranged support fire); the
+			-- DLL only caps each sim's own FinalDamage, not their Lua-side sum against remaining HP.
 			local attackerDamageInflicted = math.max(0, defenderResults.FinalDamage - defenderResults.CurrentDamage) + iRangedSupportFireDamage;
 			attackerDamageInflicted = math.min(attackerDamageInflicted, defenderResults.MaxHitPoints - defenderResults.CurrentDamage);
 			local defenderDamageInflicted = math.max(0, attackerResults.FinalDamage - attackerResults.CurrentDamage);
 
-			DoUpdateHealthBars(maxUnitHitPoints, maxUnitHitPoints, attackerResults.CurrentDamage, defenderResults.CurrentDamage, attackerDamageInflicted, defenderDamageInflicted, iRangedSupportFireDamage, iInterceptionDamage);
+			DoUpdateHealthBars(attacker:GetMaxHitPoints(), defender:GetMaxHitPoints(), attackerResults.CurrentDamage, defenderResults.CurrentDamage, attackerDamageInflicted, defenderDamageInflicted, iRangedSupportFireDamage, iInterceptionDamage);
 			
 			Controls.MyStrengthValue:SetText( Locale.ToNumber(attackerStrength / 100, "#.##"));
 			Controls.TheirStrengthValue:SetText( Locale.ToNumber(defenderStrength / 100, "#.##") );
@@ -567,8 +573,8 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 				end
 				Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey(string)));
 			else
-				local bAttackerDies = (attackerResults.CurrentDamage + defenderDamageInflicted) >= maxUnitHitPoints;
-				local bDefenderDies = (defenderResults.CurrentDamage + attackerDamageInflicted) >= maxUnitHitPoints;
+				local bAttackerDies = (attackerResults.CurrentDamage + defenderDamageInflicted) >= attacker:GetMaxHitPoints();
+				local bDefenderDies = (defenderResults.CurrentDamage + attackerDamageInflicted) >= defender:GetMaxHitPoints();
 
 				if (bAttackerDies and bDefenderDies) then
 					Controls.StalemateIndicator:SetHide(false);
@@ -635,10 +641,6 @@ function UpdateCombatOddsCityVsUnit(myCity, theirUnit)
 	local bBombing = false;
 	local bSweep = false;
 
-	------------------------------------------------------------
-	-- Strengths and modifier lists
-	------------------------------------------------------------
-
 	local attackerStrength = attacker:GetStrengthValue(true);
 	local attackerModList = attacker:GetCityCombatModifierList(true);
 	local defenderStrength = defender:GetMaxDefenseStrength( battlePlot, nil, attacker, nil, bRanged, bBombing, bSweep);
@@ -647,10 +649,6 @@ function UpdateCombatOddsCityVsUnit(myCity, theirUnit)
 	if (attackerStrength <= 0 or defenderStrength <= 0) then
 		return false;
 	end
-
-	------------------------------------------------------------
-	-- Damage
-	------------------------------------------------------------
 
 	local CombatDamage = Game.GetCombatDamage( nil, attacker, defender, nil, nil, battlePlot, bRanged, bBombing, bSweep);
 
@@ -662,7 +660,6 @@ function UpdateCombatOddsCityVsUnit(myCity, theirUnit)
 	local defenderResults = CombatDamage.Defender;
 
 	local attackerDamageInflicted = math.max( 0, defenderResults.FinalDamage - defenderResults.CurrentDamage);
-
 	local defenderDamageInflicted = math.max( 0, attackerResults.FinalDamage - attackerResults.CurrentDamage);
 
 	Controls.MyDamageValue:SetText("[COLOR_GREEN]" .. attackerDamageInflicted .. "[ENDCOLOR]");
@@ -784,7 +781,6 @@ function UpdateCombatOddsCityVsCity(myCity, theirCity)
 		SetCombatModifierRow(controlTable, modifier, false);
 	end
 
-
 	Controls.RangedAttackIndicator:SetHide(false);
 	Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey("TXT_KEY_INTERFACEMODE_RANGE_ATTACK")));
 
@@ -900,9 +896,6 @@ function DoUpdateHealthBars(iMaxMyHP, iTheirMaxHP, myCurrentDamage, theirCurrent
 		Controls.MyExtraDeltaBar:SetHide(true);
 	end
 
-	----------------------------------------------------------------
-	-- Their health bar
-	----------------------------------------------------------------
 
 	local theirRemainingHP = math.max(0, iTheirMaxHP - theirCurrentDamage);
 
@@ -910,7 +903,6 @@ function DoUpdateHealthBars(iMaxMyHP, iTheirMaxHP, myCurrentDamage, theirCurrent
 
 	-- Extra damage is already included in theirDamageTaken.
 	local theirExtraDamageTaken = math.min(iMyExtraDamageInflicted, theirDamageTaken);
-
 	local theirNormalDamageTaken = theirDamageTaken - theirExtraDamageTaken;
 
 	theirCurrentDamage = theirCurrentDamage + theirDamageTaken;
@@ -978,7 +970,7 @@ function DoUpdateHealthBars(iMaxMyHP, iTheirMaxHP, myCurrentDamage, theirCurrent
 		Controls.TheirExtraDeltaBar:SetHide(false);
 		Controls.TheirExtraDeltaBar:SetOffsetVal(0, theirDamageOffset + theirNormalDamageBarSize.y);
 		Controls.TheirExtraDeltaBar:SetSize(theirExtraDamageBarSize);
-		Controls.TheirExtraDeltaBarFlash:SetSize(theirExtraDamageBarSize	);
+		Controls.TheirExtraDeltaBarFlash:SetSize(theirExtraDamageBarSize);
 	else
 		Controls.TheirExtraDeltaBar:SetHide(true);
 	end

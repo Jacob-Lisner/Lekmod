@@ -3136,6 +3136,7 @@ CvPolicyBranchEntry::CvPolicyBranchEntry(void):
 	m_iFreeFinishingPolicy(NO_POLICY),
 	m_iFirstAdopterFreePolicies(0),
 	m_iSecondAdopterFreePolicies(0),
+	// Arrays
 	m_piPolicyBranchDisables(NULL)
 {
 }
@@ -3175,7 +3176,7 @@ bool CvPolicyBranchEntry::CacheResults(Database::Results& kResults, CvDatabaseUt
 	m_bDelayWhenNoCulture = kResults.GetBool("AIDelayNoCulture");
 	m_bDelayWhenNoCityStates = kResults.GetBool("AIDelayNoCityStates");
 	m_bDelayWhenNoScience = kResults.GetBool("AIDelayNoScience");
-
+	m_szIconString = kResults.GetText("IconString");
 	//PolicyBranch_Disables
 	{
 		kUtility.InitializeArray(m_piPolicyBranchDisables, "PolicyBranchTypes", (int)NO_POLICY_BRANCH_TYPE);
@@ -3281,6 +3282,11 @@ bool CvPolicyBranchEntry::IsDelayWhenNoScience() const
 	return m_bDelayWhenNoScience;
 }
 
+/// Should the AI delay selecting this branch when game has disabled science?
+bool CvPolicyBranchEntry::IsDelayWhenNoScience() const
+{
+	return m_bDelayWhenNoScience;
+}
 //=====================================
 // CvPolicyXMLEntries
 //=====================================

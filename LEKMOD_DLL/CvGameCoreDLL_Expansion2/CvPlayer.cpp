@@ -5744,7 +5744,11 @@ void CvPlayer::DoUnitReset()
 		{
 			pLoopUnit->changeDamage(iCitadelDamage, NO_PLAYER, /*fAdditionalTextDelay*/ 0.5f);
 		}
-
+#if defined(v35_TRAITIFY)
+		pLoopUnit->setMadeAttackLastTurn(pLoopUnit->isOutOfAttacks());
+		pLoopUnit->setKilledUnitLastTurn(pLoopUnit->killedUnit());
+		pLoopUnit->setKilledUnit(false);
+#endif
 		// Finally (now that healing is done), restore movement points
 		pLoopUnit->setMoves(pLoopUnit->maxMoves());
 		if (pLoopUnit->IsGreatGeneral())

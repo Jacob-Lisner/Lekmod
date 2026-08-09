@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -7635,11 +7635,11 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 					kPlayer.ChangeNumFreePolicies(iNumFreePolicies);
 				}
 #if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
-				int iLoop;
-				CvUnit* pLoopUnit;
+				int iLoop = 0;
+				CvUnit* pLoopUnit = NULL;
 				for (pLoopUnit = kPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kPlayer.nextUnit(&iLoop))
 				{
-					CvUnitEntry pUnitInfo = pLoopUnit->getUnitInfo();
+					CvUnitEntry& pUnitInfo = pLoopUnit->getUnitInfo();
 					for (int jJ = 0; jJ < GC.getNumPromotionInfos(); jJ++)
 					{
 						PromotionTypes ePromotion = static_cast<PromotionTypes>(jJ);
