@@ -3282,11 +3282,6 @@ bool CvPolicyBranchEntry::IsDelayWhenNoScience() const
 	return m_bDelayWhenNoScience;
 }
 
-/// Should the AI delay selecting this branch when game has disabled science?
-bool CvPolicyBranchEntry::IsDelayWhenNoScience() const
-{
-	return m_bDelayWhenNoScience;
-}
 //=====================================
 // CvPolicyXMLEntries
 //=====================================
