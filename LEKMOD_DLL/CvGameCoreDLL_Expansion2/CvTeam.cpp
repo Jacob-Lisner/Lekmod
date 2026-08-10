@@ -3635,7 +3635,12 @@ int CvTeam::getEmbarkedExtraSight() const
 
 void CvTeam::changeEmbarkedExtraSight(int iChange)
 {
-	m_iEmbarkedExtraSight = (m_iEmbarkedExtraSight + iChange);
+	if (iChange != 0)
+	{
+		GC.getMap().updateSight(false);
+		m_iEmbarkedExtraSight = (m_iEmbarkedExtraSight + iChange);
+		GC.getMap().updateSight(true);
+	}
 }
 
 // END
