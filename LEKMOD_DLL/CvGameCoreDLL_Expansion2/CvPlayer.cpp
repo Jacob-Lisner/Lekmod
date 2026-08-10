@@ -13498,20 +13498,40 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, C
 				}
 			}
 
+			// Global Defines caps (POLICY/TRAIT/BELIEF/PROMOTION/UNIT_YIELD_CAP).
+			// Per-row <Max> on *_YieldFromKills overrides the matching global when > 0.
 			int iPolicyCap = GC.getPOLICY_YIELD_CAP();
+			int iPolicyMax = GetPlayerPolicies()->GetYieldFromKillsMax(eYield);
+			if (iPolicyMax > 0)
+				iPolicyCap = iPolicyMax;
+
 			int iTraitCap = GC.getTRAIT_YIELD_CAP();
+			int iTraitMax = GetPlayerTraits()->GetYieldFromKillsMax(eYield);
+			if (iTraitMax > 0)
+				iTraitCap = iTraitMax;
+
 			int iBeliefCap = GC.getBELIEF_YIELD_CAP();
-			int iPromotionCap = GC.getPROMOTION_YIELD_CAP(); 
+
+			int iPromotionCap = GC.getPROMOTION_YIELD_CAP();
 			if (pAttackingUnit != NULL)
 			{
 				int iCapFromPromotions = pAttackingUnit->GetKillYieldCap(eYield);
-				if(iCapFromPromotions > 0)
-					iPromotionCap += iCapFromPromotions;
+				if (iCapFromPromotions > 0)
+					iPromotionCap = iCapFromPromotions;
 			}
+
 			int iUnitCap = GC.getUNIT_YIELD_CAP();
-			// Ok so EAP has requested a different System. 
-			// NQMP GJS - Cap Yields from kills to 30 per type (policy/trait/belief/other)
-			// Expanding on GJS's cap. Make them Global Integers, and use them to cap the values. 
+			if (eAttackingUnitType != NO_UNIT)
+			{
+				CvUnitEntry* pkAttackingUnitInfo = GC.getUnitInfo(eAttackingUnitType);
+				if (pkAttackingUnitInfo)
+				{
+					int iUnitMax = pkAttackingUnitInfo->GetYieldFromKillsMax(eYield);
+					if (iUnitMax > 0)
+						iUnitCap = iUnitMax;
+				}
+			}
+
 			if (iPolicyCap > 0)
 				iPolicyValue = min((iPolicyValue * iCombatStrength) / 100, iPolicyCap);
 			else 

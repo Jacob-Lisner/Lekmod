@@ -156,6 +156,7 @@ public:
 	int GetResourceQuantityRequirement(int i) const;
 	int GetBuildingProductionModifier(BuildingTypes eBuilding) const;
 	int GetYieldFromKills(YieldTypes eYield) const;
+	int GetYieldFromKillsMax(YieldTypes eYield) const;
 	int GetProductionTraits(int i) const;
 	int GetFlavorValue(int i) const;
 	int GetUnitGroupRequired(int i) const;
@@ -310,6 +311,7 @@ private:
 	int* m_piUnitGroupRequired;
 	int* m_piProductionModifierBuildings;
 	int* m_piYieldFromKills;
+	int* m_piYieldFromKillsMax;
 
 	bool* m_pbUpgradeUnitClass;
 	bool* m_pbUnitAIType;

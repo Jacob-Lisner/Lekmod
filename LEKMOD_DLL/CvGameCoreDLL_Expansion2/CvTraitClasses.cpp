@@ -200,6 +200,7 @@ CvTraitEntry::CvTraitEntry() :
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	m_paiYieldFromKills(NULL),
+	m_paiYieldFromKillsMax(NULL),
 #endif
 	m_paiExtraYieldThreshold(NULL),
 	m_paiYieldChange(NULL),
@@ -299,6 +300,7 @@ CvTraitEntry::~CvTraitEntry()
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	SAFE_DELETE_ARRAY(m_paiYieldFromKills);
+	SAFE_DELETE_ARRAY(m_paiYieldFromKillsMax);
 #endif
 #if defined(LEKMOD_v34)
 	SAFE_DELETE_ARRAY(m_paiYieldPerPopulation);
@@ -1162,6 +1164,11 @@ int CvTraitEntry::GetYieldFromKills(int i) const
 {
 	return m_paiYieldFromKills ? m_paiYieldFromKills[i] : -1;
 }
+/// Accessor:: Cap on yield from kills (0 = uncapped / use global)
+int CvTraitEntry::GetYieldFromKillsMax(int i) const
+{
+	return m_paiYieldFromKillsMax ? m_paiYieldFromKillsMax[i] : 0;
+}
 #endif
 #if !defined(TRADE_REFACTOR)
 /// Accessor:: Extra yield from trade partners
@@ -1894,7 +1901,31 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	kUtility.SetYields(m_paiYieldChangeLuxuryResources, "Trait_YieldChangesLuxuryResources", "TraitType", szTraitType); // NQMP GJS - New Netherlands UA
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
-	kUtility.SetYields(m_paiYieldFromKills, "Trait_YieldFromKills", "TraitType", szTraitType);
+	{
+		kUtility.InitializeArray(m_paiYieldFromKills, "Yields", 0);
+		kUtility.InitializeArray(m_paiYieldFromKillsMax, "Yields", 0);
+		std::string sqlKey = "Trait_YieldFromKills";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Yields.ID, Yield, COALESCE(Max, 0) "
+				"FROM Trait_YieldFromKills "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE TraitType = ?";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+
+		pResults->Bind(1, szTraitType);
+
+		while (pResults->Step())
+		{
+			const int iYieldID = pResults->GetInt(0);
+			m_paiYieldFromKills[iYieldID] = pResults->GetInt(1);
+			m_paiYieldFromKillsMax[iYieldID] = pResults->GetInt(2);
+		}
+		pResults->Reset();
+	}
 #endif
 	kUtility.SetYields(m_paiYieldChangeNaturalWonder, "Trait_YieldChangesNaturalWonder", "TraitType", szTraitType);
 	kUtility.SetYields(m_paiYieldModifier, "Trait_YieldModifiers", "TraitType", szTraitType);
@@ -3488,6 +3519,7 @@ void CvPlayerTraits::InitPlayerTraits()
 				m_iYieldRateModifier[iYield] = trait->GetYieldModifier(iYield);
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::InitPlayerTraits, Arrays
 				m_iYieldFromKills[iYield] = trait->GetYieldFromKills(iYield);
+				m_iYieldFromKillsMax[iYield] = trait->GetYieldFromKillsMax(iYield);
 #endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 				m_iWorldWonderYieldChange[iYield] = trait->GetWorldWonderYieldChanges(iYield);
@@ -4151,6 +4183,7 @@ void CvPlayerTraits::Reset()
 		m_iYieldRateModifier[iYield] = 0;
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::Reset, Arrays
 		m_iYieldFromKills[iYield] = 0;
+		m_iYieldFromKillsMax[iYield] = 0;
 #endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 		m_iWorldWonderYieldChange[iYield] = 0;
@@ -5948,6 +5981,8 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::Read (for CvPlayerTraits Arrays)
 	ArrayWrapper<int> kYieldFromKillsWrapper(NUM_YIELD_TYPES, m_iYieldFromKills);
 	kStream >> kYieldFromKillsWrapper;
+	ArrayWrapper<int> kYieldFromKillsMaxWrapper(NUM_YIELD_TYPES, m_iYieldFromKillsMax);
+	kStream >> kYieldFromKillsMaxWrapper;
 #endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	ArrayWrapper<int> kWorldWonderYieldChangesWrapper(NUM_YIELD_TYPES, m_iWorldWonderYieldChange);
@@ -6334,6 +6369,7 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldChangeNaturalWonder);
 #if defined(FULL_YIELD_FROM_KILLS) // CvPlayerTraits::Write (for CvPlayerTraits Arrays)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldFromKills);
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iYieldFromKillsMax);
 #endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_iWorldWonderYieldChange);

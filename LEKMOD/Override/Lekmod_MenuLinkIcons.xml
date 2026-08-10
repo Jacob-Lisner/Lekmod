@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lekmod Discord / GitHub font icons for UI text ([ICON_LEKMOD_DISCORD], [ICON_LEKMOD_GITHUB]) -->
+<GameData>
+	<IconFontTextures>
+		<Row>
+			<IconFontTexture>ICON_FONT_TEXTURE_LEKMOD_DISCORD</IconFontTexture>
+			<IconFontTextureFile>lekmod_disc_logo_22</IconFontTextureFile>
+		</Row>
+		<Row>
+			<IconFontTexture>ICON_FONT_TEXTURE_LEKMOD_GITHUB</IconFontTexture>
+			<IconFontTextureFile>lekmod_git_logo_22</IconFontTextureFile>
+		</Row>
+	</IconFontTextures>
+	<IconFontMapping>
+		<Row>
+			<IconName>ICON_LEKMOD_DISCORD</IconName>
+			<IconFontTexture>ICON_FONT_TEXTURE_LEKMOD_DISCORD</IconFontTexture>
+			<IconMapping>1</IconMapping>
+		</Row>
+		<Row>
+			<IconName>ICON_LEKMOD_GITHUB</IconName>
+			<IconFontTexture>ICON_FONT_TEXTURE_LEKMOD_GITHUB</IconFontTexture>
+			<IconMapping>1</IconMapping>
+		</Row>
+	</IconFontMapping>
+</GameData>

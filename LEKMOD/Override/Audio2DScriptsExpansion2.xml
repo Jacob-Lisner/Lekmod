@@ -26,42 +26,6 @@
 
     <Script2DSound>
 
-      <ScriptID>AS2D_MUSIC_MAIN_MENU_LEK_SCRAMBLE</ScriptID>
-
-      <SoundID>SND_MUSIC_MAIN_MENU_LEK</SoundID>
-
-      <SoundType>GAME_SFX</SoundType>
-
-      <iMinVolume>80</iMinVolume>
-
-      <iMaxVolume>80</iMaxVolume>
-
-      <bLooping>1</bLooping>
-
-      <fTaperSoundtrackVolume>0.0</fTaperSoundtrackVolume>
-
-    </Script2DSound>
-
-    <Script2DSound>
-
-      <ScriptID>AS2D_MUSIC_MAIN_MENU_LEK_EXP2</ScriptID>
-
-      <SoundID>SND_MUSIC_MAIN_MENU_LEK_EXP2</SoundID>
-
-      <SoundType>GAME_SFX</SoundType>
-
-      <iMinVolume>80</iMinVolume>
-
-      <iMaxVolume>80</iMaxVolume>
-
-      <bLooping>1</bLooping>
-
-      <fTaperSoundtrackVolume>0.0</fTaperSoundtrackVolume>
-
-    </Script2DSound>
-
-    <Script2DSound>
-
       <ScriptID>AS2D_INTERFACE_CARAVAN_TRADE_ROUTE</ScriptID>
 
       <SoundID>SND_INTERFACE_CARAVAN_TRADE_ROUTE</SoundID>
@@ -77,4 +41,3 @@
   </Script2DSounds>
 
 </Script2DFile>
-

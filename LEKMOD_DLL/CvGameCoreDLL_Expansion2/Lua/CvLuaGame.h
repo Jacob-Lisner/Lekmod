@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -243,6 +243,12 @@ protected:
 	static int lGetReplayMessages(lua_State* L);
 	static int lGetNumReplayMessages(lua_State* L);
 	static int lGetReplayInfo(lua_State* L);
+#ifdef REPLAY_MESSAGE_EXTENDED
+	static int lAddChatReplayMessage(lua_State* L);
+#endif
+#ifdef LEKMOD_VERSION_CHECK
+	static int lCheckLekmodUpdate(lua_State* L);
+#endif
 
 	static int lSaveReplay(lua_State* L);
 

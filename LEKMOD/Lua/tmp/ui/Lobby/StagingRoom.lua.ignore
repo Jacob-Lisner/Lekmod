@@ -7,12 +7,26 @@ include( "InstanceManager" );
 include( "UniqueBonuses" );
 include( "MPGameOptions" );
 include( "TurnStatusBehavior" ); -- for turn status button behavior
+include( "Lekmod_version.lua" );
 
 -------------------------------------------------
 -- Globals
 -------------------------------------------------
 local m_SlotInstances = {};
 local g_ChatInstances = {};
+local g_LobbyChatHistory = {};
+local g_bRequestedLobbyChatHistory = false;
+local bFlipper = false;
+local g_VersionVerified = {}; -- [playerID] = true/false
+local g_VersionDeadline = {}; -- [playerID] = remaining seconds
+local g_fVersionCheckAccum = 0;
+
+-- UserData key shared with DiploCorner for lobby → in-game chat handoff.
+local LOBBY_CHAT_USERDATA = "LekmodLobbyChat";
+local LOBBY_CHAT_REQ = "#LCHREQ#";
+local LOBBY_CHAT_CLEAR = "#LCHCLEAR#";
+local LOBBY_CHAT_PREFIX = "#LCH#";
+local LOBBY_CHAT_HISTORY_MAX = 100;
 
 local g_AdvancedOptionIM = InstanceManager:new( "GameOption", "Text", Controls.AdvancedOptions );
 local g_AdvancedOptionsList = {};
@@ -215,8 +229,14 @@ Controls.RemoveButton:RegisterCallback( Mouse.eLClick, OnCancel );
 -------------------------------------------------
 -- Context OnUpdate
 -------------------------------------------------
-function OnUpdate( fDTime )
-	-- OnUpdate only runs when the game start countdown is ticking down.
+function OnStagingUpdate( fDTime )
+	VersionCheckUpdate( fDTime );
+
+	-- Countdown only runs while g_fCountdownTimer is active (>= 0).
+	if( g_fCountdownTimer < 0 ) then
+		return;
+	end
+
 	g_fCountdownTimer = g_fCountdownTimer - fDTime;
 	if( not Network.IsEveryoneConnected() ) then
 		-- not all players are connected anymore.  This is probably due to a player join in progress.
@@ -236,12 +256,16 @@ function OnUpdate( fDTime )
 	end
 end
 
+function EnsureStagingUpdate()
+	ContextPtr:SetUpdate( OnStagingUpdate );
+end
+
 -------------------------------------------------
 -- Start Game Launch Countdown
 -------------------------------------------------
 function StartCountdown()
 	g_fCountdownTimer = 10;
-	ContextPtr:SetUpdate( OnUpdate );
+	EnsureStagingUpdate();
 end
 
 -------------------------------------------------
@@ -250,7 +274,11 @@ end
 function StopCountdown()
 	Controls.CountdownButton:SetHide(true);
 	g_fCountdownTimer = -1;
-	ContextPtr:ClearUpdate();
+	if( Matchmaking.IsHost() and not PreGame.IsHotSeatGame() ) then
+		EnsureStagingUpdate();
+	else
+		ContextPtr:ClearUpdate();
+	end
 end
 
 
@@ -295,6 +323,8 @@ Events.MultiplayerHotJoinCompleted.Add(OnHotJoinCompleted);
 -------------------------------------------------
 function OnGameLaunched()
 
+	PersistLobbyChatHistory();
+	ClearLobbyChat();
 	UIManager:DequeuePopup( ContextPtr );
 
 end
@@ -351,7 +381,8 @@ end
 -------------------------------------------------
 function OnKickPlayer( selectionIndex )
 	local playerID = GetPlayerIDBySelectionIndex(selectionIndex);
-	UIManager:PushModal(Controls.ConfirmKick, true);	
+	-- Do not pass true: that hides StagingRoom and previously wiped lobby chat on every kick confirm.
+	UIManager:PushModal(Controls.ConfirmKick);	
 	local playerName = m_SlotInstances[selectionIndex].PlayerNameLabel:GetText();
 	LuaEvents.SetKickPlayer(playerID, playerName);
 end
@@ -1006,11 +1037,249 @@ Controls.HotJoinCancelButton:RegisterCallback( Mouse.eLClick, BackButtonClick );
 
 
 -------------------------------------------------
+-- Lobby chat history (host-synced, transferred into in-game chat on launch)
+-------------------------------------------------
+function ClearLobbyChat()
+	Controls.ChatStack:DestroyAllChildren();
+	g_ChatInstances = {};
+	g_LobbyChatHistory = {};
+	g_bRequestedLobbyChatHistory = false;
+end
+
+function AppendLobbyChatHistory( fromPlayer, text, playerName )
+	table.insert( g_LobbyChatHistory, {
+		fromPlayer = fromPlayer,
+		text = text,
+		playerName = playerName,
+	} );
+	while( #g_LobbyChatHistory > LOBBY_CHAT_HISTORY_MAX ) do
+		table.remove( g_LobbyChatHistory, 1 );
+	end
+end
+
+function PersistLobbyChatHistory()
+	if( PreGame.IsHotSeatGame() ) then
+		return;
+	end
+
+	local userData = Modding.OpenUserData( LOBBY_CHAT_USERDATA, 1 );
+	local count = #g_LobbyChatHistory;
+	userData.SetValue( "count", count );
+	for i, msg in ipairs( g_LobbyChatHistory ) do
+		userData.SetValue( "from" .. i, msg.fromPlayer );
+		userData.SetValue( "name" .. i, msg.playerName or "" );
+		userData.SetValue( "text" .. i, msg.text or "" );
+	end
+end
+
+function EncodeLobbyChatSync( fromPlayer, playerName, text )
+	local safeName = string.gsub( playerName or "", "|", "/" );
+	return LOBBY_CHAT_PREFIX .. tostring( fromPlayer ) .. "|" .. safeName .. "|" .. text;
+end
+
+function DecodeLobbyChatSync( text )
+	if( string.sub( text, 1, #LOBBY_CHAT_PREFIX ) ~= LOBBY_CHAT_PREFIX ) then
+		return nil, nil, nil;
+	end
+
+	local rest = string.sub( text, #LOBBY_CHAT_PREFIX + 1 );
+	local sep1 = string.find( rest, "|", 1, true );
+	if( sep1 == nil ) then
+		return nil, nil, nil;
+	end
+	local sep2 = string.find( rest, "|", sep1 + 1, true );
+	if( sep2 == nil ) then
+		return nil, nil, nil;
+	end
+
+	local fromPlayer = tonumber( string.sub( rest, 1, sep1 - 1 ) );
+	if( fromPlayer == nil ) then
+		return nil, nil, nil;
+	end
+	local playerName = string.sub( rest, sep1 + 1, sep2 - 1 );
+	local msgText = string.sub( rest, sep2 + 1 );
+	return fromPlayer, playerName, msgText;
+end
+
+function SendLobbyChatHistoryToPlayer( playerID )
+	if( not Matchmaking.IsHost() ) then
+		return;
+	end
+	if( playerID == Matchmaking.GetLocalID() ) then
+		return;
+	end
+
+	Network.SendChat( LOBBY_CHAT_CLEAR, -1, playerID );
+	for _, msg in ipairs( g_LobbyChatHistory ) do
+		local encoded = EncodeLobbyChatSync( msg.fromPlayer, msg.playerName, msg.text );
+		if( #encoded > 255 ) then
+			local overhead = #LOBBY_CHAT_PREFIX + #tostring( msg.fromPlayer ) + 1 + #( msg.playerName or "" ) + 1;
+			local maxText = math.max( 0, 255 - overhead );
+			encoded = EncodeLobbyChatSync( msg.fromPlayer, msg.playerName, string.sub( msg.text, 1, maxText ) );
+		end
+		Network.SendChat( encoded, -1, playerID );
+	end
+end
+
+function RequestLobbyChatHistory()
+	if( PreGame.IsHotSeatGame() or Matchmaking.IsHost() or g_bRequestedLobbyChatHistory ) then
+		return;
+	end
+	g_bRequestedLobbyChatHistory = true;
+	Network.SendChat( LOBBY_CHAT_REQ );
+end
+
+-------------------------------------------------
+-- Multiplayer Lekmod version handshake
+-------------------------------------------------
+function GetPlayerDisplayName( playerID )
+	if m_PlayerNames[ playerID ] ~= nil then
+		return m_PlayerNames[ playerID ];
+	end
+	local name = PreGame.GetNickName( playerID );
+	if name ~= nil and name ~= "" then
+		return name;
+	end
+	return "Player " .. tostring( playerID );
+end
+
+function MarkPlayerVersionVerified( playerID )
+	g_VersionVerified[ playerID ] = true;
+	g_VersionDeadline[ playerID ] = nil;
+end
+
+function StartPlayerVersionWatch( playerID )
+	if( not Matchmaking.IsHost() or PreGame.IsHotSeatGame() ) then
+		return;
+	end
+	if( playerID == Matchmaking.GetLocalID() ) then
+		MarkPlayerVersionVerified( playerID );
+		return;
+	end
+	if( g_VersionVerified[ playerID ] ) then
+		return;
+	end
+	g_VersionVerified[ playerID ] = false;
+	g_VersionDeadline[ playerID ] = LekmodVersion.HANDSHAKE_TIMEOUT;
+end
+
+function KickForVersionIssue( playerID, reasonKey, expectedVersion )
+	if( not Matchmaking.IsHost() ) then
+		return;
+	end
+	local name = GetPlayerDisplayName( playerID );
+	local msg;
+	if reasonKey == "missing" then
+		msg = Locale.ConvertTextKey( "TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK", name );
+		if msg == "TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK" then
+			msg = name .. " was removed: no Lekmod version handshake received (missing/outdated Lekmod UI).";
+		end
+	else
+		msg = Locale.ConvertTextKey( "TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK", name, expectedVersion );
+		if msg == "TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK" then
+			msg = name .. " was removed: Lekmod version mismatch (expected " .. tostring(expectedVersion) .. ").";
+		end
+	end
+	Events.FrontEndPopup.CallImmediate( msg );
+	Matchmaking.KickPlayer( playerID );
+	g_VersionVerified[ playerID ] = nil;
+	g_VersionDeadline[ playerID ] = nil;
+end
+
+function HandleVersionHandshake( fromPlayer, version )
+	local localVersion = LekmodVersion.GetLocal();
+	if( Matchmaking.IsHost() ) then
+		if version ~= nil and localVersion ~= nil and LekmodVersion.Compare( version, localVersion ) == 0 then
+			MarkPlayerVersionVerified( fromPlayer );
+		else
+			KickForVersionIssue( fromPlayer, "mismatch", localVersion );
+		end
+	end
+end
+
+function SendLocalVersionHandshake()
+	if( PreGame.IsHotSeatGame() ) then
+		return;
+	end
+	Network.SendChat( LekmodVersion.GetHandshakeMessage() );
+end
+
+function VersionCheckUpdate( fDTime )
+	if( ContextPtr:IsHidden() or not Matchmaking.IsHost() or PreGame.IsHotSeatGame() ) then
+		return;
+	end
+
+	g_fVersionCheckAccum = g_fVersionCheckAccum + fDTime;
+	if( g_fVersionCheckAccum < 0.5 ) then
+		return;
+	end
+	local dt = g_fVersionCheckAccum;
+	g_fVersionCheckAccum = 0;
+
+	for playerID, deadline in pairs( g_VersionDeadline ) do
+		if( g_VersionVerified[ playerID ] ) then
+			g_VersionDeadline[ playerID ] = nil;
+		elseif( Network.IsPlayerConnected( playerID ) ) then
+			local remaining = deadline - dt;
+			if remaining <= 0 then
+				KickForVersionIssue( playerID, "missing", LekmodVersion.GetLocal() );
+			else
+				g_VersionDeadline[ playerID ] = remaining;
+			end
+		else
+			g_VersionDeadline[ playerID ] = nil;
+			g_VersionVerified[ playerID ] = nil;
+		end
+	end
+end
+
+function DisplayLobbyChatMessage( fromPlayer, text, playerName, bSkipSound, bForceScrollBottom )
+	local displayName = playerName or m_PlayerNames[ fromPlayer ];
+	if( displayName == nil ) then
+		return;
+	end
+
+	local scrollPos = Controls.ChatScroll:GetScrollValue();
+	local bAtBottom = bForceScrollBottom or ( scrollPos >= 0.99 );
+
+	local controlTable = {};
+	ContextPtr:BuildInstanceForControl( "ChatEntry", controlTable, Controls.ChatStack );
+
+	table.insert( g_ChatInstances, controlTable );
+	if( #g_ChatInstances > LOBBY_CHAT_HISTORY_MAX ) then
+		Controls.ChatStack:ReleaseChild( g_ChatInstances[ 1 ].Box );
+		table.remove( g_ChatInstances, 1 );
+	end
+
+	controlTable.String:SetText( displayName .. ": " .. text );
+	controlTable.Box:SetSizeY( controlTable.String:GetSizeY() + 15 );
+	controlTable.Box:ReprocessAnchoring();
+
+	if( bFlipper ) then
+		controlTable.Box:SetColorChannel( 3, 0.4 );
+	end
+	bFlipper = not bFlipper;
+
+	if( not bSkipSound ) then
+		Events.AudioPlay2DSound( "AS2D_IF_MP_CHAT_DING" );
+	end
+
+	Controls.ChatStack:CalculateSize();
+	Controls.ChatScroll:CalculateInternalSize();
+	if( bAtBottom ) then
+		Controls.ChatScroll:SetScrollValue( 1 );
+	else
+		Controls.ChatScroll:SetScrollValue( scrollPos );
+	end
+end
+
+-------------------------------------------------
 -- Leave the Game
 -------------------------------------------------
 function HandleExitRequest()
 	
 	StopCountdown(); -- Make sure there is no countdown going.
+	ClearLobbyChat();
 	
 	local isHost = Matchmaking.IsHost();
 	Matchmaking.LeaveMultiplayerGame();
@@ -1049,6 +1318,7 @@ function OnConnect( playerID )
     	UpdateDisplay();
       BuildPlayerNames();
     	OnChat( playerID, -1, Locale.ConvertTextKey( "TXT_KEY_CONNECTED" ) );
+		StartPlayerVersionWatch( playerID );
 
     end
 end
@@ -1322,9 +1592,8 @@ Controls.OptionsPageTab:RegisterCallback( Mouse.eLClick, OnOptionsPageTab );
 function ShowHideHandler( bIsHide, bIsInit )
 
 		--print("ShowHideHandler Hide: " .. tostring(bIsHide) .. " Init: " .. tostring(bIsInit));
-    if( bIsHide ) then
-			Controls.ChatStack:DestroyAllChildren();
-    end
+    -- Do not clear chat on hide: PushModal(..., true) for ConfirmKick temporarily hides
+    -- this screen and wiping chat there is what cleared the lobby on kick.
     
     -- Create slot instances.
     if ( bIsInit ) then
@@ -1386,6 +1655,18 @@ function ShowHideHandler( bIsHide, bIsInit )
 		UpdateDisplay();
 		ShowHideSaveButton();
 		UIManager:SetUICursor( 0 );
+		RequestLobbyChatHistory();
+		SendLocalVersionHandshake();
+		if( Matchmaking.IsHost() and not PreGame.IsHotSeatGame() ) then
+			MarkPlayerVersionVerified( Matchmaking.GetLocalID() );
+			-- Watch any humans already connected when we open/refresh the lobby.
+			for i = 0, GameDefines.MAX_MAJOR_CIVS - 1 do
+				if( i ~= Matchmaking.GetLocalID() and Network.IsPlayerConnected( i ) ) then
+					StartPlayerVersionWatch( i );
+				end
+			end
+			EnsureStagingUpdate();
+		end
 	end
 
 end
@@ -1809,33 +2090,58 @@ end
 
 -------------------------------------------------
 -------------------------------------------------
-local bFlipper = false;
 function OnChat( fromPlayer, toPlayer, text, eTargetType )
-	if( ContextPtr:IsHidden() == false and m_PlayerNames[ fromPlayer ] ~= nil ) then
-		local controlTable = {};
-		ContextPtr:BuildInstanceForControl( "ChatEntry", controlTable, Controls.ChatStack );
-	    
-		table.insert( g_ChatInstances, controlTable );
-		if( #g_ChatInstances > 100 ) then
-	    
-			Controls.ChatStack:ReleaseChild( g_ChatInstances[ 1 ].Box );
-			table.remove( g_ChatInstances, 1 );
+	if( text == nil or text == "" ) then
+		return;
+	end
+
+	-- Lekmod version handshake (must not show in chat).
+	local handshakeVersion = LekmodVersion.ParseHandshake( text );
+	if( handshakeVersion ~= nil or (text ~= nil and string.sub(text, 1, #LekmodVersion.HANDSHAKE_PREFIX) == LekmodVersion.HANDSHAKE_PREFIX) ) then
+		HandleVersionHandshake( fromPlayer, handshakeVersion );
+		return;
+	end
+
+	-- Joiner asked for history: host privately dumps the buffer.
+	if( text == LOBBY_CHAT_REQ ) then
+		if( Matchmaking.IsHost() ) then
+			SendLobbyChatHistoryToPlayer( fromPlayer );
 		end
-	    
-		controlTable.String:SetText( m_PlayerNames[ fromPlayer ] .. ": " .. text );
-		controlTable.Box:SetSizeY( controlTable.String:GetSizeY() + 15 );
-		controlTable.Box:ReprocessAnchoring();
+		return;
+	end
 
-		if( bFlipper ) then
-			controlTable.Box:SetColorChannel( 3, 0.4 );
+	-- Host told joiner to reset before applying the dump.
+	if( text == LOBBY_CHAT_CLEAR ) then
+		if( not Matchmaking.IsHost() ) then
+			Controls.ChatStack:DestroyAllChildren();
+			g_ChatInstances = {};
+			g_LobbyChatHistory = {};
 		end
-		bFlipper = not bFlipper;
+		return;
+	end
 
-		Events.AudioPlay2DSound( "AS2D_IF_MP_CHAT_DING" );		
+	-- Encoded history entry from host → joiner.
+	local syncFromPlayer, syncName, syncText = DecodeLobbyChatSync( text );
+	if( syncFromPlayer ~= nil and syncText ~= nil ) then
+		if( Matchmaking.IsHost() ) then
+			return;
+		end
+		syncName = syncName or m_PlayerNames[ syncFromPlayer ] or ( "Player " .. tostring( syncFromPlayer ) );
+		AppendLobbyChatHistory( syncFromPlayer, syncText, syncName );
+		if( ContextPtr:IsHidden() == false ) then
+			DisplayLobbyChatMessage( syncFromPlayer, syncText, syncName, true, true );
+		end
+		return;
+	end
 
-		Controls.ChatStack:CalculateSize();
-		Controls.ChatScroll:CalculateInternalSize();
-		Controls.ChatScroll:SetScrollValue( 1 );
+	local playerName = m_PlayerNames[ fromPlayer ];
+	if( playerName == nil ) then
+		return;
+	end
+
+	AppendLobbyChatHistory( fromPlayer, text, playerName );
+	if( ContextPtr:IsHidden() == false ) then
+		DisplayLobbyChatMessage( fromPlayer, text, playerName, false, false );
 	end
 end
 Events.GameMessageChat.Add( OnChat );
@@ -1845,6 +2151,14 @@ Events.GameMessageChat.Add( OnChat );
 -------------------------------------------------
 function SendChat( text )
     if( string.len( text ) > 0 ) then
+		local syncFromPlayer = DecodeLobbyChatSync( text );
+		local handshakeVersion = LekmodVersion.ParseHandshake( text );
+		-- Never let players manually send protocol messages.
+		if( text == LOBBY_CHAT_REQ or text == LOBBY_CHAT_CLEAR or syncFromPlayer ~= nil or handshakeVersion ~= nil
+			or string.sub(text, 1, #LekmodVersion.HANDSHAKE_PREFIX) == LekmodVersion.HANDSHAKE_PREFIX ) then
+			Controls.ChatEntry:ClearString();
+			return;
+		end
         Network.SendChat( text );
     end
     Controls.ChatEntry:ClearString();

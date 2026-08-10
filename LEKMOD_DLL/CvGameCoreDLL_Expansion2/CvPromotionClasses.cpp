@@ -512,7 +512,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 		if (pResults == NULL)
 		{
 			const char* szSQL =
-				"SELECT Yields.ID, Yield, COALESCE(Max, -1) "
+				"SELECT Yields.ID, Yield, COALESCE(Max, 0) "
 				"FROM UnitPromotions_YieldFromKills "
 				"INNER JOIN Yields ON Yields.Type = YieldType "
 				"WHERE PromotionType = ?";
@@ -525,10 +525,10 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 		{
 			const int iYieldID = pResults->GetInt(0);
 			const int iYield = pResults->GetInt(1);
-			const int iMaxValue = pResults->GetInt(2);
+			const int iMax = pResults->GetInt(2);
 
 			m_paiYieldFromKills[iYieldID] = iYield;
-			m_paiKillYieldCap[iYieldID] = iMaxValue;
+			m_paiKillYieldCap[iYieldID] = iMax;
 		}
 		pResults->Reset();
 	}

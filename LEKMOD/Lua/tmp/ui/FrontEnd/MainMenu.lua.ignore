@@ -2,109 +2,7 @@
 -- Main Menu
 -------------------------------------------------
 include( "MPGameDefaults" );
-
--------------------------------------------------
--- Menu music cycling
--------------------------------------------------
-local MENU_MUSIC_PROPERTY = "LekmodMainMenuMusicIndex";
-local g_iMenuMusicIndex = 1;
-local g_fMusicSwitchDelay = 0;
-local g_sPendingMusicScript = nil;
-local g_bPendingMusicIsDefault = false;
-local g_bAppliedSavedAlternate = false;
-
-local MENU_MUSIC_OPTIONS = {
-	{ localeKey = "TXT_KEY_LEKMOD_MENU_MUSIC_SCRAMBLE", script = "AS2D_MUSIC_MAIN_MENU_LEK_SCRAMBLE" },
-	{ localeKey = "TXT_KEY_LEKMOD_MENU_MUSIC_EXP2",     script = "AS2D_MUSIC_MAIN_MENU_LEK_EXP2" },
-};
-
-local function LoadMusicIndex()
-	local idx = tonumber( Modding.GetSystemProperty( MENU_MUSIC_PROPERTY ) );
-	if idx ~= nil and idx >= 1 and idx <= #MENU_MUSIC_OPTIONS then
-		g_iMenuMusicIndex = idx;
-	end
-end
-
-local function SaveMusicIndex()
-	pcall( function()
-		Modding.SetSystemProperty( MENU_MUSIC_PROPERTY, tostring( g_iMenuMusicIndex ) );
-	end );
-end
-
-local function UpdateMusicButtonLabel()
-	local music = MENU_MUSIC_OPTIONS[ g_iMenuMusicIndex ];
-	if music == nil then
-		return;
-	end
-	if Controls.MenuMusicButtonLabel ~= nil then
-		Controls.MenuMusicButtonLabel:LocalizeAndSetText( music.localeKey );
-	end
-end
-
-local function CancelPendingMusicSwitch()
-	g_fMusicSwitchDelay = 0;
-	g_sPendingMusicScript = nil;
-end
-
-local function ResetMenuAudio()
-	pcall( function()
-		Events.AudioDebugChangeMusic( false, false, true );
-	end );
-end
-
-local function SwitchToMenuMusic( scriptId, bIsDefaultTrack, delay )
-	CancelPendingMusicSwitch();
-	ResetMenuAudio();
-	g_sPendingMusicScript = scriptId;
-	g_bPendingMusicIsDefault = bIsDefaultTrack;
-	g_fMusicSwitchDelay = delay;
-end
-
-local function PlayAlternateMenuMusic( delay )
-	SwitchToMenuMusic( "AS2D_MUSIC_MAIN_MENU_LEK_EXP2", false, delay or 0.25 );
-end
-
-local function RestoreDefaultMenuMusic()
-	SwitchToMenuMusic( "AS2D_MUSIC_MAIN_MENU_LEK_SCRAMBLE", true, 0.25 );
-end
-
-local function TryStartSavedAlternateMusic()
-	if g_bAppliedSavedAlternate or g_iMenuMusicIndex == 1 then
-		return;
-	end
-	g_bAppliedSavedAlternate = true;
-	PlayAlternateMenuMusic( 1.0 );
-end
-
-local function ResetMenuMusicSession()
-	CancelPendingMusicSwitch();
-	g_bAppliedSavedAlternate = false;
-end
-
-local function CycleMenuMusic()
-	g_iMenuMusicIndex = g_iMenuMusicIndex + 1;
-	if g_iMenuMusicIndex > #MENU_MUSIC_OPTIONS then
-		g_iMenuMusicIndex = 1;
-	end
-	SaveMusicIndex();
-	UpdateMusicButtonLabel();
-	if g_iMenuMusicIndex == 1 then
-		RestoreDefaultMenuMusic();
-	else
-		PlayAlternateMenuMusic();
-	end
-end
-
-local function OnMusicUpdate( fDTime )
-	if g_fMusicSwitchDelay > 0 then
-		g_fMusicSwitchDelay = g_fMusicSwitchDelay - fDTime;
-		if g_fMusicSwitchDelay <= 0 and g_sPendingMusicScript ~= nil then
-			Events.AudioPlay2DSound( g_sPendingMusicScript );
-			g_sPendingMusicScript = nil;
-		end
-	end
-end
-ContextPtr:SetUpdate( OnMusicUpdate );
+include( "Lekmod_version.lua" );
 
 -------------------------------------------------
 -- Script Body
@@ -118,13 +16,76 @@ local i1, i2 = string.find( UI.GetVersionInfo(), " " );
 versionNumber = string.sub(UI.GetVersionInfo(), 1, i2-1);
 Controls.VersionNumber:SetText(versionNumber);
 
+-------------------------------------------------
+-- Lekmod version status (uses installer versions.json via DLL)
+-------------------------------------------------
+local g_LekmodDownloadUrl = nil;
+
+local function LookupOrFallback(key, fallback)
+	local text = Locale.Lookup(key);
+	if text == nil or text == "" or text == key then
+		return fallback;
+	end
+	return text;
+end
+
+local function UpdateLekmodVersionLabel()
+	if Controls.LekmodVersionLabel == nil then
+		return;
+	end
+
+	local localVersion = LekmodVersion.GetLocal() or "unknown";
+	Controls.LekmodVersionLabel:SetText(Locale.ConvertTextKey("TXT_KEY_LEKMOD_MENU_VERSION_CHECKING", localVersion));
+	if Controls.LekmodVersionLabel:GetText() == "TXT_KEY_LEKMOD_MENU_VERSION_CHECKING" then
+		Controls.LekmodVersionLabel:SetText("Running Lekmod " .. localVersion .. " - Checking for updates...");
+	end
+
+	local info = LekmodVersion.CheckForUpdate();
+	g_LekmodDownloadUrl = info.DownloadUrl;
+
+	if info.Success and info.IsNewer then
+		local label = Locale.ConvertTextKey("TXT_KEY_LEKMOD_MENU_VERSION_OUTDATED", localVersion, info.Latest);
+		if label == "TXT_KEY_LEKMOD_MENU_VERSION_OUTDATED" then
+			label = "Running Lekmod " .. localVersion .. " - Newer version detected (" .. tostring(info.Latest) .. ") [CLICK TO DOWNLOAD]";
+		end
+		Controls.LekmodVersionLabel:SetText(label);
+		local tip = LookupOrFallback("TXT_KEY_LEKMOD_MENU_VERSION_TT_OUTDATED", "A newer Lekmod build is available. Click to download.");
+		Controls.LekmodVersionButton:SetToolTipString(tip);
+	elseif info.Success then
+		local label = Locale.ConvertTextKey("TXT_KEY_LEKMOD_MENU_VERSION_UPTODATE", localVersion);
+		if label == "TXT_KEY_LEKMOD_MENU_VERSION_UPTODATE" then
+			label = "Running Lekmod " .. localVersion .. " - Up to date!";
+		end
+		Controls.LekmodVersionLabel:SetText(label);
+		local tip = LookupOrFallback("TXT_KEY_LEKMOD_MENU_VERSION_TT_UPTODATE", "Your Lekmod install matches the latest installer version.");
+		Controls.LekmodVersionButton:SetToolTipString(tip);
+		g_LekmodDownloadUrl = nil;
+	else
+		-- Put the error on the visible label so we can diagnose without relying on tooltips/ui_check copies.
+		local err = tostring(info.Error or "unknown");
+		Controls.LekmodVersionLabel:SetText("Running Lekmod " .. localVersion .. " [" .. err .. "]");
+		local tip = LookupOrFallback("TXT_KEY_LEKMOD_MENU_VERSION_TT_UNKNOWN", "Could not reach the online version list.");
+		tip = tip .. " [" .. err .. "]";
+		Controls.LekmodVersionButton:SetToolTipString(tip);
+	end
+end
+
+function OnLekmodVersionClicked()
+	if g_LekmodDownloadUrl ~= nil then
+		LekmodVersion.OpenDownload(g_LekmodDownloadUrl);
+	end
+end
+if Controls.LekmodVersionButton ~= nil then
+	Controls.LekmodVersionButton:RegisterCallback(Mouse.eLClick, OnLekmodVersionClicked);
+end
+UpdateLekmodVersionLabel();
+
 
 function ShowHideHandler( bIsHide, bIsInit )
     if( not bIsHide ) then
         Controls.Civ5Logo:SetTexture( "CivilzationV_Logo.dds" );
 
-        LoadMusicIndex();
-        UpdateMusicButtonLabel();
+        UpdateLekmodVersionLabel();
 
         if (not ContextPtr:IsHotLoad()) then
 			-- This is a catch all to ensure that mods are not activated at this point in the UI.
@@ -191,14 +152,52 @@ Controls.OtherButton:RegisterCallback( Mouse.eLClick, OtherClick );
 
 
 -------------------------------------------------
--- Menu music button handler
+-- Discord / GitHub link buttons
 -------------------------------------------------
-if Controls.MenuMusicButton ~= nil then
-	Controls.MenuMusicButton:RegisterCallback( Mouse.eLClick, CycleMenuMusic );
-	Controls.MenuMusicButton:SetToolTipString( Locale.Lookup( "TXT_KEY_LEKMOD_MENU_MUSIC_TT" ) );
+local LEKMOD_DISCORD_URL = "http://discord.gg/VQBNPmc";
+local LEKMOD_GITHUB_URL = "http://github.com/EnormousApplePie/Lekmod";
+
+local function OpenExternalUrl(url)
+	-- Force http:// for Steam overlay compatibility.
+	local target = tostring(url or "");
+	if string.sub(target, 1, 8) == "https://" then
+		target = "http://" .. string.sub(target, 9);
+	elseif string.sub(target, 1, 7) ~= "http://" then
+		target = "http://" .. target;
+	end
+
+	local ok = pcall(function()
+		Steam.ActivateGameOverlayToWebPage(target);
+	end);
+	if not ok and LekmodVersion ~= nil and LekmodVersion.OpenDownload ~= nil then
+		LekmodVersion.OpenDownload(target);
+	end
 end
-LoadMusicIndex();
-UpdateMusicButtonLabel();
+
+function DiscordClick()
+	OpenExternalUrl(LEKMOD_DISCORD_URL);
+end
+function GitHubClick()
+	OpenExternalUrl(LEKMOD_GITHUB_URL);
+end
+
+if Controls.DiscordButton ~= nil then
+	Controls.DiscordButton:RegisterCallback(Mouse.eLClick, DiscordClick);
+	local tip = Locale.Lookup("TXT_KEY_LEKMOD_MENU_DISCORD_TT");
+	if tip == nil or tip == "" or tip == "TXT_KEY_LEKMOD_MENU_DISCORD_TT" then
+		tip = "Join the Lekmod Discord";
+	end
+	Controls.DiscordButton:SetToolTipString(tip);
+end
+if Controls.GitHubButton ~= nil then
+	Controls.GitHubButton:RegisterCallback(Mouse.eLClick, GitHubClick);
+	local tip = Locale.Lookup("TXT_KEY_LEKMOD_MENU_GITHUB_TT");
+	if tip == nil or tip == "" or tip == "TXT_KEY_LEKMOD_MENU_GITHUB_TT" then
+		tip = "Open the Lekmod GitHub repository";
+	end
+	Controls.GitHubButton:SetToolTipString(tip);
+end
+
 
 
 -------------------------------------------------
@@ -218,15 +217,9 @@ Steam.SetOverlayNotificationPosition( "bottom_left" );
 -- Event Handler: MultiplayerGameLaunched
 -------------------------------------------------
 function OnGameLaunched()
-	ResetMenuMusicSession();
 	UIManager:DequeuePopup( ContextPtr );
 end
 Events.MultiplayerGameLaunched.Add( OnGameLaunched );
-
-function OnExitToMainMenu()
-	ResetMenuMusicSession();
-end
-Events.ExitToMainMenu.Add( OnExitToMainMenu );
 
 
 ----------------------------------------------------------------        
@@ -241,10 +234,6 @@ function OnSystemUpdateUI( type, tag  )
 		if (tag == "MainMenu") then
 			-- Look for any cached invite
 			UI:CheckForCommandLineInvitation();
-			LoadMusicIndex();
-			UpdateMusicButtonLabel();
-			TryStartSavedAlternateMusic();
-			
 			if (Network.IsDedicatedServer()) then
 					ResetMultiplayerOptions(); 
 			    UIManager:QueuePopup( ContextPtr:LookUpControl( "DedicatedServerScreen" ), PopupPriority.LobbyScreen );

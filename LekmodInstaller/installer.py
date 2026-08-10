@@ -14,6 +14,49 @@ from ui_manager import UIManager
 from google_drive_api import GoogleDriveDownloader
 from installer_updater import InstallerUpdater
 
+def write_civ5_version_cache(latest_version, file_id):
+    """Write latest version info for the in-game main menu checker (FrontEnd has no DLL HTTP)."""
+    written = []
+    try:
+        docs = os.path.join(os.path.expanduser("~"), "Documents", "My Games", "Sid Meier's Civilization 5")
+        # Plain-text fallback for DLL reader / Lua io.open
+        cache_dir = os.path.join(docs, "Lekmod")
+        os.makedirs(cache_dir, exist_ok=True)
+        cache_path = os.path.join(cache_dir, "version_cache.txt")
+        with open(cache_path, "w", encoding="utf-8") as f:
+            f.write(f"{latest_version}\n{file_id or ''}\n")
+        written.append(cache_path)
+
+        # ModUserData SQLite — readable from FrontEnd via Modding.OpenUserData
+        try:
+            import sqlite3
+            ud_dir = os.path.join(docs, "ModUserData")
+            os.makedirs(ud_dir, exist_ok=True)
+            ud_path = os.path.join(ud_dir, "LekmodVersionCache-1.db")
+            conn = sqlite3.connect(ud_path)
+            try:
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS SimpleValues(Name TEXT Primary Key, Value VARIANT)"
+                )
+                conn.execute(
+                    "INSERT OR REPLACE INTO SimpleValues(Name, Value) VALUES (?, ?)",
+                    ("Latest", str(latest_version)),
+                )
+                conn.execute(
+                    "INSERT OR REPLACE INTO SimpleValues(Name, Value) VALUES (?, ?)",
+                    ("FileId", str(file_id or "")),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+            written.append(ud_path)
+        except Exception as e:
+            print(f"Warning: could not write ModUserData version cache: {e}")
+
+        return written[0] if written else None
+    except Exception:
+        return None
+
 try:
     from PIL import Image, ImageTk
     HAS_PIL = True
@@ -651,6 +694,13 @@ class LekmodInstaller:
             
             # Store versions data for later use
             self.versions_data = versions
+
+            latest = self.updater.get_latest_version(versions)
+            if latest:
+                file_id = (versions.get(latest) or {}).get("file_id", "")
+                cache_path = write_civ5_version_cache(latest, file_id)
+                if cache_path:
+                    self.log(f"✓ Wrote in-game version cache ({latest}) for main menu")
             
             # Format version list with dates and sizes
             version_display = []

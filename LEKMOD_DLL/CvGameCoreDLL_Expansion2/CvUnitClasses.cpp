@@ -126,6 +126,7 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_paeGreatWorks(NULL),
 	m_piProductionModifierBuildings(NULL),
 	m_piYieldFromKills(NULL),
+	m_piYieldFromKillsMax(NULL),
 #if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
 	m_piEraStrengthChanges(NULL),
 	m_piEraRangedStrengthChanges(NULL),
@@ -168,6 +169,7 @@ CvUnitEntry::~CvUnitEntry(void)
 	SAFE_DELETE_ARRAY(m_paeGreatWorks);
 	SAFE_DELETE_ARRAY(m_piProductionModifierBuildings);
 	SAFE_DELETE_ARRAY(m_piYieldFromKills);
+	SAFE_DELETE_ARRAY(m_piYieldFromKillsMax);
 #if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
 	SAFE_DELETE_ARRAY(m_piEraStrengthChanges);
 	SAFE_DELETE_ARRAY(m_piEraRangedStrengthChanges);
@@ -332,7 +334,31 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 
 	kUtility.PopulateArrayByValue(m_piResourceQuantityRequirements, "Resources", "Unit_ResourceQuantityRequirements", "ResourceType", "UnitType", szUnitType, "Cost");
 	kUtility.PopulateArrayByValue(m_piProductionModifierBuildings, "Buildings", "Unit_ProductionModifierBuildings", "BuildingType", "UnitType", szUnitType, "ProductionModifier");
-	kUtility.PopulateArrayByValue(m_piYieldFromKills, "Yields", "Unit_YieldFromKills", "YieldType", "UnitType", szUnitType, "Yield");
+	{
+		kUtility.InitializeArray(m_piYieldFromKills, "Yields", 0);
+		kUtility.InitializeArray(m_piYieldFromKillsMax, "Yields", 0);
+		std::string sqlKey = "Unit_YieldFromKills";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Yields.ID, Yield, COALESCE(Max, 0) "
+				"FROM Unit_YieldFromKills "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE UnitType = ?";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+
+		pResults->Bind(1, szUnitType);
+
+		while (pResults->Step())
+		{
+			const int iYieldID = pResults->GetInt(0);
+			m_piYieldFromKills[iYieldID] = pResults->GetInt(1);
+			m_piYieldFromKillsMax[iYieldID] = pResults->GetInt(2);
+		}
+		pResults->Reset();
+	}
 	kUtility.PopulateArrayByExistence(m_pbFreePromotions, "UnitPromotions", "Unit_FreePromotions", "PromotionType", "UnitType", szUnitType);
 
 	kUtility.PopulateArrayByExistence(m_pbUpgradeUnitClass, "UnitClasses", "Unit_ClassUpgrades", "UnitClassType", "UnitType", szUnitType);
@@ -1128,7 +1154,15 @@ int CvUnitEntry::GetYieldFromKills(YieldTypes eYield) const
 {
 	CvAssertMsg((int)eYield < NUM_YIELD_TYPES, "Yield type out of bounds");
 	CvAssertMsg((int)eYield > -1, "Index out of bounds");
-	return m_piYieldFromKills[(int)eYield];
+	return m_piYieldFromKills ? m_piYieldFromKills[(int)eYield] : 0;
+}
+
+/// Cap on yield from kills for this yield type (0 = uncapped / use global)
+int CvUnitEntry::GetYieldFromKillsMax(YieldTypes eYield) const
+{
+	CvAssertMsg((int)eYield < NUM_YIELD_TYPES, "Yield type out of bounds");
+	CvAssertMsg((int)eYield > -1, "Index out of bounds");
+	return m_piYieldFromKillsMax ? m_piYieldFromKillsMax[(int)eYield] : 0;
 }
 
 /// Boost in production for leader with this trait

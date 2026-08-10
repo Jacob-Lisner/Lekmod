@@ -321,6 +321,7 @@ public:
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int GetYieldFromKills(int i) const;
+	int GetYieldFromKillsMax(int i) const;
 #endif
 #if defined(LEKMOD_v34)
 	int GetPolicyResourceQuantity(int i) const;
@@ -646,6 +647,7 @@ private:
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int* m_paiYieldFromKills;
+	int* m_paiYieldFromKillsMax;
 #endif
 #if defined(LEKMOD_v34)
 	int* m_piPolicyResourceQuantity;
@@ -994,6 +996,7 @@ public:
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int GetYieldFromKills(YieldTypes eYield) const;
+	int GetYieldFromKillsMax(YieldTypes eYield) const;
 #endif
 #if defined(LEKMOD_v34)
 	int GetPolicyResourceQuantity(ResourceTypes eResource) const;

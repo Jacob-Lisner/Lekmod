@@ -278,6 +278,7 @@ public:
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int GetYieldFromKills(int i) const;
+	int GetYieldFromKillsMax(int i) const;
 #endif
 	int GetExtraYieldThreshold(int i) const;
 	int GetYieldChange(int i) const;
@@ -555,6 +556,7 @@ protected:
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int* m_paiYieldFromKills;
+	int* m_paiYieldFromKillsMax;
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	int* m_paiGreatWorkYieldChanges;
@@ -1221,6 +1223,10 @@ public:
 	{
 		return m_iYieldFromKills[(int)eYield];
 	};
+	int GetYieldFromKillsMax(YieldTypes eYield) const
+	{
+		return m_iYieldFromKillsMax[(int)eYield];
+	};
 #endif
 #if defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	int GetWorldWonderYieldChange(YieldTypes eYield) const
@@ -1581,6 +1587,7 @@ private:
 	BuildingTypes m_eFreeBuildingOnConquest;
 #if defined(FULL_YIELD_FROM_KILLS)
 	int m_iYieldFromKills[NUM_YIELD_TYPES];
+	int m_iYieldFromKillsMax[NUM_YIELD_TYPES];
 #endif
 	int m_iExtraYieldThreshold[NUM_YIELD_TYPES];
 	int m_iFreeCityYield[NUM_YIELD_TYPES];

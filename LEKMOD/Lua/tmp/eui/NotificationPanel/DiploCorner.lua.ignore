@@ -632,6 +632,32 @@ function LoadChatMessages()
     end
 end
 
+-- Import lobby chat history persisted by StagingRoom on launch, then write into replay so it survives save/reload.
+function ImportLobbyChatHistory()
+    local userData = Modding.OpenUserData("LekmodLobbyChat", 1);
+    local count = tonumber(userData.GetValue("count") or 0);
+    local fallbackMessages = {};
+    if count == nil or count <= 0 then
+        return fallbackMessages;
+    end
+
+    local hasReplayApi = Game.AddChatReplayMessage ~= nil;
+    for i = 1, count do
+        local fromPlayer = tonumber(userData.GetValue("from" .. i) or -1);
+        local text = userData.GetValue("text" .. i) or "";
+        if fromPlayer ~= nil and fromPlayer >= 0 and text ~= "" then
+            if hasReplayApi then
+                Game.AddChatReplayMessage(fromPlayer, text, ChatTargetTypes.CHATTARGET_ALL, -1);
+            else
+                table.insert(fallbackMessages, { fromPlayer = fromPlayer, text = text });
+            end
+        end
+    end
+
+    userData.SetValue("count", 0);
+    return fallbackMessages;
+end
+
 -- NEW: populate Emote Picker
 Controls.EmotePickerButton:RegisterCallback( Mouse.eLClick, function() Controls.EmotePicker:SetHide(not Controls.EmotePicker:IsHidden()) end );
 for i in GameInfo.IconFontMapping('1 ORDER BY LENGTH(IconFontTexture), rowid') do
@@ -644,4 +670,8 @@ end
 Controls.EmotesScrollPanel:ReprocessAnchoring()
 Controls.EmotesScrollPanel:CalculateInternalSize()
 
+local lobbyChatFallback = ImportLobbyChatHistory();
 LoadChatMessages();
+for _, msg in ipairs(lobbyChatFallback) do
+    OnChat(msg.fromPlayer, -1, msg.text, ChatTargetTypes.CHATTARGET_ALL, true, 0, 0);
+end

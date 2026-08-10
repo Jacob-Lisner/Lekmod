@@ -35,18 +35,37 @@
 		<!-- END VERSION -->
 		<!-- Start v35 -->
 
-		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC">
-			<Text>[ICON_GREAT_MUSICIAN] ScrambleForAfricaMusic</Text>
-		</Replace>
-		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC_SCRAMBLE">
-			<Text>[ICON_GREAT_MUSICIAN] ScrambleForAfricaMusic</Text>
-		</Replace>
-		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC_EXP2">
-			<Text>[ICON_GREAT_MUSICIAN] Terra Nova</Text>
-		</Replace>
-		<Replace Tag="TXT_KEY_LEKMOD_MENU_MUSIC_TT">
-			<Text>Click to change menu music.</Text>
-		</Replace>
+
+		<Row Tag="TXT_KEY_LEKMOD_MENU_DISCORD">
+  			<Text>DISCORD</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_DISCORD_TT">
+  			<Text>Join the Lekmod Discord</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_GITHUB">
+  			<Text>GITHUB</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_GITHUB_TT">
+  			<Text>Open the Lekmod GitHub repository</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_CHECKING">
+  			<Text>Running Lekmod {1_Version} - [COLOR_YELLOW]Checking for updates...[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_UPTODATE">
+  			<Text>Running Lekmod {1_Version} - [COLOR_POSITIVE_TEXT]Up to date![ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_OUTDATED">
+  			<Text>Running Lekmod {1_Version} - [COLOR_WARNING_TEXT] Newer version detected ({2_Latest})[ENDCOLOR] [COLOR_CYAN](CLICK TO DOWNLOAD)[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_UNKNOWN">
+  			<Text>Running Lekmod {1_Version}</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK">
+  			<Text>{1_Name} was removed: Lekmod version mismatch (expected {2_Version}).</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK">
+  			<Text>{1_Name} was removed: missing/outdated Lekmod UI.</Text>
+		</Row>
 
 		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY">
 			<Text>Wealthy</Text>

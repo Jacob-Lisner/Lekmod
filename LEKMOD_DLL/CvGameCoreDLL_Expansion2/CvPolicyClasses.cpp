@@ -288,6 +288,7 @@ CvPolicyEntry::CvPolicyEntry(void):
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	m_paiYieldFromKills(NULL),
+	m_paiYieldFromKillsMax(NULL),
 #endif
 #if defined(LEKMOD_v34)
 	m_piPolicyResourceQuantity(NULL),
@@ -399,6 +400,7 @@ CvPolicyEntry::~CvPolicyEntry(void)
 #endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	SAFE_DELETE_ARRAY(m_paiYieldFromKills);
+	SAFE_DELETE_ARRAY(m_paiYieldFromKillsMax);
 #endif
 #if defined(LEKMOD_v34)
 	SAFE_DELETE_ARRAY(m_piPolicyResourceQuantity);
@@ -779,7 +781,31 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	kUtility.PopulateArrayByValue(m_paiFreeUnitClasses, "UnitClasses", "Policy_FreeUnitClasses", "UnitClassType", "PolicyType", szPolicyType, "Count");
 	kUtility.PopulateArrayByValue(m_paiTourismOnUnitCreation, "UnitClasses", "Policy_TourismOnUnitCreation", "UnitClassType", "PolicyType", szPolicyType, "Tourism");
 #if defined(FULL_YIELD_FROM_KILLS)
-	kUtility.SetYields(m_paiYieldFromKills, "Policy_YieldFromKills", "PolicyType", szPolicyType);
+	{
+		kUtility.InitializeArray(m_paiYieldFromKills, "Yields", 0);
+		kUtility.InitializeArray(m_paiYieldFromKillsMax, "Yields", 0);
+		std::string sqlKey = "Policy_YieldFromKills";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Yields.ID, Yield, COALESCE(Max, 0) "
+				"FROM Policy_YieldFromKills "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE PolicyType = ?";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+
+		pResults->Bind(1, szPolicyType);
+
+		while (pResults->Step())
+		{
+			const int iYieldID = pResults->GetInt(0);
+			m_paiYieldFromKills[iYieldID] = pResults->GetInt(1);
+			m_paiYieldFromKillsMax[iYieldID] = pResults->GetInt(2);
+		}
+		pResults->Reset();
+	}
 #endif
 #if defined(TRADE_REFACTOR)
 	{
@@ -2857,6 +2883,13 @@ int CvPolicyEntry::GetYieldFromKills(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_paiYieldFromKills ? m_paiYieldFromKills[i] : -1;
 }
+/// Cap on yield from kills for this yield type (0 = uncapped / use global)
+int CvPolicyEntry::GetYieldFromKillsMax(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_paiYieldFromKillsMax ? m_paiYieldFromKillsMax[i] : 0;
+}
 #endif
 #if defined(LEKMOD_v34)
 /// Amount of Strategics being given by this Policy
@@ -4663,6 +4696,27 @@ int CvPlayerPolicies::GetYieldFromKills(YieldTypes eYield) const
 	}
 
 	return iYield;
+}
+/// Per-row kill yield cap (highest Max among adopted policies; 0 = none)
+int CvPlayerPolicies::GetYieldFromKillsMax(YieldTypes eYield) const
+{
+	int iMax = 0;
+
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetYieldFromKills(eYield) > 0)
+			{
+				const int iPolicyMax = pPolicy->GetYieldFromKillsMax(eYield);
+				if (iPolicyMax > iMax)
+					iMax = iPolicyMax;
+			}
+		}
+	}
+
+	return iMax;
 }
 #endif
 #if defined(LEKMOD_v34)

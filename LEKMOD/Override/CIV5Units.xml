@@ -184448,6 +184448,7 @@
 		<Column name="PolicyType" type="text" reference="Policies(Type)" />
 		<Column name="YieldType" type="text" reference="Yields(Type)" />
 		<Column name="Yield" type="integer" />
+		<Column name="Max" type="integer" />
 	</Table>
 	<Policy_YieldFromKills>
 		<Delete />
@@ -201731,6 +201732,7 @@
 		<Column name="TraitType" type="text" reference="Traits(Type)" />
 		<Column name="YieldType" type="text" reference="Yields(Type)" />
 		<Column name="Yield" type="integer" />
+		<Column name="Max" type="integer" />
 	</Table>
 	<Trait_YieldFromKills>
 		<Delete />
@@ -201739,6 +201741,12 @@
 			<TraitType>TRAIT_CARNIVAL</TraitType>
 			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
 			<Yield>100</Yield>
+		</Row>
+		<Row>
+			<TraitType>TRAIT_VATICAN</TraitType>
+			<YieldType>YIELD_FAITH</YieldType>
+			<Yield>100</Yield>
+			<Max>30</Max>
 		</Row>
 	</Trait_YieldFromKills>
 
@@ -206008,7 +206016,6 @@
 			<Description>TXT_KEY_TRAIT_VATICAN</Description> 
 			<ShortDescription>TXT_KEY_TRAIT_VATICAN_SHORT</ShortDescription> 
 			<NumExtraLeagueVotes>0</NumExtraLeagueVotes>
-			<FaithFromKills>100</FaithfromKills>
 			<!-- Trait_ImprovementYieldChanges -->
 			<!-- Has code in Lua\Civilziations\Lekmod_vatican.lua -->
 		</Row>
@@ -265207,6 +265214,7 @@
 		<Column name="UnitType" type="text" reference="Units(Type)" />
 		<Column name="YieldType" type="text" reference="Yields(Type)" />
 		<Column name="Yield" type="integer"  />
+		<Column name="Max" type="integer" />
 	</Table> 
 	<Unit_YieldFromKills>
 		<Delete />

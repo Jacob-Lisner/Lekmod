@@ -1,6 +1,8 @@
 ----------------------------------------------------------------        
 -- Globals
 ----------------------------------------------------------------   
+include( "Lekmod_version.lua" );
+
 local g_joinFailed = false;		-- Are we attempting to close this page after a join failure?
 															-- Used to prevent the ActivateAllowedDLC mechanic in ShowHideHander 
 															-- from restoring the page after a join failed.  This can occur
@@ -124,6 +126,12 @@ function OnConnectionCompete()
 		UIManager:QueuePopup( Controls.StagingRoomScreen, PopupPriority.StagingScreen );
         UIManager:DequeuePopup( ContextPtr );
 	end
+
+    -- Version handshake so hosts can detect vanilla / mismatched Lekmod clients.
+    Network.SendChat(LekmodVersion.GetHandshakeMessage());
+
+    -- TOURNAMENT MOD:
+    Network.SendChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT"))
     
 end
 

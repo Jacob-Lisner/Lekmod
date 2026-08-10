@@ -1487,6 +1487,8 @@ Diversify Spain and Australia's NW Discovery bonus
 #define LUAAPI_GET_TURN_TIME_ELAPSED
 /*REPLAY EVENTS CHANGES END*/
 
+// Fetches LekmodInstaller/github_setup/versions.json for main-menu update status
+#define LEKMOD_VERSION_CHECK
 
 /*LOGGING START*/
 ///
