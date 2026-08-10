@@ -182,7 +182,6 @@ void checkBattleUnitType(BattleUnitTypes /*unitType*/)
 CvCombatInfo::CvCombatInfo() :
 	m_pTargetPlot(NULL),
 	m_pFromPlot(NULL),
-	m_bUseLiveOriginPlot(true),
 	m_bAttackerAdvances(false),
 	m_bAttackIsRanged(false),
 	m_bAttackIsBombingMission(false),
@@ -215,7 +214,6 @@ CvCombatInfo& CvCombatInfo::operator=(const CvCombatInfo& rhs)
 {
 	m_pTargetPlot = rhs.m_pTargetPlot;
 	m_pFromPlot = rhs.m_pFromPlot;
-	m_bUseLiveOriginPlot = rhs.m_bUseLiveOriginPlot;
 	m_bAttackerAdvances = rhs.m_bAttackerAdvances;
 	m_bAttackIsRanged = rhs.m_bAttackIsRanged;
 	m_bAttackIsBombingMission = rhs.m_bAttackIsBombingMission;
@@ -262,11 +260,11 @@ const CvCombatMemberEntry* CvCombatInfo::getCombatMember(BattleUnitTypes unitTyp
 // Perform the Random Roll for this combat
 void CvCombatInfo::doRandomness(BattleUnitTypes eUnitType, int iWoundedRatio)
 {
-	if (getCombatSeed(eUnitType) == -1)
+	if (getCombatSeed(eUnitType) != -1)
 		return; // if we haven't set the combat seed yet, don't do randomness yet.  This is for set seeds.
 	const char* szLog = "Combat Damage Roll";
 	// this is bad, but theres like 4 global values that all equal this for combat so fuck it.
-	int iExtraDamage = 2400;
+	int iExtraDamage = 1200;
 
 	switch (eUnitType)
 	{
@@ -347,6 +345,8 @@ void CvCombatInfo::doExperience()
 	CvUnit* pDefenderUnit = getUnit(BATTLE_UNIT_DEFENDER);
 	CvCity* pDefenderCity = getCity(BATTLE_UNIT_DEFENDER);
 	CvUnit* pInterceptor = getUnit(BATTLE_UNIT_INTERCEPTOR);
+
+	const bool bIsMelee = !getAttackIsAirSweep() && !getAttackIsBombingMission() && !getAttackIsRanged();
 
 	int iAttackerExperience = 0;
 	int iDefenderExperience = 0;
@@ -431,15 +431,15 @@ void CvCombatInfo::doExperience()
 	// Attacker metadata.
 	if (pAttackerUnit != NULL)
 	{
-		setInBorders(BATTLE_UNIT_ATTACKER, pPlot->getOwner() == pAttackerUnit->getOwner());
-
 		if (pDefenderUnit != NULL)
 		{
+			setInBorders(BATTLE_UNIT_ATTACKER, pPlot->getOwner() == (bIsMelee ? pAttackerUnit->getOwner() : pDefenderUnit->getOwner()));
 			setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, pDefenderUnit->maxXPValue());
 			setUpdateGlobal(BATTLE_UNIT_ATTACKER, pDefenderUnit->canEarnGlobalXP());
 		}
 		else if (pDefenderCity != NULL)
 		{
+			setInBorders(BATTLE_UNIT_ATTACKER, pPlot->getOwner() == pDefenderCity->getOwner());
 			setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, pDefenderCity->getMaxXPValue());
 			setUpdateGlobal(BATTLE_UNIT_ATTACKER, pDefenderCity->canEarnGlobalXP());
 		}
@@ -454,14 +454,15 @@ void CvCombatInfo::doExperience()
 	// Defender metadata.
 	if (pDefenderUnit != NULL)
 	{
-		setInBorders(BATTLE_UNIT_DEFENDER, pPlot->getOwner() == pDefenderUnit->getOwner());
 		if (pAttackerUnit != NULL)
 		{
+			setInBorders(BATTLE_UNIT_DEFENDER, pPlot->getOwner() == (bIsMelee ? pDefenderUnit->getOwner() : pAttackerUnit->getOwner()));
 			setMaxExperienceAllowed(BATTLE_UNIT_DEFENDER, pAttackerUnit->maxXPValue());
 			setUpdateGlobal(BATTLE_UNIT_DEFENDER, pAttackerUnit->canEarnGlobalXP());
 		}
 		else if (pAttackerCity != NULL)
 		{
+			setInBorders(BATTLE_UNIT_DEFENDER, pPlot->getOwner() == pAttackerCity->getOwner());
 			setMaxExperienceAllowed(BATTLE_UNIT_DEFENDER, pAttackerCity->getMaxXPValue());
 			setUpdateGlobal(BATTLE_UNIT_DEFENDER, pAttackerCity->canEarnGlobalXP());
 		}
@@ -512,14 +513,16 @@ void CvCombatModifierList::AddEntry(const CvString& strText, int iModifier, bool
 	if (iModifier == 0)
 		return;
 
-	if (iMiscCount > 0)
+	int& iThisMiscModifier = bPercent ? iMiscModifier : iMiscModifierFlat;
+	int& iThisMiscCount = bPercent ? iMiscCount : iMiscCountFlat;
+	int& iThisMiscIndex = bPercent ? iMiscEntryIndex : iMiscFlatEntryIndex;
+
+	if (iThisMiscIndex >= 0)
 	{
-		CvCombatModifierEntry& kMiscEntry = m_kEntries.back();
+		iThisMiscModifier += iModifier;
+		++iThisMiscCount;
 
-		iMiscModifier += iModifier;
-		++iMiscCount;
-
-		RebuildMiscellaneous();
+		RebuildMiscellaneous(bPercent);
 		return;
 	}
 
@@ -533,25 +536,43 @@ void CvCombatModifierList::AddEntry(const CvString& strText, int iModifier, bool
 	if (m_kEntries.empty())
 		return;
 
-	CvCombatModifierEntry& kLastEntry = m_kEntries.back();
+	int iVictim = -1;
+	for (int i = static_cast<int>(m_kEntries.size()) - 1; i >= 0; --i)
+	{
+		if (m_kEntries[i].m_bPercent == bPercent && !m_kEntries[i].m_bMiscellaneous)
+		{
+			iVictim = i;
+			break;
+		}
+	}
 
-	iMiscModifier = kLastEntry.m_iModifier + iModifier;
-	iMiscCount = 2;
+	bool bVictimSameType = (iVictim >= 0);
+	if (iVictim < 0)
+		iVictim = static_cast<int>(m_kEntries.size()) - 1;
 
-	RebuildMiscellaneous();
+	iThisMiscModifier = bVictimSameType ? (m_kEntries[iVictim].m_iModifier + iModifier) : iModifier;
+	iThisMiscCount = bVictimSameType ? 2 : 1;
+	iThisMiscIndex = iVictim;
+
+	RebuildMiscellaneous(bPercent);
 }
 
-void CvCombatModifierList::RebuildMiscellaneous()
+void CvCombatModifierList::RebuildMiscellaneous(bool bPercent)
 {
-	if (m_kEntries.empty())
+	int iIndex = bPercent ? iMiscEntryIndex : iMiscFlatEntryIndex;
+	if (iIndex < 0 || iIndex >= static_cast<int>(m_kEntries.size()))
 		return;
 
-	Localization::String localizedText = Localization::Lookup("TXT_KEY_COMBATMOD_MISCELLANEOUS");
-	localizedText << iMiscCount;
+	int iCount = bPercent ? iMiscCount : iMiscCountFlat;
+	int iModifier = bPercent ? iMiscModifier : iMiscModifierFlat;
 
-	CvCombatModifierEntry& kMiscEntry = m_kEntries.back();
+	Localization::String localizedText = Localization::Lookup("TXT_KEY_COMBATMOD_MISCELLANEOUS");
+	localizedText << iCount;
+
+	CvCombatModifierEntry& kMiscEntry = m_kEntries[iIndex];
 	kMiscEntry.m_strText = localizedText.toUTF8();
-	kMiscEntry.m_iModifier = iMiscModifier;
+	kMiscEntry.m_iModifier = iModifier;
+	kMiscEntry.m_bPercent = bPercent;
 	kMiscEntry.m_bMiscellaneous = true;
 }
 #endif

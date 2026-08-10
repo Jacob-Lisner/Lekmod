@@ -27,19 +27,21 @@
 
         <Box  Anchor="C,C" AnchorSide="o,o" Offset="0,0" Size="2,160" Color="255,255,200,32" HideBox="0" ID="DetailsSeperator" >
 
-            <Stack Anchor="L,T" AnchorSide="o,i" Offset="25,24" Padding="6" StackGrowth="Bottom" ID="MyCombatResultsStack" >
+            <Stack Anchor="L,T" AnchorSide="o,i" Offset="25,24" Padding="1" StackGrowth="Bottom" ID="MyCombatResultsStack" >
                 <Label ID="MyDamage" String="TXT_KEY_EUPANEL_UNIT_YOUR_APPROXIMATE_DAMAGE" Anchor="R,T" Offset="40,0" Font="TwCenMT16">
                     <Label ID="MyDamageValue" AnchorSide="O.I" Anchor="R,C" Offset="6,0" Font="TwCenMT16"/>
                 </Label>
+                <Box Size="1,3" Color="0,0,0,0" HideBox="1"/>
                 <Label ID="MyStrength" String="TXT_KEY_EUPANEL_UNIT_YOUR_STRENGTH" Anchor="R,T" Offset="40,0" Font="TwCenMT16">
                     <Label ID="MyStrengthValue" AnchorSide="O.I" Anchor="R,C" Offset="6,0" Font="TwCenMT16"/>
                 </Label>
             </Stack>
 
-            <Stack Anchor="R,T" AnchorSide="o,i" Offset="24,24" Padding="6" StackGrowth="Bottom" ID="TheirCombatResultsStack" >
+            <Stack Anchor="R,T" AnchorSide="o,i" Offset="24,24" Padding="1" StackGrowth="Bottom" ID="TheirCombatResultsStack" >
                 <Label ID="TheirDamage" String="TXT_KEY_EUPANEL_UNIT_THEIR_APPROXIMATE_DAMAGE" Anchor="L,T" Offset="40,0" Font="TwCenMT16">
                     <Label ID="TheirDamageValue" AnchorSide="O.I" Anchor="L,C" Offset="6,0" Font="TwCenMT16"/>
                 </Label>
+                <Box Size="1,3" Color="0,0,0,0" HideBox="1"/>
                 <Label ID="TheirStrength" String="TXT_KEY_EUPANEL_UNIT_THEIR_STRENGTH" Anchor="L,T" Offset="40,0" Font="TwCenMT16">
                     <Label ID="TheirStrengthValue" AnchorSide="O.I" Anchor="L,C" Offset="6,0" Font="TwCenMT16"/>
                 </Label>

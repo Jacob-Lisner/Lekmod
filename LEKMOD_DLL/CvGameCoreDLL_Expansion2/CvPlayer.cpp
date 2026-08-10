@@ -5744,7 +5744,11 @@ void CvPlayer::DoUnitReset()
 		{
 			pLoopUnit->changeDamage(iCitadelDamage, NO_PLAYER, /*fAdditionalTextDelay*/ 0.5f);
 		}
-
+#if defined(v35_TRAITIFY)
+		pLoopUnit->setMadeAttackLastTurn(pLoopUnit->isOutOfAttacks());
+		pLoopUnit->setKilledUnitLastTurn(pLoopUnit->killedUnit());
+		pLoopUnit->setKilledUnit(false);
+#endif
 		// Finally (now that healing is done), restore movement points
 		pLoopUnit->setMoves(pLoopUnit->maxMoves());
 		if (pLoopUnit->IsGreatGeneral())
@@ -22158,10 +22162,10 @@ int CvPlayer::getYieldFromMinorCivsTimes100(YieldTypes eYield) const
 			case YIELD_SCIENCE:
 				yield += kMinor.GetMinorCivAI()->GetCurrentScienceFriendshipBonusTimes100(GetID());
 			case YIELD_CULTURE:
-				yield += GetCulturePerTurnFromMinor(ePlayer);
+				yield += GetCulturePerTurnFromMinor(ePlayer) * 100;
 				break;
 			case YIELD_FAITH:
-				yield += GetFaithPerTurnFromMinor(ePlayer);
+				yield += GetFaithPerTurnFromMinor(ePlayer) * 100;
 				break;
 		}
 	}

@@ -305,14 +305,6 @@ public:
 	CvPlot* getFromPlot() const { return m_pFromPlot; };
 	void setFromPlot(CvPlot* plot) { m_pFromPlot = plot; };
 
-	// When getFromPlot() is NULL, controls whether the attacker's live plot() is used as a fallback (true, the
-	// default, matches original behavior for real combat/AI callers that never touch fromPlot at all) or whether
-	// origin-plot-dependent checks (river crossing, amphibious, elevation) are skipped entirely (false -- for
-	// preview callers that explicitly tried to resolve a hypothetical origin and couldn't, e.g. a target that
-	// can't be reached this turn, where checking against the attacker's unrelated current position is meaningless).
-	bool getUseLiveOriginPlot() const { return m_bUseLiveOriginPlot; };
-	void setUseLiveOriginPlot(bool bUse) { m_bUseLiveOriginPlot = bUse; };
-
 	bool getAttackerAdvances() const { return m_bAttackerAdvances; };
 	void setAttackerAdvances(bool bAdvance) { m_bAttackerAdvances = bAdvance; };
 
@@ -396,7 +388,6 @@ protected:
 
 	CvPlot* 	m_pTargetPlot;									//!< The plot that the attacker is attacking
 	CvPlot* 	m_pFromPlot;									//!< Optional override for the attacker's origin plot; NULL means use the attacker's live plot() unless m_bUseLiveOriginPlot is false
-	bool		m_bUseLiveOriginPlot;							//!< When m_pFromPlot is NULL, whether to fall back to the attacker's live plot() (true) or skip origin-plot checks entirely (false)
 	bool		m_bAttackerAdvances;							//!< Should the attacker advance?
 	bool		m_bAttackIsRanged;								//!< Attack is ranged
 	bool		m_bAttackIsBombingMission;						//!< Attack is a bombing mission by an airplane
@@ -465,18 +456,30 @@ struct CvCombatModifierList
 		: iMaxLines(iMaxLines)
 		, iMiscModifier(0)
 		, iMiscCount(0)
+		, iMiscEntryIndex(-1)
+		, iMiscModifierFlat(0)
+		, iMiscCountFlat(0)
+		, iMiscFlatEntryIndex(-1)
 		, bAttackerSide(false)
 	{
 	}
 
 	void AddEntry(const CvString& strText, int iModifier, bool bPercent = true);
-	void RebuildMiscellaneous();
+	void RebuildMiscellaneous(bool bPercent);
 
 	std::vector<CvCombatModifierEntry> m_kEntries;
 
 	int iMaxLines;
+
+	// Percent (e.g. "+15%") and flat (e.g. "+120") modifiers are tracked as separate misc
+	// buckets so an overflowed list never sums the two together into one meaningless number.
 	int iMiscModifier;
 	int iMiscCount;
+	int iMiscEntryIndex;		// Index into m_kEntries of the percent misc row, -1 if none yet.
+	int iMiscModifierFlat;
+	int iMiscCountFlat;
+	int iMiscFlatEntryIndex;	// Index into m_kEntries of the flat misc row, -1 if none yet.
+
 	bool bAttackerSide;
 };
 #endif

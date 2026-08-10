@@ -179,7 +179,7 @@ public:
 	// Derived fields (not in XML)
 	int GetCargoSpace() const;  // (from free promotions)
 	int GetPower() const;
-	void DoUpdatePower(int iMeleeStrength, int iRangedStrength);
+	int DoUpdatePower(int iMeleeStrength, int iRangedStrength) const;
 
 	UnitMoveRate GetMoveRate(int numHexes) const;
 
@@ -291,7 +291,6 @@ private:
 	bool m_bSubmerge;
 #endif
 
-	// This is not loaded from XML, but cached so we don't have to recalculate every time
 	int m_iCachedPower;
 
 	int m_iUnitFlagIconOffset;

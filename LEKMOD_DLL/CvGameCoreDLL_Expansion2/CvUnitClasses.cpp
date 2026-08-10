@@ -523,8 +523,7 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 
 	}
 
-	// Calculate military Power and cache it
-	DoUpdatePower(GetCombat(), GetRangedCombat());
+	m_iCachedPower = DoUpdatePower(GetCombat(), GetRangedCombat());
 
 	return true;
 }
@@ -1218,6 +1217,7 @@ bool CvUnitEntry::GetFreePromotions(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_pbFreePromotions ? m_pbFreePromotions[i] : false;
 }
+
 #if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
 bool CvUnitEntry::IsFreePromotionEra(int iPromotion, int iEra) const
 {
@@ -1347,8 +1347,8 @@ int CvUnitEntry::GetPower() const
 	return m_iCachedPower;
 }
 
-/// Update military Power
-void CvUnitEntry::DoUpdatePower(int iMeleeStrength, int iRangedStrength)
+/// Calculate military Power for the given strength values (does not cache - see header comment)
+int CvUnitEntry::DoUpdatePower(int iMeleeStrength, int iRangedStrength) const
 {
 	int iPower;
 
@@ -1561,7 +1561,7 @@ void CvUnitEntry::DoUpdatePower(int iMeleeStrength, int iRangedStrength)
 	//sprintf(temp, "%s: %i\n", GetDescription(), iPower);
 	//OutputDebugString(temp);
 
-	m_iCachedPower = iPower;
+	return iPower;
 }
 
 UnitMoveRate CvUnitEntry::GetMoveRate(int numHexes) const

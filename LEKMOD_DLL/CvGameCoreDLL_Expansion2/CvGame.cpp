@@ -12776,7 +12776,7 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 			kInfo.doRandomness(BATTLE_UNIT_INTERCEPTOR, iWoundedRatio);
 			iDamage += kInfo.getCombatSeed(BATTLE_UNIT_INTERCEPTOR);
 
-			double fStrengthRatio = kInfo.doStrengthRatio(iAttackerStrength, iInterceptorStrength);
+			double fStrengthRatio = kInfo.doStrengthRatio(iInterceptorStrength, iAttackerStrength);
 			iDamage = static_cast<int>(iDamage * fStrengthRatio);
 
 			// Interception Damage can be reduced by victim's promotions
@@ -12798,7 +12798,7 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 			kInfo.doRandomness(BATTLE_UNIT_INTERCEPTOR, iWoundedRatio);
 			iDamage += kInfo.getCombatSeed(BATTLE_UNIT_INTERCEPTOR);
 
-			double fStrengthRatio = kInfo.doStrengthRatio(iAttackerStrength, iInterceptorStrength);
+			double fStrengthRatio = kInfo.doStrengthRatio(iInterceptorStrength, iAttackerStrength);
 			iDamage = static_cast<int>(iDamage * fStrengthRatio);
 			iDamage /= 100;
 			// Interceptions Deal at least 1 damage, but no more than iMaxHP - 1
@@ -12887,6 +12887,16 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 			{
 				iAttackerDamageDealt = defender.GetMaxHitPoints() - defender.getDamage();
 				iDefenderFinalDamage = iMaxHP;
+			}
+			if (iDefenderFinalDamage > iMaxHP)
+			{
+				iAttackerDamageDealt = iMaxHP - defender.getDamage();
+				iDefenderFinalDamage = iMaxHP;
+			}
+			if (iAttackerFinalDamage > iMaxHP)
+			{
+				iDefenderDamageDealt = iMaxHP - attacker.getDamage() - kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR);
+				iAttackerFinalDamage = iMaxHP;
 			}
 			// set Damages
 			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage); // Final HP - Attacker
@@ -12978,6 +12988,16 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 					iDefenderFinalDamage = defender.GetMaxHitPoints() - 1;
 				}
 			}
+			if (iDefenderFinalDamage > defender.GetMaxHitPoints())
+			{
+				iAttackerDamageDealt = defender.GetMaxHitPoints() - defender.getDamage();
+				iDefenderFinalDamage = defender.GetMaxHitPoints();
+			}
+			if (iAttackerFinalDamage > iMaxHP)
+			{
+				iDefenderDamageDealt = iMaxHP - attacker.getDamage() - kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR);
+				iAttackerFinalDamage = iMaxHP;
+			}
 
 			// set Damages
 			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage ); // Final HP - Attacker
@@ -13052,13 +13072,15 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 
 			int iDefenderFinalDamage = iAttackerDamageDealt + defender.getDamage();
 			int iAttackerFinalDamage = iDefenderDamageDealt + attacker.getDamage();
-			if (kInfo.getAttackIsRanged() && iDefenderFinalDamage >= iMaxHP)
+			if (iDefenderFinalDamage > iMaxHP)
 			{
-				iDefenderFinalDamage = iMaxHP - defender.getDamage();
+				iAttackerDamageDealt = iMaxHP - defender.getDamage();
+				iDefenderFinalDamage = iMaxHP;
 			}
-			else if (kInfo.getAttackIsRanged() && iAttackerFinalDamage >= iMaxHP)
+			if (iAttackerFinalDamage > iMaxHP)
 			{
-				iAttackerFinalDamage = iMaxHP - attacker.getDamage();
+				iDefenderDamageDealt = iMaxHP - attacker.getDamage();
+				iAttackerFinalDamage = iMaxHP;
 			}
 			// set Damages
 			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage); // Final HP - Attacker
@@ -13119,13 +13141,15 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 
 			int iDefenderFinalDamage = iAttackerDamageDealt + defender.getDamage();
 			int iAttackerFinalDamage = iDefenderDamageDealt + attacker.getDamage();
-			if (kInfo.getAttackIsRanged() && iDefenderFinalDamage >= iMaxHP)
+			if (iDefenderFinalDamage > defender.GetMaxHitPoints() - 1)
 			{
-				iDefenderFinalDamage = iMaxHP - defender.getDamage();
+				iAttackerDamageDealt = defender.GetMaxHitPoints() - 1 - defender.getDamage();
+				iDefenderFinalDamage = defender.GetMaxHitPoints() - 1;
 			}
-			else if (kInfo.getAttackIsRanged() && iAttackerFinalDamage >= iMaxHP)
+			if (iAttackerFinalDamage > attacker.GetMaxHitPoints() - 1)
 			{
-				iAttackerFinalDamage = iMaxHP - attacker.getDamage();
+				iDefenderDamageDealt = attacker.GetMaxHitPoints() - 1 - attacker.getDamage();
+				iAttackerFinalDamage = attacker.GetMaxHitPoints() - 1;
 			}
 			// set Damages
 			kInfo.setFinalDamage(BATTLE_UNIT_ATTACKER, iAttackerFinalDamage); // Final HP - Attacker

@@ -235,6 +235,11 @@
 				[ICON_GOLDEN_AGE] Golden Age
 			</Text>
 		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_WATER">
+			<Text>
+				Nearby {1_Terrain}
+			</Text>
+		</Row>
 		<Row Tag="TXT_KEY_COMBATMOD_FRIENDLY_LANDS">
 			<Text>
 				Friendly Lands
@@ -529,7 +534,113 @@
 		</Row>
 		<Row Tag="TXT_KEY_DAWN_OF_MAN_MALI_TEXT">
 			<Text>
-				O great Mansa Musa, Lion of Mali and lord of the golden lands, your people look to you beneath the burning sun of the Sahel. From the banks of the Niger to the sands of the Sahara, merchants speak your name with awe, for the caravans of gold, salt, ivory, and learning flow through your empire like lifeblood through the veins of the world.[NEWLINE][NEWLINE]You inherit a realm already rich in earth and trade, yet it is by wisdom, faith, and command that riches become greatness. Let the cities of Mali rise as beacons to scholars, merchants, and pilgrims. Let Timbuktu’s libraries fill with knowledge, and let your generosity carry the fame of Mali beyond desert, sea, and empire. [NEWLINE][NEWLINE]O Mansa, will you gather the wealth of the world beneath your banner? Will your gold build monuments, feed wisdom, and humble distant kings? Can you forge an empire whose splendor will be remembered long after the caravans have vanished into the sand?
+				O great Mansa Musa, Lion of Mali and lord of the golden lands, your people look to you beneath the burning sun of the Sahel. From the banks of the Niger to the sands of the Sahara, merchants speak your name with awe, for the caravans of gold, salt, ivory, and learning flow through your empire like lifeblood through the veins of the world.[NEWLINE][NEWLINE]You inherit a realm already rich in earth and trade, yet it is by wisdom, faith, and command that riches become greatness. Let the cities of Mali rise as beacons to scholars, merchants, and pilgrims. Let Timbuktu’s libraries fill with knowledge, and let your generosity carry the fame of Mali beyond desert, sea, and empire. [NEWLINE][NEWLINE]O Mansa, will you gather the wealth of the world beneath your banner? Will your gold build monuments, feed wisdom, and humble distant kings? Can you forge an empire whose splendor will be remembered long after the caravans have vanished into the sand? Can you build a civilization that will stand the test of time?
+			</Text>
+		</Row>
+		<!-- MALI Cities -->
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_CAPITAL">
+			<Text>
+				Niani
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_1">
+			<Text>
+				Timbuktu
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_2">
+			<Text>
+				Jenne
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_3">
+			<Text>
+				Kumbi Saleh
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_4">
+			<Text>
+				Walata
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_5">
+			<Text>
+				Tawdenni
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_6">
+			<Text>
+				Tadmekka
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_7">
+			<Text>
+				Awdaghust
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_8">
+			<Text>
+				Kirina
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_9">
+			<Text>
+				Segu
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_10">
+			<Text>
+				Nioro
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_11">
+			<Text>
+				Kangaba
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_12">
+			<Text>
+				Kouroussa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_13">
+			<Text>
+				Niagassola
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_14">
+			<Text>
+				Diara
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_15">
+			<Text>
+				Kayes
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_16">
+			<Text>
+				N'teret
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_17">
+			<Text>
+				Dia
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_18">
+			<Text>
+				Arawan
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_19">
+			<Text>
+				Kiri
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_20">
+			<Text>
+				Mopti
 			</Text>
 		</Row>
 		<!-- Mansa Musa -->
@@ -572,13 +683,23 @@
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_HELP_MALI_COMPOSITE_BOWMAN">
 			<Text>
-				Has +1 [ICON_STRENGTH] Melee Strength compared to the [ICON_UNIT_COMPOSITE_BOWMAN] [COLOR_YELLOW]Composite Bowman[ENDCOLOR] that it replaces. If the Skirmisher attacks an enemy unit, it gains +1 [ICON_MOVES] movement at the start of the next turn. If the Skirmisher successfully kills a unit, it immediately regains all [ICON_MOVES] Movement and [ICON_WAR] Attacks. Abilities are Kept on Upgrade
+				Has +1 [ICON_STRENGTH] Melee Strength compared to the [ICON_UNIT_COMPOSITE_BOWMAN] [COLOR_YELLOW]Composite Bowman[ENDCOLOR] that it replaces. Arrives with [COLOR_GREEN]Skirmisher Tactics[ENDCOLOR] Promotion.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_MALI_SKIRMISHER_TACTICS">
+			<Text>
+				Skirmisher Tactics
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_MALI_SKIRMISHER_TACTICS_HELP">
+			<Text>
+				If this Unit makes an attack, at the start of the next turn it gains +1 [ICON_MOVES] movement. If this Unit kills an enemy unit, it immediately gains +1 [ICON_MOVES] movement and regains all [ICON_MOVES] movement. Kept on Upgrade.
 			</Text>
 		</Row>
 		<!-- Buganda -->
 		<Row Tag="TXT_KEY_TRAIT_BUGANDA_DESC">
 			<Text>
-				[ICON_MISSION_EMBARK] Embarked Military units fight as if they are on land and may perform most actions as if they are not embarked. Units heal an additional [ICON_MISSION_HEAL] [COLOR_GREEN]+10[ENDCOLOR] HP and gain +100% more [ICON_GOLD] Gold when [ICON_MISSION_PILLAGE] Pillaging
+				[ICON_MISSION_EMBARK] Embarked Military units fight as if they are on land and may perform most actions as if they are not embarked. Units heal an additional [ICON_MISSION_HEAL] [COLOR_GREEN]+10[ENDCOLOR] HP and gain +100% more [ICON_GOLD] Gold when [ICON_MISSION_PILLAGE] Pillaging.
 			</Text>
 		</Row>
 		<Row Tag="TXT_KEY_TRAIT_BUGANDA_SHORT_DESC">
@@ -586,8 +707,154 @@
 				War Canoes
 			</Text>
 		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WAR_CANOES">
+			<Text>
+				War Canoes
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WAR_CANOES_HELP">
+			<Text>
+				100% [ICON_GOLD] Gold and [COLOR_GREEN]+10[ENDCOLOR] additional HP when [ICON_MISSION_PILLAGE] Pillaging.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WATER_PILLAGE">
+			<Text>
+				River Raids
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WATER_PILLAGE_HELP">
+			<Text>
+				+25% [ICON_STRENGTH] Strength when nearby Water or Rivers. Gains [COLOR_XP_BLUE]+5 XP[ENDCOLOR] when [ICON_MISSION_PILLAGE] Pillaging.
+			</Text>
+		</Row>
 		<!-- Buganda Civ -->
+		<!-- Buganda Cities -->
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_CAPITAL">
+			<Text>
+				Kampala
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_1">
+			<Text>
+				Kasangati
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_2">
+			<Text>
+				Mukono
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_3">
+			<Text>
+				Ssentema
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_4">
+			<Text>
+				Butoolo
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_5">
+			<Text>
+				Mitiyana
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_6">
+			<Text>
+				Buzinde
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_7">
+			<Text>
+				Nakasongola
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_8">
+			<Text>
+				Kaabasanda
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_9">
+			<Text>
+				Masaka
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_10">
+			<Text>
+				Sembalue
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_11">
+			<Text>
+				Lakaayi
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_12">
+			<Text>
+				Kabula
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_13">
+			<Text>
+				Mwera
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_14">
+			<Text>
+				Ntenjeru
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_15">
+			<Text>
+				Mpenja
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_16">
+			<Text>
+				Kanoni
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_17">
+			<Text>
+				Kaweeri
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_18">
+			<Text>
+				Kalangala
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_19">
+			<Text>
+				Maggyo
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_20">
+			<Text>
+				Kibbale
+			</Text>
+		</Row>
 		<!-- Kabaka Muteesa I -->
+		<Row Tag="TXT_KEY_CIV_BUGANDA_DESC">
+			<Text>
+				Baganda Empire
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_BUGANDA_SHORT_DESC">
+			<Text>
+				Buganda
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_BUGANDA_ADJECTIVE">
+			<Text>
+				Baganda
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DAWN_OF_MAN_BUGANDA_TEXT">
+			<Text>
+				Hail Kabaka Muteesa I, guardian of Buganda and lord of the hills above Nnalubaale, your people gather beneath the royal drums. From the shores of the great lake to the roads of the interior, your kingdom stands strong yet beyond your borders, the world presses closer. Traders from the coast bring cloth, guns, and foreign prayers. Missionaries speak of distant kings and new gods. Some arrive with gifts, some with promises, and some with ambitions hidden beneath polite words.[NEWLINE][NEWLINE]Wise Muteesa, you must weigh each stranger as carefully as a spear in the hand. Let no faith, merchant, or empire master Buganda while you still command the court. Take what strengthens your kingdom, reject what would divide it, and make the palace at Mengo a place where foreign powers compete for your favor.[NEWLINE][NEWLINE]O Kabaka, will you guide Buganda through the age of traders, missionaries, and empires? Can you build a civilization that will stand the test of time?
+			</Text>
+		</Row>
 		<Row Tag="TXT_KEY_LEADER_BUGANDA">
 			<Text>
 				Kabaka Muteesa I
@@ -595,7 +862,7 @@
 		</Row>
 		<Row Tag="TXT_KEY_LEADER_BUGANDA_PEDIA">
 			<Text>
-				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Muteesa_I_of_Buganda[ENDCOLOR][NEWLINE][NEWLINE]Muteesa I Mukaabya Walugembe Kayiira (c. 1837–9 October 1884) was the 30th Kabaka of the Kingdom of Buganda, from 1856 until 1884. In Ugandan historiography, Muteesa left a mixed legacy, with some regarding him as the most important of the kings of Buganda because of his vision and diplomatic skills, while others are more critical and believe he welcomed foreign influence that ultimately undermined Buganda's sovereignty.
+				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Muteesa_I_of_Buganda [ENDCOLOR][NEWLINE][NEWLINE]Muteesa I Mukaabya Walugembe Kayiira (c. 1837-9 October 1884) was the 30th Kabaka of the Kingdom of Buganda, from 1856 until 1884. In Ugandan historiography, Muteesa left a mixed legacy, with some regarding him as the most important of the kings of Buganda because of his vision and diplomatic skills, while others are more critical and believe he welcomed foreign influence that ultimately undermined Buganda's sovereignty.
 			</Text>
 		</Row>
 		<!-- Buganda Unit -->
@@ -23426,12 +23693,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_CITYSTATE_KILWA"> 
 			<Text>
-				Kampala
+				Ashgabat
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_CITYSTATE_KILWA_ADJ"> 
 			<Text>
-				Kampalan
+				Turkmen
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_CITYSTATE_KILWA_TEXT"> 
@@ -119849,7 +120116,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_ANTI_GUNPOWDER_HELP"> 
 			<Text>
-				Before engaging in melee, this unit has an extra attack.
+				Before engaging in melee combat, this unit performs a Ranged Attack at [COLOR_RED]half[ENDCOLOR] [ICON_STRENGTH] Strength. +25% [ICON_STRENGTH] Strength VS Gunpowder and Paradropper Units.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_ANTI_HELICOPTER"> 
@@ -120864,12 +121131,12 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_HEAVY_CHARGE_DOWNHILL_HELP"> 
 			<Text>
-				If attacking from higher elevation into lower elevation, gains +20% Combat Strength and forces defender to retreat if it inflicts more damage than it receives. A defender who cannot retreat takes 50% additional damage.
+				If Attacking from a Higher Elevation, this unit gains 20% Combat Strength. If the Defender cannot retreat this unit gains 50% Base Combat Strength for that attack. If the Defender can retreat, and takes more damage in combat than this unit, it will retreat.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_HEAVY_CHARGE_HELP"> 
 			<Text>
-				Forces defender to retreat if it inflicts more damage than it receives. A defender who cannot retreat takes extra damage.
+				When Attacking, if the Defender cannot retreat, this unit gains 50% Base Combat Strength for that attack. If the Defender can retreat, and takes more damage in combat than this unit, it will retreat.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_HEAVY_PAYLOAD"> 
@@ -136933,7 +137200,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_CITY_STATE_BONUSES"> 
 			<Text>
-				[ICON_HAPPINESS_1] Happiness, [ICON_FOOD] Food, [ICON_CULTURE] Culture, and [ICON_PEACE] Faith from friendly and allied [ICON_CITY_STATE] City-States increased by 50%. Units gifted by [ICON_CITY_STATE] City-States arrive 50% faster and start with +10 experience.
+				[ICON_HAPPINESS_1] Happiness, [ICON_FOOD] Food, [ICON_CULTURE] Culture, and [ICON_PEACE] Faith from friendly and allied [ICON_CITY_STATE] City-States increased by 50%. Units gifted by [ICON_CITY_STATE] City-States arrive 50% faster and start with +15 experience.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_CITY_STATE_BONUSES_SHORT"> 
@@ -137108,7 +137375,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_FIGHT_WELL_DAMAGED"> 
 			<Text>
-				Units fight as though they were at full strength even when damaged. +1 [ICON_CULTURE] Culture from each [ICON_BUILD_FISHING_BOATS] Fishing Boat and +2 [ICON_CULTURE] Culture from each Atoll.
+				Non-Air Units Fight at Full Strength even when Damaged. +1 [ICON_CULTURE] Culture from each [ICON_BUILD_FISHING_BOATS] Fishing Boat and +2 [ICON_CULTURE] Culture from each Atoll.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_FIGHT_WELL_DAMAGED_SHORT"> 

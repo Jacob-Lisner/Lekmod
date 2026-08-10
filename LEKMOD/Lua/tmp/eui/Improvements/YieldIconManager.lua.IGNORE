@@ -25,7 +25,7 @@ local g_maxYieldID = ((YieldTypes or {}).NUM_YIELD_TYPES or 5) -1
 local g_activeTeamID = Game.GetActiveTeam()
 local g_isVanillaDLL = Map_GetPlot(0,0).GetCulture
 local g_defaultTexture = "YieldAtlas.dds"
-local g_Textures = { [0]=g_defaultTexture, g_defaultTexture, g_defaultTexture, g_defaultTexture, "YieldAtlas_128_Culture.dds", "YieldAtlas_128_Faith.dds", "yieldatlas_128_GA.dds", "yieldatlas_128_Tourism.dds"  } -- v34
+local g_Textures = { [0]=g_defaultTexture, g_defaultTexture, g_defaultTexture, g_defaultTexture, "YieldAtlas_128_Culture.dds", "YieldAtlas_128_Faith.dds", "yieldatlas_128_GA.dds", "YieldAtlas_128_Tourism.dds"  } -- v34
 local g_OffsetXs = { [0]=0, 128 , 256, 384, 0, 0, 0, 0, 0 }
 -- compatibility with "DLL - Various Mod Components" extra yields
 for row in GameInfo.Yields() do

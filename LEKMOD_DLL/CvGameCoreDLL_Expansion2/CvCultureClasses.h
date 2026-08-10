@@ -80,8 +80,8 @@ public:
 	int GetGreatWorkCurrentThemingBonus (int iIndex) const;
 
 	bool SwapGreatWorks (PlayerTypes ePlayer1, int iWork1, PlayerTypes ePlayer2, int iWork2);
-	void MoveGreatWorks(PlayerTypes ePlayer, int iCity1, int iBuildingClass1, int iWorkIndex1, 
-																					 int iCity2, int iBuildingClass2, int iWorkIndex2);
+	void MoveGreatWorks(PlayerTypes ePlayer, int iCity1, int iBuildingClass1, int iWorkIndex1, int iCity2, int iBuildingClass2, int iWorkIndex2);
+
 	GreatWorkList m_CurrentGreatWorks;
 
 	// Culture Victory

@@ -13,6 +13,7 @@ local cultureTexture = "YieldAtlas_128_Culture.dds"
 local defaultTexture = "YieldAtlas.dds"
 local faithTexture = "YieldAtlas_128_Faith.dds"
 local goldenageTexture = "yieldatlas_128_GA.dds"
+local tourismTexture = "YieldAtlas_128_Tourism.dds"
 
 local g_VisibleSet = {};
 local g_YieldInfoCache = {};
@@ -234,8 +235,20 @@ function SetYieldIcon( yieldType, amount, parent, record )
 				record.ImageInstances = {};
 			end
 			table.insert( record.ImageInstances, imageInstance );
+        elseif (yieldtype == 7) then
+            imageInstance.Image:SetTexture(tourismTexture);
+            if( amount >= 5 ) then
+                imageInstance.Image:SetTextureOffsetVal( 0 * 128, 512 );
+            else
+                imageInstance.Image:SetTextureOffsetVal( 0 * 128, 128 * ( amount - 1 ) );
+            end
+            
+			imageInstance.Image:ChangeParent( parent );
 
-        end
+			if( record.ImageInstances == nil ) then
+				record.ImageInstances = {};
+			end
+			table.insert( record.ImageInstances, imageInstance );
     end
 end
 

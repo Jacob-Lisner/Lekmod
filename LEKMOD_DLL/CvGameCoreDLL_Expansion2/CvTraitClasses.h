@@ -927,7 +927,7 @@ public:
 	};
 #endif
 #if defined(v35_TRAITIFY)
-	bool IsEmbarkedUnitsFullStrength() const { return m_bEmbarkedUnitsFullStrength; }
+	bool IsEmbarkedUnitsFullStrength() const { return m_iEmbarkedUnitFullStrengthCount > 0 ? true : false; }
 	int GetCityStateUnitGiftExtraExperience() const { return m_iCityStateUnitGiftExtraExperience; }
 	int GetGreatGeneralSiegeBonus() const { return m_iGreatGeneralSiegeBonus; }
 #endif
@@ -1488,7 +1488,7 @@ private:
 	int m_iFriendlyLandsCitizenMoveChange;
 #endif
 #if defined(v35_TRAITIFY)
-	bool m_bEmbarkedUnitsFullStrength;
+	int m_iEmbarkedUnitFullStrengthCount;
 	int m_iCityStateUnitGiftExtraExperience;
 	int m_iGreatGeneralSiegeBonus;
 #endif

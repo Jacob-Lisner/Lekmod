@@ -737,7 +737,7 @@ public:
 	bool IsDelayWhenNoCulture() const;
 	bool IsDelayWhenNoCityStates() const;
 	bool IsDelayWhenNoScience() const;
-
+	CvString GetIconString() const { return m_szIconString; }
 	// Accessor Functions (Arrays)
 	int GetPolicyBranchDisables(int i) const;
 
@@ -754,6 +754,7 @@ private:
 	bool m_bDelayWhenNoCulture;
 	bool m_bDelayWhenNoCityStates;
 	bool m_bDelayWhenNoScience;
+	CvString m_szIconString;
 	// Arrays
 	int* m_piPolicyBranchDisables;
 };

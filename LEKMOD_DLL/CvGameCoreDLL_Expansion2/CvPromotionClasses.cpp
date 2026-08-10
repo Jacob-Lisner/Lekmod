@@ -123,6 +123,12 @@ CvPromotionEntry::CvPromotionEntry():
 	m_iReligiousStrengthLossRivalTerritory(0),
 	m_iTradeMissionInfluenceModifier(0),
 	m_iTradeMissionGoldModifier(0),
+#if defined(v35_TRAITIFY)
+	m_iNearbyWaterCombatModifier(0),
+	m_iAttackExtraMoves(0),
+	m_bKillRefreshMove(false),
+	m_bKillRefreshAttack(false),
+#endif
 	m_bCannotBeChosen(false),
 	m_bLostWithUpgrade(false),
 	m_bNotWithUpgrade(false),
@@ -412,6 +418,12 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	m_iReligiousStrengthLossRivalTerritory = kResults.GetInt("ReligiousStrengthLossRivalTerritory");
 	m_iTradeMissionInfluenceModifier = kResults.GetInt("TradeMissionInfluenceModifier");
 	m_iTradeMissionGoldModifier = kResults.GetInt("TradeMissionGoldModifier");
+#if defined(v35_TRAITIFY)
+	m_iNearbyWaterCombatModifier = kResults.GetInt("NearbyWaterCombatModifier");
+	m_iAttackExtraMoves = kResults.GetInt("AttackExtraMoves");
+	m_bKillRefreshMove = kResults.GetBool("KillRefreshMove");
+	m_bKillRefreshAttack = kResults.GetBool("KillRefreshAttack");
+#endif
 
 	//References
 	const char* szLayerAnimationPath = kResults.GetText("LayerAnimationPath");

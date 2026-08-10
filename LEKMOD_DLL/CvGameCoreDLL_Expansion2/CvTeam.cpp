@@ -3700,7 +3700,12 @@ int CvTeam::getEmbarkedExtraSight() const
 
 void CvTeam::changeEmbarkedExtraSight(int iChange)
 {
-	m_iEmbarkedExtraSight = (m_iEmbarkedExtraSight + iChange);
+	if (iChange != 0)
+	{
+		GC.getMap().updateSight(false);
+		m_iEmbarkedExtraSight = (m_iEmbarkedExtraSight + iChange);
+		GC.getMap().updateSight(true);
+	}
 }
 
 // END
@@ -7720,11 +7725,11 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 					kPlayer.ChangeNumFreePolicies(iNumFreePolicies);
 				}
 #if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
-				int iLoop;
-				CvUnit* pLoopUnit;
+				int iLoop = 0;
+				CvUnit* pLoopUnit = NULL;
 				for (pLoopUnit = kPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kPlayer.nextUnit(&iLoop))
 				{
-					CvUnitEntry pUnitInfo = pLoopUnit->getUnitInfo();
+					CvUnitEntry& pUnitInfo = pLoopUnit->getUnitInfo();
 					for (int jJ = 0; jJ < GC.getNumPromotionInfos(); jJ++)
 					{
 						PromotionTypes ePromotion = static_cast<PromotionTypes>(jJ);
