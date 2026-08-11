@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	¬ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -87,7 +87,7 @@ typedef FFastList< CvTradedItem, c_eMPoolTypeGame, 0 > TradedItemList;
 //!  - Also stores the players involved and the turn the deal ends (if any)
 //!  - Populated through calls to a group of methods that each create and add a CvTradedItem
 //!  - These methods to create CvTradedItems have customized parameters so the external caller
-//!    doesnùt need to know how the data is stored internally
+//!    doesn¬ùt need to know how the data is stored internally
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class CvDeal
 {
@@ -300,6 +300,9 @@ public:
 	void DoCancelDealsBetweenPlayers(PlayerTypes eFromPlayer, PlayerTypes eToPlayer);
 	void DoCancelAllDealsWithPlayer(PlayerTypes eCancelPlayer);
 	void DoCancelAllProposedDealsWithPlayer(PlayerTypes eCancelPlayer);
+#ifdef LEKMOD_LUXURY_BAN_CANCEL_DEALS
+	void DoCancelAllDealsWithResource(ResourceTypes eResource);
+#endif
 	void DoEndTradedItem(CvTradedItem* pItem, PlayerTypes eToPlayer, bool bCancelled);
 
 	int GetTradeItemGoldCost(TradeableItems eItem, PlayerTypes ePlayer1, PlayerTypes ePlayer2) const;

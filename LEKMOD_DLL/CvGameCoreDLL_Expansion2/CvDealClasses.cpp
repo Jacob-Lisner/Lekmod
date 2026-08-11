@@ -3400,6 +3400,107 @@ void CvGameDeals::DoCancelAllProposedDealsWithPlayer(PlayerTypes eCancelPlayer)
 	}
 }
 
+#ifdef LEKMOD_LUXURY_BAN_CANCEL_DEALS
+/// Cancel all current (and proposed) deals that trade eResource (e.g. World Congress luxury ban)
+void CvGameDeals::DoCancelAllDealsWithResource(ResourceTypes eResource)
+{
+	if(eResource == NO_RESOURCE)
+	{
+		return;
+	}
+
+	DealList::iterator it;
+	DealList tempDeals;
+	PlayerTypes eActivePlayer = GC.getGame().getActivePlayer();
+	bool bActivePlayerInvolved = false;
+
+	if(m_CurrentDeals.size() > 0)
+	{
+		for(it = m_CurrentDeals.begin(); it != m_CurrentDeals.end(); ++it)
+		{
+			tempDeals.push_back(*it);
+		}
+
+		m_CurrentDeals.clear();
+		for(it = tempDeals.begin(); it != tempDeals.end(); ++it)
+		{
+			bool bInvolvesResource = false;
+			TradedItemList::iterator itemIter;
+			for(itemIter = it->m_TradedItems.begin(); itemIter != it->m_TradedItems.end(); ++itemIter)
+			{
+				if(itemIter->m_eItemType == TRADE_ITEM_RESOURCES && (ResourceTypes)itemIter->m_iData1 == eResource)
+				{
+					bInvolvesResource = true;
+					break;
+				}
+			}
+
+			if(bInvolvesResource)
+			{
+				it->m_iFinalTurn = GC.getGame().getGameTurn();
+#ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+				it->m_bDealCancelled = true;
+#endif
+
+				for(itemIter = it->m_TradedItems.begin(); itemIter != it->m_TradedItems.end(); ++itemIter)
+				{
+#ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+					itemIter->m_iTurnsRemaining = 0;
+#else
+					itemIter->m_iFinalTurn = GC.getGame().getGameTurn();
+#endif
+					PlayerTypes eFromPlayer = itemIter->m_eFromPlayer;
+					PlayerTypes eToPlayer = it->GetOtherPlayer(eFromPlayer);
+					DoEndTradedItem(&*itemIter, eToPlayer, true);
+				}
+
+				if(it->m_eFromPlayer == eActivePlayer || it->m_eToPlayer == eActivePlayer)
+				{
+					bActivePlayerInvolved = true;
+				}
+
+				m_HistoricalDeals.push_back(*it);
+			}
+			else
+			{
+				m_CurrentDeals.push_back(*it);
+			}
+		}
+
+		if(bActivePlayerInvolved)
+		{
+			GC.GetEngineUserInterface()->setDirty(GameData_DIRTY_BIT, true);
+		}
+	}
+
+	// Reject pending proposals that include this resource (accept would fail IsPossibleToTradeItem anyway)
+	DealList tempProposed;
+	for(it = m_ProposedDeals.begin(); it != m_ProposedDeals.end(); ++it)
+	{
+		tempProposed.push_back(*it);
+	}
+
+	for(it = tempProposed.begin(); it != tempProposed.end(); ++it)
+	{
+		bool bInvolvesResource = false;
+		TradedItemList::iterator itemIter;
+		for(itemIter = it->m_TradedItems.begin(); itemIter != it->m_TradedItems.end(); ++itemIter)
+		{
+			if(itemIter->m_eItemType == TRADE_ITEM_RESOURCES && (ResourceTypes)itemIter->m_iData1 == eResource)
+			{
+				bInvolvesResource = true;
+				break;
+			}
+		}
+
+		if(bInvolvesResource)
+		{
+			FinalizeDeal(it->m_eFromPlayer, it->m_eToPlayer, false);
+		}
+	}
+}
+#endif
+
 /// End a TradedItem (if it's an ongoing item)
 void CvGameDeals::DoEndTradedItem(CvTradedItem* pItem, PlayerTypes eToPlayer, bool bCancelled)
 {

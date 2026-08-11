@@ -5840,7 +5840,12 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 							if(pLoopPlot->isCity() || pLoopPlot->getImprovementType() != NO_IMPROVEMENT)
 							{
 								// Appropriate Unpillaged Improvement on this Plot?
-								if (pLoopPlot->isCity() || (GC.getImprovementInfo(pLoopPlot->getImprovementType())->IsImprovementResourceTrade(eResource) && !pLoopPlot->IsImprovementPillaged()))
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+								const bool bConnectsResource = pLoopPlot->isCity() || (pLoopPlot->DoesImprovementConnectResource(eResource) && !pLoopPlot->IsImprovementPillaged());
+#else
+								const bool bConnectsResource = pLoopPlot->isCity() || (GC.getImprovementInfo(pLoopPlot->getImprovementType())->IsImprovementResourceTrade(eResource) && !pLoopPlot->IsImprovementPillaged());
+#endif
+								if (bConnectsResource)
 								{
 									for(int iI = 0; iI < MAX_PLAYERS; iI++)
 									{

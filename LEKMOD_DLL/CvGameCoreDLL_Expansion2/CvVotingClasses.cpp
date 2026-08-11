@@ -6156,6 +6156,28 @@ void CvLeague::DoEnactResolution(CvEnactProposal* pProposal)
 	{
 		resolution.DoEffects(m_vMembers[i].ePlayer);
 	}
+
+#ifdef LEKMOD_LUXURY_BAN_CANCEL_DEALS
+	// Luxury ban: end all deals that trade the banned resource as soon as the resolution passes
+	if (resolution.GetEffects()->bNoResourceHappiness)
+	{
+		ResourceTypes eTargetLuxury = NO_RESOURCE;
+		if (resolution.GetProposerDecision()->GetType() == RESOLUTION_DECISION_ANY_LUXURY_RESOURCE)
+		{
+			ResourceTypes eDecision = (ResourceTypes) resolution.GetProposerDecision()->GetDecision();
+			CvResourceInfo* pInfo = GC.getResourceInfo(eDecision);
+			if (pInfo && pInfo->getResourceUsage() == RESOURCEUSAGE_LUXURY)
+			{
+				eTargetLuxury = eDecision;
+			}
+		}
+		CvAssertMsg(eTargetLuxury != NO_RESOURCE, "Banning Happiness for NO_RESOURCE when cancelling deals. Please send Anton your save file and version.");
+		if (eTargetLuxury != NO_RESOURCE)
+		{
+			GC.getGame().GetGameDeals()->DoCancelAllDealsWithResource(eTargetLuxury);
+		}
+	}
+#endif
 	
 	// Active Resolutions with only one-time effects immediately expire
 	if (resolution.HasOngoingEffects())

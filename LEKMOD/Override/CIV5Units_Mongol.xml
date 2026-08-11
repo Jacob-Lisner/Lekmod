@@ -856,7 +856,7 @@
 		<!-- Kabaka Muteesa I -->
 		<Row Tag="TXT_KEY_CIV_BUGANDA_DESC">
 			<Text>
-				Baganda Empire
+				Buganda Empire
 			</Text>
 		</Row>
 		<Row Tag="TXT_KEY_CIV_BUGANDA_SHORT_DESC">
@@ -866,7 +866,7 @@
 		</Row>
 		<Row Tag="TXT_KEY_CIV_BUGANDA_ADJECTIVE">
 			<Text>
-				Baganda
+				Buganda
 			</Text>
 		</Row>
 		<Row Tag="TXT_KEY_DAWN_OF_MAN_BUGANDA_TEXT">
@@ -896,19 +896,19 @@
 			</Text>
 		</Row>
 		<!-- Buganda Improvement -->
-		<Row Tag="TXT_KEY_BAGANDA_LAKE">
+		<Row Tag="TXT_KEY_BUGANDA_LAKE">
 			<Text>
 				Kabaka's Lake
 			</Text>
 		</Row>
-		<Row Tag="TXT_KEY_CIV5_BAGANDA_LAKE_TEXT">
+		<Row Tag="TXT_KEY_CIV5_BUGANDA_LAKE_TEXT">
 			<Text>
 				Available at [ICON_TECH_CIVIL_SERVICE] [COLOR_CYAN]Civil Service[ENDCOLOR]. Must be constructed next to a [COLOR_GREEN]City[ENDCOLOR] and on [COLOR_GREEN]flat land[ENDCOLOR]. [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] may not be removed or pillaged, [COLOR_RED]May not be adjacent to another[ENDCOLOR] [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] and will [COLOR_GREEN]remove[ENDCOLOR] the resource it is on. Receives all bonuses a regular [COLOR_GREEN]lake[ENDCOLOR] would, and the tile and adjacent tiles become fresh water tiles (if not already). It is still a land tile. +2 [ICON_FOOD] Food and +1 [ICON_GOLD] Gold. Receives +2 [ICON_CULTURE] Culture and [ICON_TOURISM] Tourism at [ICON_TECH_FLIGHT] [COLOR_CYAN]Flight[ENDCOLOR]. [NEWLINE][NEWLINE]If  [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] removes a resource that you cannot see at the time of constructing the lake, the resource will instead be moved to another valid plot within the nearest city's range.
 			</Text>
 		</Row>
-		<Replace Tag="TXT_KEY_BUILD_BAGANDA_LAKE"> 
+		<Replace Tag="TXT_KEY_BUILD_BUGANDA_LAKE"> 
 			<Text>
-				Construct [LINK=IMPROVEMENT_BAGANDA_LAKE]Kabaka's Lake[\LINK]
+				Construct [LINK=IMPROVEMENT_BUGANDA_LAKE]Kabaka's Lake[\LINK]
 			</Text>
 		</Replace>
 		<!-- End New Civs -->

@@ -31896,7 +31896,7 @@
 			<Remove>true</Remove> 
 		</Row>
 		<Row> 
-			<BuildType>BUILD_BAGANDA_LAKE</BuildType> 
+			<BuildType>BUILD_BUGANDA_LAKE</BuildType> 
 			<FeatureType>FEATURE_MARSH</FeatureType> 
 			<PrereqTech>TECH_MASONRY</PrereqTech> 
 			<Time>550</Time> 
@@ -31905,7 +31905,7 @@
 			<Remove>true</Remove> 
 		</Row>
 		<Row> 
-			<BuildType>BUILD_BAGANDA_LAKE</BuildType> 
+			<BuildType>BUILD_BUGANDA_LAKE</BuildType> 
 			<FeatureType>FEATURE_JUNGLE</FeatureType> 
 			<PrereqTech>TECH_BRONZE_WORKING</PrereqTech> 
 			<Time>550</Time> 
@@ -31914,7 +31914,7 @@
 			<Remove>true</Remove> 
 		</Row>
 		<Row> 
-			<BuildType>BUILD_BAGANDA_LAKE</BuildType> 
+			<BuildType>BUILD_BUGANDA_LAKE</BuildType> 
 			<FeatureType>FEATURE_FOREST</FeatureType> 
 			<PrereqTech>TECH_MINING</PrereqTech> 
 			<Time>400</Time> 
@@ -47831,13 +47831,13 @@
 		</Row>
 		<Row>
 			<ID>51</ID>
-			<Type>BUILD_BAGANDA_LAKE</Type>
-			<Description>TXT_KEY_BUILD_BAGANDA_LAKE</Description>
+			<Type>BUILD_BUGANDA_LAKE</Type>
+			<Description>TXT_KEY_BUILD_BUGANDA_LAKE</Description>
 			<HotKey>KB_O</HotKey>
 			<OrderPriority>98</OrderPriority>
 			<Time>700</Time>
 			<PrereqTech>TECH_CIVIL_SERVICE</PrereqTech>
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType>
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType>
 			<EntityEvent>ENTITY_EVENT_BUILD</EntityEvent>
 			<IconIndex>33</IconIndex>
 			<IconAtlas>UNIT_ACTION_ATLAS</IconAtlas>
@@ -134890,13 +134890,13 @@
 	<Improvement_TechYieldChanges>
 		<Delete />
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TechType>TECH_FLIGHT</TechType> 
 			<YieldType>YIELD_CULTURE</YieldType> 
 			<Yield>2</Yield> 
 		</Row>
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TechType>TECH_FLIGHT</TechType> 
 			<YieldType>YIELD_TOURISM</YieldType> 
 			<Yield>2</Yield> 
@@ -135439,23 +135439,23 @@
 	<Improvement_ValidTerrains>
 		<Delete />
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TerrainType>TERRAIN_GRASS</TerrainType> 
 		</Row>
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TerrainType>TERRAIN_PLAINS</TerrainType> 
 		</Row>
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TerrainType>TERRAIN_DESERT</TerrainType> 
 		</Row>
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TerrainType>TERRAIN_TUNDRA</TerrainType> 
 		</Row>
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<TerrainType>TERRAIN_SNOW</TerrainType> 
 		</Row>
 		<Row> 
@@ -135880,12 +135880,12 @@
 	<Improvement_Yields>
 		<Delete />
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<YieldType>YIELD_FOOD</YieldType> 
 			<Yield>2</Yield> 
 		</Row>
 		<Row> 
-			<ImprovementType>IMPROVEMENT_BAGANDA_LAKE</ImprovementType> 
+			<ImprovementType>IMPROVEMENT_BUGANDA_LAKE</ImprovementType> 
 			<YieldType>YIELD_GOLD</YieldType> 
 			<Yield>1</Yield>
 		</Row>
@@ -136716,7 +136716,7 @@
 			<Description>TXT_KEY_IMPROVEMENT_TRADING_POST</Description>
 			<Civilopedia>TXT_KEY_CIV5_IMPROVEMENTS_TRADING_POST_TEXT</Civilopedia>
 			<ArtDefineTag>ART_DEF_IMPROVEMENT_TRADING_POST</ArtDefineTag>
-			<BuildableOnResources>true</BuildableOnResources>
+			<BuildableOnResources>false</BuildableOnResources>
 			<PillageGold>20</PillageGold>
 			<PortraitIndex>32</PortraitIndex>
 			<IconAtlas>TERRAIN_ATLAS</IconAtlas>
@@ -136749,16 +136749,16 @@
 		</Row>
 		<Row>
 			<ID>45</ID>
-			<Type>IMPROVEMENT_BAGANDA_LAKE</Type>
-			<Description>TXT_KEY_BAGANDA_LAKE</Description>
-			<Civilopedia>TXT_KEY_CIV5_BAGANDA_LAKE_TEXT</Civilopedia>
+			<Type>IMPROVEMENT_BUGANDA_LAKE</Type>
+			<Description>TXT_KEY_BUGANDA_LAKE</Description>
+			<Civilopedia>TXT_KEY_CIV5_BUGANDA_LAKE_TEXT</Civilopedia>
 			<ArtDefineTag>ART_DEF_IMPROVEMENT_WELL</ArtDefineTag>
 			<SpecificCivRequired>true</SpecificCivRequired>
 			<CivilizationType>CIVILIZATION_BUGANDA</CivilizationType>
 			<BuildableOnResources>true</BuildableOnResources>
 			<RequiresFlatlands>true</RequiresFlatland>
 			<RemovesResource>true</RemovesResource>
-			<Permanent>true></Permanent>
+			<Permanent>true</Permanent>
 			<NoTwoAdjacent>true</NoTwoAdjacent>
 			<PillageGold>20</PillageGold>
 			<AdjacentCityMakesValid>true</AdjacentCityMakesValid>
@@ -256407,7 +256407,7 @@
 		<!-- Buganda -->
 		<Row> 
 			<UnitType>UNIT_WORKER</UnitType> 
-			<BuildType>BUILD_BAGANDA_LAKE</BuildType> 
+			<BuildType>BUILD_BUGANDA_LAKE</BuildType> 
 		</Row>
 		<!-- Archaeologist -->
 		<Row> 
@@ -256746,7 +256746,7 @@
 		<!-- Buganda -->
 		<Row> 
 			<UnitType>UNIT_AUSTRALIA_WORKER</UnitType> 
-			<BuildType>BUILD_BAGANDA_LAKE</BuildType> 
+			<BuildType>BUILD_BUGANDA_LAKE</BuildType> 
 		</Row>
 	</Unit_Builds> 
 

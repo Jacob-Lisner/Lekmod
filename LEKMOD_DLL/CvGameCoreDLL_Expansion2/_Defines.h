@@ -1100,6 +1100,10 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD
 // Adds a dedicated DLL/Lua check for disabled luxury trades when target already has the luxury.
 #define LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+// When a World Congress luxury ban passes, cancel all deals involving that resource.
+#define LEKMOD_LUXURY_BAN_CANCEL_DEALS
+// Don't add feature-clear time when an improvement keeps the feature (Trading Post etc.). Forts still pay it.
+#define LEKMOD_SKIP_FEATURE_TIME_IF_NOT_REMOVED
 // Exposes pending incoming deal sender list (oldest first) for End Turn UI prompting.
 #define LEKMOD_PENDING_DEAL_TURN_PROMPT
 // Allows the Collection of Golden Age Points during a Golden Age via game option.
@@ -1210,6 +1214,8 @@ romania and brazil traits are double counted
 #define LEKMOD_BELIEF_YIELDIFY
 // When a resource is removed from a plot, but it can't be seen by the player, move it to a new plot instead of deleting it.
 #define LEKMOD_RELOCATE_RESOURCE
+// Don't delete undiscovered resources under RemovesResource improvements; permanent ones auto-connect when revealed.
+#define LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
 // Generic define for temp changes
 #define CLEAN_UP
 // Experimental Changes

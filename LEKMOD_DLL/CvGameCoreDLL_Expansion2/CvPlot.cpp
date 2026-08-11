@@ -2727,7 +2727,45 @@ int CvPlot::getBuildTime(BuildTypes eBuild, PlayerTypes ePlayer) const
 
 	if(getFeatureType() != NO_FEATURE)
 	{
-		iTime += GC.getBuildInfo(eBuild)->getFeatureTime(getFeatureType());
+		CvBuildInfo* pkBuildInfo = GC.getBuildInfo(eBuild);
+		if(pkBuildInfo)
+		{
+			FeatureTypes eFeature = getFeatureType();
+#ifdef LEKMOD_SKIP_FEATURE_TIME_IF_NOT_REMOVED
+			// Builds that keep the feature (e.g. Trading Post) should not pay clear time.
+			// Forts are the exception and still take the longer build time.
+			bool bAddFeatureTime = true;
+			if(!pkBuildInfo->isFeatureRemove(eFeature))
+			{
+				bool bIsFort = false;
+				const ImprovementTypes eImprovement = (ImprovementTypes)pkBuildInfo->getImprovement();
+				if(eImprovement != NO_IMPROVEMENT)
+				{
+					CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(eImprovement);
+					if(pkImprovementInfo && pkImprovementInfo->GetType() && strcmp(pkImprovementInfo->GetType(), "IMPROVEMENT_FORT") == 0)
+					{
+						bIsFort = true;
+					}
+				}
+				if(!bIsFort && pkBuildInfo->GetType() && strcmp(pkBuildInfo->GetType(), "BUILD_FORT") == 0)
+				{
+					bIsFort = true;
+				}
+
+				if(!bIsFort)
+				{
+					bAddFeatureTime = false;
+				}
+			}
+
+			if(bAddFeatureTime)
+			{
+				iTime += pkBuildInfo->getFeatureTime(eFeature);
+			}
+#else
+			iTime += pkBuildInfo->getFeatureTime(eFeature);
+#endif
+		}
 	}
 
 	iTime *= std::max(0, (GC.getTerrainInfo(getTerrainType())->getBuildModifier() + 100));
@@ -5432,7 +5470,11 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 
 					if(GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) GC.getResourceInfo(getResourceType())->getTechCityTrade()))
 					{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+						if(getImprovementType() != NO_IMPROVEMENT && DoesImprovementConnectResource(getResourceType()))
+#else
 						if(getImprovementType() != NO_IMPROVEMENT && GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 						{
 							if(!IsImprovementPillaged())
 							{
@@ -5607,7 +5649,11 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 					// Add Resource Quantity to total
 					if(GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) GC.getResourceInfo(getResourceType())->getTechCityTrade()))
 					{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+						if(getImprovementType() != NO_IMPROVEMENT && DoesImprovementConnectResource(getResourceType()))
+#else
 						if(getImprovementType() != NO_IMPROVEMENT && GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 						{
 							if(!IsImprovementPillaged())
 							{
@@ -6400,6 +6446,41 @@ int CvPlot::getNumResourceForPlayer(PlayerTypes ePlayer) const
 	return iRtnValue;
 }
 
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+//	--------------------------------------------------------------------------------
+/// True if the plot's improvement connects eResource (normal trade improvement, or permanent RemovesResource keeping a now-revealed resource)
+bool CvPlot::DoesImprovementConnectResource(ResourceTypes eResource) const
+{
+	if(eResource == NO_RESOURCE || getImprovementType() == NO_IMPROVEMENT)
+	{
+		return false;
+	}
+
+	CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(getImprovementType());
+	if(!pkImprovementInfo)
+	{
+		return false;
+	}
+
+	if(pkImprovementInfo->IsImprovementResourceTrade(eResource))
+	{
+		return true;
+	}
+
+	// Permanent resource-removing improvements leave undiscovered resources in place;
+	// once the owning team can see the resource, the improvement itself connects it.
+	if(pkImprovementInfo->IsPermanent() && pkImprovementInfo->IsRemovesResource())
+	{
+		if(getTeam() != NO_TEAM && getResourceType(getTeam()) == eResource)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 ImprovementTypes CvPlot::getImprovementType() const
 {
@@ -6887,7 +6968,11 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 			{
 				if(GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) GC.getResourceInfo(getResourceType())->getTechCityTrade()))
 				{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+					if(DoesImprovementConnectResource(getResourceType()))
+#else
 					if(GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 					{
 						if(bPillaged)
 						{
@@ -7364,7 +7449,11 @@ void CvPlot::DoFindCityToLinkResourceTo(CvCity* pCityToExclude)
 		// Already have a valid improvement here?
 		if(isCity() || getImprovementType() != NO_IMPROVEMENT)
 		{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+			if(isCity() || DoesImprovementConnectResource(getResourceType()))
+#else
 			if(isCity() || GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 			{
 				SetResourceLinkedCityActive(true);
 			}
@@ -10013,9 +10102,14 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 				{
 					if (getResourceType() != NO_RESOURCE)
 					{
-#if !defined(LEKMOD_RELOCATE_RESOURCE)
-						setResourceType(NO_RESOURCE, 0);
-#else
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+						// Only remove resources the builder can already see; leave undiscovered ones in place
+						TeamTypes eBuilderTeam = (ePlayer != NO_PLAYER) ? GET_PLAYER(ePlayer).getTeam() : NO_TEAM;
+						if (eBuilderTeam != NO_TEAM && getResourceType(eBuilderTeam) != NO_RESOURCE)
+						{
+							setResourceType(NO_RESOURCE, 0);
+						}
+#elif defined(LEKMOD_RELOCATE_RESOURCE)
 						// if there was a resource here, but the team can't see it then Move it instead of deleting it.
 						if (getResourceType(GET_PLAYER(getOwner()).getTeam()) == NO_RESOURCE)
 						{
@@ -10031,6 +10125,8 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 							}
 							city->addResourceLocally(this, getResourceType(), getNumResource());
 						}
+						setResourceType(NO_RESOURCE, 0);
+#else
 						setResourceType(NO_RESOURCE, 0);
 #endif
 					}

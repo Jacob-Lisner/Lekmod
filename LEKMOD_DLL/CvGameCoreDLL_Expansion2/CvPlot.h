@@ -495,6 +495,9 @@ public:
 	void setNumResource(int iNum);
 	void changeNumResource(int iChange);
 	int getNumResourceForPlayer(PlayerTypes ePlayer) const;
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+	bool DoesImprovementConnectResource(ResourceTypes eResource) const;
+#endif
 
 	ImprovementTypes getImprovementType() const;
 	ImprovementTypes getImprovementTypeNeededToImproveResource(PlayerTypes ePlayer = NO_PLAYER, bool bTestPlotOwner = true);
