@@ -6,6 +6,7 @@ include( "InstanceManager" );
 
 local g_MyCombatDataIM = InstanceManager:new( "UsCombatInfo", "Root", Controls.MyCombatResultsStack );
 local g_TheirCombatDataIM = InstanceManager:new( "ThemCombatInfo", "Root", Controls.TheirCombatResultsStack );
+local g_TheirNoteIM = InstanceManager:new( "ThemCombatNote", "Root", Controls.TheirCombatResultsStack );
 
 local g_NumButtons = 12;
 local g_lastUnitID = -1;		-- Used to determine if a different pUnit has been selected.
@@ -267,16 +268,37 @@ function SetCombatModifierRow(controlTable, modifier, bForMe)
 	end
 end
 
+function WillShowAirInterceptWarning(bBombing, interceptor)
+	return bBombing and interceptor == nil;
+end
+
+function AddAirInterceptWarning(bBombing, interceptor)
+	if (not WillShowAirInterceptWarning(bBombing, interceptor)) then
+		return;
+	end
+	g_TheirNoteIM:GetInstance().Text:SetText(Locale.ConvertTextKey("TXT_KEY_EUPANEL_AIR_INTERCEPT_WARNING1"));
+end
+
 function GetMeleeAttackFromPlot(attacker, battlePlot)
 	local pPathFromPlot = attacker:GetPathAttackFromPlot(battlePlot);
 
 	return pPathFromPlot;
 end
 
+local g_CombatIndicatorColors = { "Green", "Red", "Yellow" };
+
+function SetCombatIndicator(color, textKey, ...)
+	for _, otherColor in ipairs(g_CombatIndicatorColors) do
+		Controls[otherColor .. "Indicator"]:SetHide(otherColor ~= color);
+	end
+	Controls[color .. "IndicatorLabel"]:SetText(Locale.ToUpper(Locale.ConvertTextKey(textKey, ...)));
+end
+
 function UpdateCombatOddsUnitVsCity(pMyUnit, pCity)
 
 	g_MyCombatDataIM:ResetInstances();
 	g_TheirCombatDataIM:ResetInstances();
+	g_TheirNoteIM:ResetInstances();
 
 	if (pMyUnit == nil or pCity == nil) then
 		return false;
@@ -373,35 +395,23 @@ function UpdateCombatOddsUnitVsCity(pMyUnit, pCity)
 		SetCombatModifierRow(controlTable, modifier, true);
 	end
 
+	AddAirInterceptWarning(bBombing, interceptor);
 	for _, modifier in ipairs(defenderModList) do
 		local controlTable = g_TheirCombatDataIM:GetInstance();
 		SetCombatModifierRow(controlTable, modifier, false);
 	end
 
-	Controls.RangedAttackIndicator:SetHide(true);
-	Controls.SafeAttackIndicator:SetHide(true);
-	Controls.RiskyAttackIndicator:SetHide(true);
-	Controls.TotalVictoryIndicator:SetHide(true);
-	Controls.MajorVictoryIndicator:SetHide(true);
-	Controls.SmallVictoryIndicator:SetHide(true);
-	Controls.SmallDefeatIndicator:SetHide(true);
-	Controls.MajorDefeatIndicator:SetHide(true);
-	Controls.TotalDefeatIndicator:SetHide(true);
-	Controls.StalemateIndicator:SetHide(true);
-
 	if (bRanged or bBombing) then
-		Controls.RangedAttackIndicator:SetHide(false);
-		if (bBombing) then
-			Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey("TXT_KEY_INTERFACEMODE_AIRSTRIKE")));
-		else
-			Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey("TXT_KEY_INTERFACEMODE_RANGE_ATTACK")));
-		end
+		SetCombatIndicator("Green", bBombing and "TXT_KEY_INTERFACEMODE_AIRSTRIKE" or "TXT_KEY_INTERFACEMODE_RANGE_ATTACK");
+	-- A melee strike that reduces the city to 0 HP always captures it (a 1 HP city can never survive melee)
+	elseif (defenderResults.FinalDamage >= defenderResults.MaxHitPoints) then
+		SetCombatIndicator("Green", "TXT_KEY_EUPANEL_GUARANTEED_CAPTURE");
 	elseif (attackerResults.CurrentDamage >(attackerResults.MaxHitPoints / 2) and defenderDamageInflicted > 0) then
-		Controls.RiskyAttackIndicator:SetHide(false);
+		SetCombatIndicator("Red", "TXT_KEY_EUPANEL_RISKY_ATTACK");
 	elseif (defenderDamageInflicted >= attackerDamageInflicted) then
-		Controls.RiskyAttackIndicator:SetHide(false);
+		SetCombatIndicator("Red", "TXT_KEY_EUPANEL_RISKY_ATTACK");
 	else
-		Controls.SafeAttackIndicator:SetHide(false);
+		SetCombatIndicator("Green", "TXT_KEY_EUPANEL_SAFE_ATTACK");
 	end
 
 	Controls.MyCombatResultsStack:CalculateSize();
@@ -420,6 +430,7 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 
 	g_MyCombatDataIM:ResetInstances();
 	g_TheirCombatDataIM:ResetInstances();
+	g_TheirNoteIM:ResetInstances();
 	local bSweepPreview = (pTheirUnit == nil and pBattlePlot ~= nil);
 
 	if (pMyUnit ~= nil and (pTheirUnit ~= nil or bSweepPreview)) then
@@ -494,7 +505,9 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 		local attackerStrength = attacker:GetMaxAttackStrength(battlePlot, defender, nil, interceptor, bRanged, bBombing, bSweep, fromPlot);
 		local attackerModList = attacker:GetAttackModifierList(battlePlot, defender, nil, interceptor, bRanged, bBombing, bSweep, g_ModifierListLength, fromPlot);
 		local defenderStrength = defender:GetMaxDefenseStrength(battlePlot, attacker, nil, interceptor, bRanged, bBombing, bSweep);
-		local defenderModList = defender:GetDefenseModifierList(battlePlot, attacker, nil, interceptor, bRanged, bBombing, bSweep, g_ModifierListLength);
+
+		local defenderModListLength = WillShowAirInterceptWarning(bBombing, interceptor) and (g_ModifierListLength - 1) or g_ModifierListLength;
+		local defenderModList = defender:GetDefenseModifierList(battlePlot, attacker, nil, interceptor, bRanged, bBombing, bSweep, defenderModListLength);
 		local interceptorStrength = 0
 		local interceptorModList = nil;
 		if (interceptor ~= nil) then
@@ -545,53 +558,42 @@ function UpdateCombatOddsUnitVsUnit(pMyUnit, pTheirUnit, pBattlePlot)
 				local controlTable = g_MyCombatDataIM:GetInstance();
 				SetCombatModifierRow(controlTable, modifier, true);
 			end
+			AddAirInterceptWarning(bBombing, interceptor);
 			for _, modifier in ipairs(defenderModList) do
 				local controlTable = g_TheirCombatDataIM:GetInstance();
 				SetCombatModifierRow(controlTable, modifier, false);
 			end
 			
-			Controls.RangedAttackIndicator:SetHide(true);
-			Controls.SafeAttackIndicator:SetHide(true);
-			Controls.RiskyAttackIndicator:SetHide(true);
-			Controls.TotalVictoryIndicator:SetHide(true);
-			Controls.MajorVictoryIndicator:SetHide(true);
-			Controls.SmallVictoryIndicator:SetHide(true);
-			Controls.SmallDefeatIndicator:SetHide(true);
-			Controls.MajorDefeatIndicator:SetHide(true);
-			Controls.TotalDefeatIndicator:SetHide(true);
-			Controls.StalemateIndicator:SetHide(true);
-
 			if (bRanged or bBombing or bSweep) then
-				Controls.RangedAttackIndicator:SetHide(false);
-				local string
+				local textKey;
 				if bSweep then
-					string = "TXT_KEY_INTERFACEMODE_AIR_SWEEP";
+					textKey = "TXT_KEY_INTERFACEMODE_AIR_SWEEP";
 				elseif bBombing then
-					string = "TXT_KEY_INTERFACEMODE_AIRSTRIKE";
+					textKey = "TXT_KEY_INTERFACEMODE_AIRSTRIKE";
 				else -- bRanged
-					string = "TXT_KEY_INTERFACEMODE_RANGE_ATTACK";
+					textKey = "TXT_KEY_INTERFACEMODE_RANGE_ATTACK";
 				end
-				Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey(string)));
+				SetCombatIndicator("Green", textKey);
 			else
 				local bAttackerDies = (attackerResults.CurrentDamage + defenderDamageInflicted) >= attacker:GetMaxHitPoints();
 				local bDefenderDies = (defenderResults.CurrentDamage + attackerDamageInflicted) >= defender:GetMaxHitPoints();
 
 				if (bAttackerDies and bDefenderDies) then
-					Controls.StalemateIndicator:SetHide(false);
+					SetCombatIndicator("Yellow", "TXT_KEY_EUPANEL_STALEMATE");
 				elseif (bAttackerDies) then
-					Controls.TotalDefeatIndicator:SetHide(false);
+					SetCombatIndicator("Red", "TXT_KEY_EUPANEL_TOTAL_DEFEAT");
 				elseif (bDefenderDies) then
-					Controls.TotalVictoryIndicator:SetHide(false);
+					SetCombatIndicator("Green", "TXT_KEY_EUPANEL_TOTAL_VICTORY");
 				elseif (attackerDamageInflicted - defenderDamageInflicted > 30) then
-					Controls.MajorVictoryIndicator:SetHide(false);
+					SetCombatIndicator("Green", "TXT_KEY_EUPANEL_MAJOR_VICTORY");
 				elseif (attackerDamageInflicted > defenderDamageInflicted) then
-					Controls.SmallVictoryIndicator:SetHide(false);
+					SetCombatIndicator("Green", "TXT_KEY_EUPANEL_MINOR_VICTORY");
 				elseif (defenderDamageInflicted - attackerDamageInflicted > 30) then
-					Controls.MajorDefeatIndicator:SetHide(false);
+					SetCombatIndicator("Red", "TXT_KEY_EUPANEL_MAJOR_DEFEAT");
 				elseif (attackerDamageInflicted < defenderDamageInflicted) then
-					Controls.SmallDefeatIndicator:SetHide(false);
+					SetCombatIndicator("Red", "TXT_KEY_EUPANEL_MINOR_DEFEAT");
 				else
-					Controls.StalemateIndicator:SetHide(false);
+					SetCombatIndicator("Yellow", "TXT_KEY_EUPANEL_STALEMATE");
 				end
 			end
 			-------------------------
@@ -624,6 +626,7 @@ function UpdateCombatOddsCityVsUnit(myCity, theirUnit)
 
 	g_MyCombatDataIM:ResetInstances();
 	g_TheirCombatDataIM:ResetInstances();
+	g_TheirNoteIM:ResetInstances();
 
 	if (myCity == nil or theirUnit == nil) then
 		return false;
@@ -682,18 +685,7 @@ function UpdateCombatOddsCityVsUnit(myCity, theirUnit)
 	end
 
 
-	Controls.RangedAttackIndicator:SetHide(false);
-	Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey("TXT_KEY_INTERFACEMODE_RANGE_ATTACK")));
-
-	Controls.SafeAttackIndicator:SetHide(true);
-	Controls.RiskyAttackIndicator:SetHide(true);
-	Controls.TotalVictoryIndicator:SetHide(true);
-	Controls.MajorVictoryIndicator:SetHide(true);
-	Controls.SmallVictoryIndicator:SetHide(true);
-	Controls.SmallDefeatIndicator:SetHide(true);
-	Controls.MajorDefeatIndicator:SetHide(true);
-	Controls.TotalDefeatIndicator:SetHide(true);
-	Controls.StalemateIndicator:SetHide(true);
+	SetCombatIndicator("Green", "TXT_KEY_INTERFACEMODE_RANGE_ATTACK");
 
 	Controls.MyCombatResultsStack:CalculateSize();
 	Controls.TheirCombatResultsStack:CalculateSize();
@@ -711,6 +703,7 @@ function UpdateCombatOddsCityVsCity(myCity, theirCity)
 
 	g_MyCombatDataIM:ResetInstances();
 	g_TheirCombatDataIM:ResetInstances();
+	g_TheirNoteIM:ResetInstances();
 
 	if (myCity == nil or theirCity == nil) then
 		return false;
@@ -781,18 +774,7 @@ function UpdateCombatOddsCityVsCity(myCity, theirCity)
 		SetCombatModifierRow(controlTable, modifier, false);
 	end
 
-	Controls.RangedAttackIndicator:SetHide(false);
-	Controls.RangedAttackButtonLabel:SetText(Locale.ToUpper(Locale.ConvertTextKey("TXT_KEY_INTERFACEMODE_RANGE_ATTACK")));
-
-	Controls.SafeAttackIndicator:SetHide(true);
-	Controls.RiskyAttackIndicator:SetHide(true);
-	Controls.TotalVictoryIndicator:SetHide(true);
-	Controls.MajorVictoryIndicator:SetHide(true);
-	Controls.SmallVictoryIndicator:SetHide(true);
-	Controls.SmallDefeatIndicator:SetHide(true);
-	Controls.MajorDefeatIndicator:SetHide(true);
-	Controls.TotalDefeatIndicator:SetHide(true);
-	Controls.StalemateIndicator:SetHide(true);
+	SetCombatIndicator("Green", "TXT_KEY_INTERFACEMODE_RANGE_ATTACK");
 
 
 	Controls.MyCombatResultsStack:CalculateSize();
