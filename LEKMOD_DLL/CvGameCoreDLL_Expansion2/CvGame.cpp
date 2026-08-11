@@ -12957,7 +12957,7 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 			} while (damagePair.first == -1 || damagePair.second == -1);
 			int iAttackerDamageDealt = damagePair.first;
 			int iDefenderDamageDealt = damagePair.second;
-			if (iDefenderDamageDealt < 0)
+			if (!kInfo.getDefenderRetaliates() || iDefenderStrength <= 0)
 			{
 				iDefenderDamageDealt = 0; // no retaliation, so no damage to the attacker
 			}
@@ -13130,7 +13130,7 @@ void CvGame::getCombatDamage(CvCombatInfo& kInfo)
 				iAttackerDamageDealt = GC.getMIN_CITY_STRIKE_DAMAGE();
 			}
 			int iDefenderDamageDealt = damagePair.second;
-			if (iDefenderDamageDealt < 0) // No Retaliation
+			if (!kInfo.getDefenderRetaliates()) // No Retaliation
 			{
 				iDefenderDamageDealt = 0;
 			}
