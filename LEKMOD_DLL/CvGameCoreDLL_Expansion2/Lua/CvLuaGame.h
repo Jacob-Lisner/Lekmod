@@ -246,9 +246,6 @@ protected:
 #ifdef REPLAY_MESSAGE_EXTENDED
 	static int lAddChatReplayMessage(lua_State* L);
 #endif
-#ifdef LEKMOD_VERSION_CHECK
-	static int lCheckLekmodUpdate(lua_State* L);
-#endif
 
 	static int lSaveReplay(lua_State* L);
 

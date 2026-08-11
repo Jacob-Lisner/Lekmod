@@ -6,8 +6,13 @@ LekmodVersion = LekmodVersion or {}
 
 LekmodVersion.HANDSHAKE_PREFIX = "#LEKVER#"
 LekmodVersion.VERSIONS_PAGE_URL = "https://github.com/EnormousApplePie/Lekmod/blob/main/LekmodInstaller/github_setup/versions.json"
+-- FrontEnd fetches these via undocumented vanilla Network.HttpRequest (Civ5-Patch pattern).
+LekmodVersion.VERSIONS_RAW_URLS = {
+	"https://raw.githubusercontent.com/EnormousApplePie/Lekmod/main/LekmodInstaller/github_setup/versions.json",
+	"https://cdn.jsdelivr.net/gh/EnormousApplePie/Lekmod@main/LekmodInstaller/github_setup/versions.json",
+}
+LekmodVersion.HTTP_TIMEOUT = 10 -- seconds
 LekmodVersion.HANDSHAKE_TIMEOUT = 12 -- seconds after connect before host kicks unverified players
-LekmodVersion.CACHE_RELATIVE = "My Games\\Sid Meier's Civilization 5\\Lekmod\\version_cache.txt"
 
 function LekmodVersion.Normalize(versionText)
 	if versionText == nil then
@@ -60,79 +65,6 @@ function LekmodVersion.Compare(a, b)
 	return 0
 end
 
--- FrontEnd has no Game Lua bindings; read installer/DLL-written cache instead.
-local function GetUserProfileRoot()
-	local roots = {}
-	local ok, home = pcall(function()
-		if os and os.getenv then
-			return os.getenv("USERPROFILE") or os.getenv("HOME")
-		end
-		return nil
-	end)
-	if ok and home ~= nil and home ~= "" then
-		table.insert(roots, home .. "\\Documents")
-	end
-	return roots
-end
-
-function LekmodVersion.ReadCacheFile()
-	-- Prefer ModUserData: works on FrontEnd without Game DLL bindings / io.
-	local okUd, userData = pcall(function()
-		return Modding.OpenUserData("LekmodVersionCache", 1)
-	end)
-	if okUd and userData ~= nil then
-		local latest = LekmodVersion.Normalize(userData.GetValue("Latest"))
-		if latest ~= nil then
-			return {
-				Latest = latest,
-				FileId = userData.GetValue("FileId"),
-				Source = "userdata",
-			}, nil
-		end
-	end
-
-	if io == nil or io.open == nil then
-		return nil, "no-io"
-	end
-
-	local tried = {}
-	for _, root in ipairs(GetUserProfileRoot()) do
-		local path = root .. "\\" .. LekmodVersion.CACHE_RELATIVE
-		table.insert(tried, path)
-		local ok, f = pcall(function()
-			return io.open(path, "r")
-		end)
-		if ok and f ~= nil then
-			local line1 = f:read("*l")
-			local line2 = f:read("*l")
-			f:close()
-			local latest = LekmodVersion.Normalize(line1)
-			if latest ~= nil then
-				return {
-					Latest = latest,
-					FileId = (line2 ~= nil and string.match(line2, "%S+")) or nil,
-					Source = "cache",
-				}, nil
-			end
-		end
-	end
-
-	return nil, "cache-miss"
-end
-
-function LekmodVersion.WriteCacheUserData(latest, fileId)
-	local ok, userData = pcall(function()
-		return Modding.OpenUserData("LekmodVersionCache", 1)
-	end)
-	if not ok or userData == nil then
-		return
-	end
-	pcall(function()
-		userData.SetValue("Latest", latest or "")
-		userData.SetValue("FileId", fileId or "")
-	end)
-end
-
 local function ResultFromLatest(localVersion, latest, fileId, source)
 	local result = {
 		Local = localVersion,
@@ -150,65 +82,68 @@ local function ResultFromLatest(localVersion, latest, fileId, source)
 	return result
 end
 
-function LekmodVersion.CheckForUpdate()
-	local localVersion = LekmodVersion.GetLocal()
-	local result = {
-		Local = localVersion,
+function LekmodVersion.UnreachableResult(errorCode)
+	return {
+		Local = LekmodVersion.GetLocal(),
 		Success = false,
 		IsNewer = false,
 		Latest = nil,
 		DownloadUrl = nil,
-		Error = nil,
-		Source = nil,
+		Error = errorCode or "unreachable",
+		Source = "http",
 	}
+end
 
-	-- Prefer DLL when available (in-game / contexts where Game is registered).
-	local checker = nil
-	if type(LekmodCheckUpdate) == "function" then
-		checker = LekmodCheckUpdate
-	elseif Game ~= nil and Game.CheckLekmodUpdate ~= nil then
-		checker = function(v) return Game.CheckLekmodUpdate(v) end
+-- Parse installer versions.json body; returns latest version + file_id.
+function LekmodVersion.ParseVersionsJson(body)
+	if body == nil or body == "" then
+		return nil, nil
 	end
-
-	if checker ~= nil then
-		local ok, info = pcall(function()
-			return checker(localVersion)
-		end)
-		if ok and info ~= nil and (info.Success == true or info.Success == 1) then
-			result.Success = true
-			result.Latest = LekmodVersion.Normalize(info.Latest) or info.Latest
-			result.FileId = info.FileId
-			result.IsNewer = (info.IsNewer == true or info.IsNewer == 1)
-			result.DownloadUrl = info.DownloadUrl
-			result.Source = info.Source or "dll"
-			-- Mirror into FrontEnd-readable userdata for next main-menu visit.
-			LekmodVersion.WriteCacheUserData(result.Latest, result.FileId)
-			return result
+	local best, bestFileId = nil, nil
+	for ver, block in string.gmatch(tostring(body), '"([vV]?%d+%.%d+[%d%.]*)"%s*:%s*(%b{})') do
+		local norm = LekmodVersion.Normalize(ver)
+		if norm ~= nil then
+			local fileId = string.match(block, '"file_id"%s*:%s*"([^"]+)"')
+			if best == nil or LekmodVersion.Compare(norm, best) > 0 then
+				best = norm
+				bestFileId = fileId
+			end
 		end
-		if ok and info ~= nil then
-			result.Error = tostring(info.Error or "fetch-failed")
-			result.Source = info.Source
-		elseif not ok then
-			result.Error = "call-failed"
-		else
-			result.Error = "nil-result"
-		end
-		-- Fall through to cache if DLL HTTP failed.
-	else
-		result.Error = "no-api"
 	end
+	return best, bestFileId
+end
 
-	local cached, cacheErr = LekmodVersion.ReadCacheFile()
-	if cached ~= nil then
-		return ResultFromLatest(localVersion, cached.Latest, cached.FileId, cached.Source)
+function LekmodVersion.ResultFromVersionsBody(body, source)
+	local localVersion = LekmodVersion.GetLocal()
+	local latest, fileId = LekmodVersion.ParseVersionsJson(body)
+	if latest == nil then
+		return LekmodVersion.UnreachableResult("parse-failed")
 	end
+	return ResultFromLatest(localVersion, latest, fileId, source or "http")
+end
 
-	if result.Error == nil or result.Error == "no-api" then
-		result.Error = cacheErr or result.Error or "no-api"
-	else
-		result.Error = tostring(result.Error) .. "+" .. tostring(cacheErr or "cache-miss")
+-- Undocumented vanilla API (FireWire FHttpRequest in CivilizationV*.exe).
+function LekmodVersion.HasHttpRequest()
+	return Network ~= nil and type(Network.HttpRequest) == "function"
+end
+
+function LekmodVersion.StartHttpVersionsRequest(urlIndex)
+	if not LekmodVersion.HasHttpRequest() then
+		return nil, nil
 	end
-	return result
+	local urls = LekmodVersion.VERSIONS_RAW_URLS
+	local index = urlIndex or 1
+	if index < 1 or index > #urls then
+		return nil, nil
+	end
+	local url = urls[index]
+	local ok, req = pcall(function()
+		return Network.HttpRequest(url)
+	end)
+	if ok and req ~= nil then
+		return req, index
+	end
+	return nil, nil
 end
 
 function LekmodVersion.OpenDownload(url)

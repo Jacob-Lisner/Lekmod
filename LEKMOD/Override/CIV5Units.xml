@@ -75761,7 +75761,7 @@
 			<ArtStylePrefix>AFRICAN</ArtStylePrefix> 
 			<PortraitIndex>0</PortraitIndex> 
 			<IconAtlas>LEKMOD_MALI_ATLAS</IconAtlas> 
-			<AlphaIconAtlas>MALI_ALPHA_ICON_ATLAS</AlphaIconAtlas> 
+			<AlphaIconAtlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</AlphaIconAtlas> 
 			<MapImage>generic_map.dds</MapImage> 
 			<DawnOfManQuote>TXT_KEY_DAWN_OF_MAN_MALI_TEXT</DawnOfManQuote> 
 			<DawnOfManImage>generic_DoM.dds</DawnOfManImage> 
@@ -75783,7 +75783,7 @@
 			<ArtStylePrefix>AFRICAN</ArtStylePrefix> 
 			<PortraitIndex>0</PortraitIndex> 
 			<IconAtlas>LEKMOD_BUGANDA_ATLAS</IconAtlas> 
-			<AlphaIconAtlas>BUGANDA_ALPHA_ICON_ATLAS</AlphaIconAtlas> 
+			<AlphaIconAtlas>LEKMOD_BUGANDA_ICON_ALPHA</AlphaIconAtlas> 
 			<MapImage>generic_map.dds</MapImage> 
 			<DawnOfManQuote>TXT_KEY_DAWN_OF_MAN_BUGANDA_TEXT</DawnOfManQuote> 
 			<DawnOfManImage>generic_DoM.dds</DawnOfManImage> 
@@ -78844,6 +78844,38 @@
 			<Red>0.803921568627451</Red>
 			<Green>0.556862745098039</Green>
 			<Blue>0.458823529411765</Blue>
+			<Alpha>1</Alpha>
+		</Row>
+		<Row>
+			<ID>373</ID>
+			<Type>COLOR_PLAYER_BUGANDA_ICON</Type>
+			<Red>1</Red>
+			<Green>1</Green>
+			<Blue>1</Blue>
+			<Alpha>1</Alpha>
+		</Row>
+		<Row>
+			<ID>374</ID>
+			<Type>COLOR_PLAYER_BUGANDA_BACKGROUND</Type>
+			<Red>0.274509803921569</Red>
+			<Green>0.0549019607843137</Green>
+			<Blue>0.298039215686275</Blue>
+			<Alpha>1</Alpha>
+		</Row>
+		<Row>
+			<ID>375</ID>
+			<Type>COLOR_PLAYER_MALI_ICON</Type>
+			<Red>0.96078431372549</Red>
+			<Green>0.941176470588235</Green>
+			<Blue>0.862745098039216</Blue>
+			<Alpha>1</Alpha>
+		</Row>
+		<Row>
+			<ID>376</ID>
+			<Type>COLOR_PLAYER_MALI_BACKGROUND</Type>
+			<Red>0.627450980392157</Red>
+			<Green>0.392156862745098</Green>
+			<Blue>0.137254901960784</Blue>
 			<Alpha>1</Alpha>
 		</Row>
 	</Colors> 
@@ -132995,6 +133027,209 @@
             <IconsPerRow>2</IconsPerRow>
             <IconsPerColumn>2</IconsPerColumn>
         </Row>
+		<Row>
+            <Atlas>LEKMOD_BUGANDA_ATLAS</Atlas>
+            <IconSize>32</IconSize>
+            <Filename>atlas_buganda_32.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ATLAS</Atlas>
+            <IconSize>64</IconSize>
+            <Filename>atlas_buganda_64.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ATLAS</Atlas>
+            <IconSize>80</IconSize>
+            <Filename>atlas_buganda_80.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ATLAS</Atlas>
+            <IconSize>128</IconSize>
+            <Filename>atlas_buganda_128.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ATLAS</Atlas>
+            <IconSize>45</IconSize>
+            <Filename>atlas_buganda_45.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ATLAS</Atlas>
+            <IconSize>256</IconSize>
+            <Filename>atlas_buganda_256.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+		<Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>32</IconSize>
+            <Filename>alpha_atlas_buganda_32.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>48</IconSize>
+            <Filename>alpha_atlas_buganda_48.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>64</IconSize>
+            <Filename>alpha_atlas_buganda_64.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>80</IconSize>
+            <Filename>alpha_atlas_buganda_80.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>128</IconSize>
+            <Filename>alpha_atlas_buganda_128.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>45</IconSize>
+            <Filename>alpha_atlas_buganda_45.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>16</IconSize>
+            <Filename>alpha_atlas_buganda_16.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_BUGANDA_ICON_ALPHA</Atlas>
+            <IconSize>24</IconSize>
+            <Filename>alpha_atlas_buganda_24.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+		<Row>
+            <Atlas>LEKMOD_BUGANDA_EXP_FORCE_FLAG</Atlas>
+            <IconSize>32</IconSize>
+            <Filename>Buganda_UU_Flag_32.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+		 <Row>
+            <Atlas>LEKMOD_MALI_ATLAS</Atlas>
+            <IconSize>32</IconSize>
+            <Filename>atlas_mali_32.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ATLAS</Atlas>
+            <IconSize>64</IconSize>
+            <Filename>atlas_mali_64.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ATLAS</Atlas>
+            <IconSize>80</IconSize>
+            <Filename>atlas_mali_80.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ATLAS</Atlas>
+            <IconSize>128</IconSize>
+            <Filename>atlas_mali_128.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ATLAS</Atlas>
+            <IconSize>45</IconSize>
+            <Filename>atlas_mali_45.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ATLAS</Atlas>
+            <IconSize>256</IconSize>
+            <Filename>atlas_mali_256.dds</Filename>
+            <IconsPerRow>2</IconsPerRow>
+            <IconsPerColumn>2</IconsPerColumn>
+        </Row>
+		 <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>32</IconSize>
+            <Filename>alpha_atlas_mali_32.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>48</IconSize>
+            <Filename>alpha_atlas_mali_48.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>64</IconSize>
+            <Filename>alpha_atlas_mali_64.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>80</IconSize>
+            <Filename>alpha_atlas_mali_80.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>128</IconSize>
+            <Filename>alpha_atlas_mali_128.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>45</IconSize>
+            <Filename>alpha_atlas_mali_45.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>16</IconSize>
+            <Filename>alpha_atlas_mali_16.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
+        <Row>
+            <Atlas>LEKMOD_MALI_ALPHA_ICON_ALPHA</Atlas>
+            <IconSize>24</IconSize>
+            <Filename>alpha_atlas_mali_24.dds</Filename>
+            <IconsPerRow>1</IconsPerRow>
+            <IconsPerColumn>1</IconsPerColumn>
+        </Row>
 	</IconTextureAtlases> 
 
 	<Table name="Improvement_EraYieldChanges">
@@ -181698,15 +181933,15 @@
 		<Row>
 			<ID>182</ID>
 			<Type>PLAYERCOLOR_MALI</Type>
-			<PrimaryColor>COLOR_PLAYER_TUNISIA_ICON</PrimaryColor>
-			<SecondaryColor>COLOR_PLAYER_TUNISIA_BACKGROUND</SecondaryColor>
+			<PrimaryColor>COLOR_PLAYER_MALI_ICON</PrimaryColor>
+			<SecondaryColor>COLOR_PLAYER_MALI_BACKGROUND</SecondaryColor>
 			<TextColor>COLOR_PLAYER_WHITE_TEXT</TextColor>
 		</Row>
 		<Row>
 			<ID>183</ID>
 			<Type>PLAYERCOLOR_BUGANDA</Type>
-			<PrimaryColor>COLOR_PLAYER_TUNISIA_ICON</PrimaryColor>
-			<SecondaryColor>COLOR_PLAYER_TUNISIA_BACKGROUND</SecondaryColor>
+			<PrimaryColor>COLOR_PLAYER_BUGANDA_ICON</PrimaryColor>
+			<SecondaryColor>COLOR_PLAYER_BUGANDA_BACKGROUND</SecondaryColor>
 			<TextColor>COLOR_PLAYER_WHITE_TEXT</TextColor>
 		</Row>
 	</PlayerColors> 
@@ -185488,7 +185723,13 @@
 			<PolicyType>POLICY_HONOR_FINISHER</PolicyType> 
 			<BuildingClassType>BUILDINGCLASS_ARMORY</BuildingClassType> 
 			<YieldType>YIELD_FOOD</YieldType> 
-			<YieldChange>2</YieldChange> 
+			<YieldChange>1</YieldChange> 
+		</Row>
+		<Row> 
+			<PolicyType>POLICY_HONOR_FINISHER</PolicyType> 
+			<BuildingClassType>BUILDINGCLASS_COURTHOUSE</BuildingClassType> 
+			<YieldType>YIELD_FOOD</YieldType> 
+			<YieldChange>1</YieldChange> 
 		</Row>
 		<!-- Piety Opener -->
 		 <Row> 
@@ -185501,12 +185742,6 @@
 			<PolicyType>POLICY_PIETY</PolicyType> 
 			<BuildingClassType>BUILDINGCLASS_PALACE</BuildingClassType> 
 			<YieldType>YIELD_FAITH</YieldType> 
-			<YieldChange>1</YieldChange> 
-		</Row>
-		<Row> 
-			<PolicyType>POLICY_PIETY</PolicyType> 
-			<BuildingClassType>BUILDINGCLASS_PALACE</BuildingClassType> 
-			<YieldType>YIELD_PRODUCTION</YieldType> 
 			<YieldChange>1</YieldChange> 
 		</Row>
 		<!-- Organized Religion, Shrine -->
@@ -185540,6 +185775,12 @@
 			<PolicyType>POLICY_MANDATE_OF_HEAVEN</PolicyType> 
 			<BuildingClassType>BUILDINGCLASS_PALACE</BuildingClassType> 
 			<YieldType>YIELD_FAITH</YieldType> 
+			<YieldChange>1</YieldChange> 
+		</Row>
+		<Row> 
+			<PolicyType>POLICY_MANDATE_OF_HEAVEN</PolicyType> 
+			<BuildingClassType>BUILDINGCLASS_PALACE</BuildingClassType> 
+			<YieldType>YIELD_PRODUCTION</YieldType> 
 			<YieldChange>1</YieldChange> 
 		</Row>
 		<!-- Free Religion -->
@@ -186952,7 +187193,7 @@
 		<Row> 
 			<PolicyType>POLICY_COMMERCE_FINISHER</PolicyType> 
 			<UnitClassType>UNITCLASS_MERCHANT</UnitClassType> 
-			<Count>1</Count> 
+			<Count>2</Count> 
 		</Row>
 		<Row> 
 			<PolicyType>POLICY_EXPLORATION_FINISHER</PolicyType> 
@@ -272634,11 +272875,12 @@
 			<AdvancedStartCost>40</AdvancedStartCost>
 			<XPValueAttack>3</XPValueAttack>
 			<XPValueDefense>3</XPValueDefense>
-			<UnitArtInfo>ART_DEF_UNIT_U_EXPEDITIONARY_FORCE</UnitArtInfo>
-			<UnitFlagIconOffset>65</UnitFlagIconOffset>
-			<PortraitIndex>10</PortraitIndex>
-			<IconAtlas>LEKMOD_UNIT_ATLAS</IconAtlas>
-			<UnitFlagAtlas>UNIT_FLAG_ATLAS</UnitFlagAtlas>
+			<Conscription>3</Conscription>
+			<UnitArtInfo>ART_DEF_UNIT_U_ETHIOPIA_MEHAL_SEFARI</UnitArtInfo>
+			<UnitFlagIconOffset>0</UnitFlagIconOffset>
+			<PortraitIndex>3</PortraitIndex>
+			<IconAtlas>LEKMOD_BUGANDA_ATLAS</IconAtlas>
+			<UnitFlagAtlas>LEKMOD_BUGANDA_EXP_FORCE_FLAG</UnitFlagAtlas>
 		</Row>
 	</Units>
 	

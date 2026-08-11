@@ -12,26 +12,23 @@
 	<Language_en_US>
 		<!-- Version Number, Leave at top -->
 		<Row Tag="TXT_KEY_LEKMOD_VERSION">
-			<Text>LEKMOD v34.15</Text>
+			<Text>LEKMOD v35.0 Beta Test</Text>
 		</Row>
 		<Replace Tag="TXT_KEY_MULTIPLAYER_STAGING_ROOM"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR]
+				[COLOR_POSITIVE_TEXT]LEKMOD v35.0 Beta Test[ENDCOLOR]
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_AD_SETUP_ADVANCED_OPTIONS"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR]  
+				[COLOR_POSITIVE_TEXT]LEKMOD v35.0 Beta Test[ENDCOLOR]  
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_GAME_SELECTION_SCREEN"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR] 
+				[COLOR_POSITIVE_TEXT]LEKMOD v35.0 Beta Test[ENDCOLOR] 
 			</Text>
 		</Replace>
-		<Row Tag="TXT_KEY_GAME_OPTION_SCUFFED_VERSION_CHECKER">
-			<Text>[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR]</Text>
-		</Row>
 		<!-- END VERSION -->
 		<!-- Start v35 -->
 
@@ -44,6 +41,18 @@
 		</Row>
 		<Row Tag="TXT_KEY_LEKMOD_MENU_GITHUB">
   			<Text>GITHUB</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_UNREACHABLE">
+			<Text>Running Lekmod {1_Version} - [COLOR_WARNING_TEXT]Cannot reach update server[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_TT_UNREACHABLE">
+			<Text>Could not reach the online version list. Check your internet connection.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_TT_UPTODATE">
+			<Text>Your Lekmod install matches the latest installer version.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_TT_OUTDATED">
+			<Text>A newer Lekmod build is available. Click to download.</Text>
 		</Row>
 		<Row Tag="TXT_KEY_LEKMOD_MENU_GITHUB_TT">
   			<Text>Open the Lekmod GitHub repository</Text>
@@ -7479,10 +7488,6 @@ Many individual cacicazgos have been studied in colonial Mexico, showing that en
 			<Text>+34% [ICON_STRENGTH] Combat Strength VS [COLOR_POSITIVE_TEXT]Naval[ENDCOLOR] units.</Text>
 		</Row>
 	<!-- New options -->
-	<!-- version checker -->
-		<Row Tag="TXT_KEY_GAME_OPTION_SCUFFED_VERSION_CHECKER_HELP">
-			<Text>[COLOR_POSITIVE_TEXT]Version Checker[ENDCOLOR][NEWLINE][NEWLINE]This Game Option allows for a simple way of checking if people in your game lobby are running the same version of Lekmod or not. Simply enable this option once all the desires Players are in, then whomever does not see this Game Option in the Game Option tab after turning it on, is running a different version!</Text>
-		</Row>
 	<!-- v26 -->
 		<Row Tag="TXT_KEY_GAME_OPTION_FAST_HAND">
 			<Text>Fast Hand</Text>
@@ -16729,7 +16734,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GOD_FESTIVALS"> 
 			<Text>
-				+1 [ICON_PRODUCTION] Production and +1 [ICON_PEACE] Faith from [ICON_RES_SUGAR] Sugar, [ICON_RES_WINE] Wine and [ICON_RES_SPICES] Spices.
+				+1 [ICON_PRODUCTION] Production and +1 [ICON_PEACE] Faith from [ICON_RES_INCENSE] Incense, [ICON_RES_WINE] Wine and [ICON_RES_SPICES] Spices.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GOD_FESTIVALS_SHORT"> 
@@ -17654,7 +17659,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_WIND"> 
 			<Text>
-				+2 [ICON_PEACE] Faith from [ICON_RES_COTTON] Cotton, [ICON_RES_INCENSE] Incense, [ICON_RES_TEA] Tea, and [ICON_RES_COFFEE] Coffee
+				+2 [ICON_PEACE] Faith from [ICON_RES_COTTON] Cotton, [ICON_RES_SUGAR] Sugar, [ICON_RES_TEA] Tea, and [ICON_RES_COFFEE] Coffee
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_WIND_SHORT"> 
@@ -115438,7 +115443,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_HONOR_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Honor[ENDCOLOR] improves the effectiveness of one's army in a variety of ways.[NEWLINE][NEWLINE]Adopting Honor gives a +33% combat bonus VS [COLOR_POSITIVE_TEXT]Barbarians[ENDCOLOR]. Gain [ICON_CULTURE] Culture for the empire for each enemy unit killed. Unlocks building the [ICON_WONDER_STATUE_ZEUS] Statue of Zeus.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Honor tree will grant [ICON_RESEARCH] Science for each enemy unit killed. +1 [ICON_FOOD] Food from [ICON_BUILDING_BARRACKS] Barracks, and +2 [ICON_FOOD] Food from [ICON_BUILDING_ARMORY] Armories. [ICON_GREAT_GENERAL] Great Generals can be purchased with [ICON_PEACE] Faith starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
+				[COLOR_POSITIVE_TEXT]Honor[ENDCOLOR] improves the effectiveness of one's army in a variety of ways.[NEWLINE][NEWLINE]Adopting Honor gives a +33% combat bonus VS [COLOR_POSITIVE_TEXT]Barbarians[ENDCOLOR]. Gain [ICON_CULTURE] Culture for the empire for each enemy unit killed. Unlocks building the [ICON_WONDER_STATUE_ZEUS] Statue of Zeus.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Honor tree will grant [ICON_RESEARCH] Science for each enemy unit killed. +1 [ICON_FOOD] Food from [ICON_BUILDING_BARRACKS] Barracks, [ICON_BUILDING_ARMORY] Armories, and [ICON_BUILDING_COURTHOUSE] Courthouses. [ICON_GREAT_GENERAL] Great Generals can be purchased with [ICON_PEACE] Faith starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_LIBERTY"> 
@@ -115453,7 +115458,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_LIBERTY_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Liberty[ENDCOLOR] is best for civilizations which desire rapid expansion.[NEWLINE][NEWLINE]Adopting Liberty will provide 1 [ICON_CULTURE] Culture per city. Unlocks building the [ICON_WONDER_PYRAMID] Pyramids.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Liberty tree will grant a free [ICON_GREAT_PEOPLE] Great Person of your choice near the [ICON_CAPITAL] Capital. All cities gain +33% [ICON_PRODUCTION] Production towards [COLOR_POSITIVE_TEXT]National Wonders[ENDCOLOR] and +15% [ICON_PRODUCTION] Production towards any building required for a [COLOR_POSITIVE_TEXT]National Wonder[ENDCOLOR].
+				[COLOR_POSITIVE_TEXT]Liberty[ENDCOLOR] is best for civilizations which desire rapid expansion.[NEWLINE][NEWLINE]Adopting Liberty will provide 1 [ICON_CULTURE] Culture per city. Unlocks building the [ICON_WONDER_PYRAMID] Pyramids.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Liberty tree will grant a free [ICON_GREAT_PEOPLE] Great Person of your choice near the [ICON_CAPITAL] Capital. All cities gain +33% [ICON_PRODUCTION] Production towards [COLOR_POSITIVE_TEXT]National Wonders[ENDCOLOR], +15% [ICON_PRODUCTION] Production towards [ICON_BUILDING_FACTORY] Factories, and towards any building required for a [COLOR_POSITIVE_TEXT]National Wonder[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_ORDER"> 
@@ -115498,7 +115503,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_PIETY_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Piety[ENDCOLOR] increases the [ICON_PEACE] Faith of empires.[NEWLINE][NEWLINE]Adopting Piety provides you with +1 [ICON_PRODUCTION] Production, +1 [ICON_CULTURE] Culture, and +1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital. +50% [ICON_PRODUCTION] Production towards [ICON_BUILDING_SHRINE] Shrines and [ICON_BUILDING_TEMPLE] Temples. Unlocks building the [ICON_WONDER_MOSQUE_OF_DJENNE] Great Mosque of Djenne.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Piety tree causes a [ICON_PROPHET] Great Prophet to appear. [COLOR_POSITIVE_TEXT]Holy Sites[ENDCOLOR] provide +1 [ICON_FOOD] Food and +3 [ICON_CULTURE] Culture. Provides a free [ICON_BUILDING_GARDEN] Garden in your first 4 cities and allows [ICON_PEACE] Faith purchasing of 1 [ICON_GREAT_PEOPLE] Great Person of every kind with exception to a [ICON_GREAT_SCIENTIST] Great Scientist starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
+				[COLOR_POSITIVE_TEXT]Piety[ENDCOLOR] increases the [ICON_PEACE] Faith of empires.[NEWLINE][NEWLINE]Adopting Piety provides you with +1 [ICON_CULTURE] Culture and +1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital. +50% [ICON_PRODUCTION] Production towards [ICON_BUILDING_SHRINE] Shrines and [ICON_BUILDING_TEMPLE] Temples. Unlocks building the [ICON_WONDER_MOSQUE_OF_DJENNE] Great Mosque of Djenne.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Piety tree causes a [ICON_PROPHET] Great Prophet to appear. [COLOR_POSITIVE_TEXT]Holy Sites[ENDCOLOR] provide +1 [ICON_FOOD] Food and +3 [ICON_CULTURE] Culture. Provides a free [ICON_BUILDING_GARDEN] Garden in your first 4 cities and allows [ICON_PEACE] Faith purchasing of 1 [ICON_GREAT_PEOPLE] Great Person of every kind with exception to a [ICON_GREAT_SCIENTIST] Great Scientist starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_RATIONALISM"> 
@@ -116308,7 +116313,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_MANDATE_OF_HEAVEN_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Mandate of Heaven[ENDCOLOR][NEWLINE]+1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital and +1 [ICON_HAPPINESS_1] Happiness from each [ICON_BUILDING_TEMPLE] Temple. 20% discount on all purchases of [COLOR_POSITIVE_TEXT]Religious Units[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Buildings[ENDCOLOR] with [ICON_PEACE] Faith.
+				[COLOR_POSITIVE_TEXT]Mandate of Heaven[ENDCOLOR][NEWLINE]+1 [ICON_PRODUCTION] Production and +1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital. +1 [ICON_HAPPINESS_1] Happiness from each [ICON_BUILDING_TEMPLE] Temple. 20% discount on all purchases of [COLOR_POSITIVE_TEXT]Religious Units[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Buildings[ENDCOLOR] with [ICON_PEACE] Faith.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_MARITIME_INFRASTRUCTURE"> 
@@ -116784,7 +116789,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_PROFESSIONAL_ARMY_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Professional Army[ENDCOLOR][NEWLINE]+100% [ICON_PRODUCTION] Production towards [ICON_BUILDING_BARRACKS] Barracks, and +50% [ICON_PRODUCTION] Production towards [ICON_BUILDING_ARMORY] Armories and [ICON_BUILDING_MILITARY_ACADEMY] Military Academies. They each provide +1 [ICON_PRODUCTION] Production, +1 [ICON_CULTURE] Culture, and +1 [ICON_GOLD] Gold.
+				[COLOR_POSITIVE_TEXT]Professional Army[ENDCOLOR][NEWLINE]+100% [ICON_PRODUCTION] Production towards [ICON_BUILDING_BARRACKS] Barracks, [ICON_BUILDING_ARMORY] Armories, and [ICON_BUILDING_MILITARY_ACADEMY] Military Academies. They each provide +1 [ICON_PRODUCTION] Production, +1 [ICON_CULTURE] Culture, and +1 [ICON_GOLD] Gold.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_PROTECTIONISM"> 
