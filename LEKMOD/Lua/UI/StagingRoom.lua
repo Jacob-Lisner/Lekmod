@@ -7,12 +7,29 @@ include( "InstanceManager" );
 include( "UniqueBonuses" );
 include( "MPGameOptions" );
 include( "TurnStatusBehavior" ); -- for turn status button behavior
+include( "Lekmod_version.lua" );
+include( "Lekmod_staging_draft.lua" );
 
 -------------------------------------------------
 -- Globals
 -------------------------------------------------
-local m_SlotInstances = {};
+-- m_SlotInstances / m_PlayerNames are globals so Lekmod_staging_draft.lua can
+-- align ban boxes and draft icons with the visible player list.
+m_SlotInstances = {};
 local g_ChatInstances = {};
+local g_LobbyChatHistory = {};
+local g_bRequestedLobbyChatHistory = false;
+local bFlipper = false;
+local g_VersionVerified = {}; -- [playerID] = true/false
+local g_VersionDeadline = {}; -- [playerID] = remaining seconds
+local g_fVersionCheckAccum = 0;
+
+-- UserData key shared with DiploCorner for lobby → in-game chat handoff.
+local LOBBY_CHAT_USERDATA = "LekmodLobbyChat";
+local LOBBY_CHAT_REQ = "#LCHREQ#";
+local LOBBY_CHAT_CLEAR = "#LCHCLEAR#";
+local LOBBY_CHAT_PREFIX = "#LCH#";
+local LOBBY_CHAT_HISTORY_MAX = 100;
 
 local g_AdvancedOptionIM = InstanceManager:new( "GameOption", "Text", Controls.AdvancedOptions );
 local g_AdvancedOptionsList = {};
@@ -20,7 +37,7 @@ local g_AdvancedOptionsList = {};
 local m_HostID;
 local m_bIsHost;
 
-local m_PlayerNames = {};
+m_PlayerNames = {};
 local m_bLaunchReady = false;
 local m_bTeamsValid = false;
 
@@ -149,9 +166,23 @@ end
 -------------------------------------------------
 -------------------------------------------------
 function OnSaveButton()
+	if Draft_PersistToPreGame ~= nil then
+		Draft_PersistToPreGame();
+	end
     UIManager:QueuePopup( Controls.SaveMenu, PopupPriority.SaveMenu );
 end
 Controls.SaveButton:RegisterCallback( Mouse.eLClick, OnSaveButton );
+
+-------------------------------------------------
+-------------------------------------------------
+function OnCivilopediaButton()
+	if Draft_OpenCivilopedia ~= nil then
+		Draft_OpenCivilopedia("");
+	end
+end
+if Controls.CivilopediaButton ~= nil then
+	Controls.CivilopediaButton:RegisterCallback( Mouse.eLClick, OnCivilopediaButton );
+end
 
 -------------------------------------------------
 -------------------------------------------------
@@ -215,8 +246,17 @@ Controls.RemoveButton:RegisterCallback( Mouse.eLClick, OnCancel );
 -------------------------------------------------
 -- Context OnUpdate
 -------------------------------------------------
-function OnUpdate( fDTime )
-	-- OnUpdate only runs when the game start countdown is ticking down.
+function OnStagingUpdate( fDTime )
+	if Draft_SyncBanScroll ~= nil then
+		Draft_SyncBanScroll();
+	end
+	VersionCheckUpdate( fDTime );
+
+	-- Countdown only runs while g_fCountdownTimer is active (>= 0).
+	if( g_fCountdownTimer < 0 ) then
+		return;
+	end
+
 	g_fCountdownTimer = g_fCountdownTimer - fDTime;
 	if( not Network.IsEveryoneConnected() ) then
 		-- not all players are connected anymore.  This is probably due to a player join in progress.
@@ -236,12 +276,16 @@ function OnUpdate( fDTime )
 	end
 end
 
+function EnsureStagingUpdate()
+	ContextPtr:SetUpdate( OnStagingUpdate );
+end
+
 -------------------------------------------------
 -- Start Game Launch Countdown
 -------------------------------------------------
 function StartCountdown()
 	g_fCountdownTimer = 10;
-	ContextPtr:SetUpdate( OnUpdate );
+	EnsureStagingUpdate();
 end
 
 -------------------------------------------------
@@ -250,7 +294,9 @@ end
 function StopCountdown()
 	Controls.CountdownButton:SetHide(true);
 	g_fCountdownTimer = -1;
-	ContextPtr:ClearUpdate();
+	-- Keep OnStagingUpdate alive for ban/player scroll sync + version checks
+	-- (ClearUpdate here broke ban-column scroll for non-host clients).
+	EnsureStagingUpdate();
 end
 
 
@@ -259,6 +305,9 @@ end
 -------------------------------------------------
 function LaunchGame()
 
+	if Draft_PersistToPreGame ~= nil then
+		Draft_PersistToPreGame();
+	end
 	if (PreGame.IsHotSeatGame()) then
 		-- In case they changed the DLC.  This won't do anything if it is already setup properly.
 		local prevCursor = UIManager:SetUICursor( 1 );
@@ -295,6 +344,15 @@ Events.MultiplayerHotJoinCompleted.Add(OnHotJoinCompleted);
 -------------------------------------------------
 function OnGameLaunched()
 
+	PersistLobbyChatHistory();
+	ClearLobbyChat();
+	-- Mark before memory reset so the flag is stored in the save (turn-0 loads included).
+	if Draft_MarkGameLaunched ~= nil then
+		Draft_MarkGameLaunched();
+	end
+	if Draft_ResetState ~= nil then
+		Draft_ResetState();
+	end
 	UIManager:DequeuePopup( ContextPtr );
 
 end
@@ -317,6 +375,9 @@ end
 function CivSelected( selectionIndex, civID )
 	local playerID = GetPlayerIDBySelectionIndex(selectionIndex);
 	if( playerID >= 0 ) then
+		if Draft_CivAllowedForPlayer ~= nil and not Draft_CivAllowedForPlayer(playerID, civID) then
+			return;
+		end
 		PreGame.SetCivilization( playerID, civID );
 		Network.BroadcastPlayerInfo();
 		UpdateDisplay();
@@ -351,7 +412,8 @@ end
 -------------------------------------------------
 function OnKickPlayer( selectionIndex )
 	local playerID = GetPlayerIDBySelectionIndex(selectionIndex);
-	UIManager:PushModal(Controls.ConfirmKick, true);	
+	-- Do not pass true: that hides StagingRoom and previously wiped lobby chat on every kick confirm.
+	UIManager:PushModal(Controls.ConfirmKick);	
 	local playerName = m_SlotInstances[selectionIndex].PlayerNameLabel:GetText();
 	LuaEvents.SetKickPlayer(playerID, playerName);
 end
@@ -379,9 +441,16 @@ function OnReadyCheck( bChecked )
 	Network.BroadcastPlayerInfo();
 	UpdateDisplay();
 	CheckGameAutoStart();	
-	ShowHideSaveButton();	
+	ShowHideSaveButton();
+	-- Lock / unlock draft + ban interactions with game-ready state.
+	if Draft_RefreshBanUI ~= nil then
+		Draft_RefreshBanUI();
+	end
+	if Draft_UpdateActionButtons ~= nil then
+		Draft_UpdateActionButtons();
+	end
 end
--- Controls.LocalReadyCheck:RegisterCheckHandler( OnReadyCheck );
+Controls.LocalReadyCheck:RegisterCheckHandler( OnReadyCheck );
 
 
 -------------------------------------------------
@@ -577,6 +646,14 @@ function RefreshPlayerList()
 	Controls.SlotStack:CalculateSize();
 	Controls.SlotStack:ReprocessAnchoring();
 	Controls.ListingScrollPanel:CalculateInternalSize();
+
+	-- Keep ban column in sync when slots are added/removed/retyped.
+	if Draft_RefreshBanUI ~= nil then
+		Draft_RefreshBanUI();
+	end
+	if Draft_RefreshDraftIconsAll ~= nil then
+		Draft_RefreshDraftIconsAll();
+	end
 end
 
 
@@ -613,6 +690,9 @@ function UpdatePlayer( slotInstance, playerInfo )
         
 			IconHookup( leader.PortraitIndex, 64, leader.IconAtlas, slotInstance.Portrait );
 			SimpleCivIconHookup( playerID, 64, slotInstance.Icon);
+			if Draft_ApplyLeaderPortraitHelp ~= nil then
+				Draft_ApplyLeaderPortraitHelp(slotInstance.PortraitButton, civIndex, slotInstance.PortraitHoverAnim);
+			end
 		else   
 			if ( not activeCivSlot or PreGame.IsCivilizationKeyAvailable( playerID ) ) then
 				--------------------------------------------------------------
@@ -622,6 +702,9 @@ function UpdatePlayer( slotInstance, playerInfo )
 
 				IconHookup( 22, 64, "LEADER_ATLAS", slotInstance.Portrait );
 				SimpleCivIconHookup(-1, 64, slotInstance.Icon);
+				if Draft_ApplyLeaderPortraitHelp ~= nil then
+					Draft_ApplyLeaderPortraitHelp(slotInstance.PortraitButton, -1, slotInstance.PortraitHoverAnim);
+				end
 			else
 				--------------------------------------------------------------
 				-- A player has chosen a civilization we don't have access to
@@ -630,7 +713,10 @@ function UpdatePlayer( slotInstance, playerInfo )
 
 				IconHookup( 22, 64, "LEADER_ATLAS", slotInstance.Portrait );
 				SimpleCivIconHookup(-1, 64, slotInstance.Icon);
-			end				
+				if Draft_ApplyLeaderPortraitHelp ~= nil then
+					Draft_ApplyLeaderPortraitHelp(slotInstance.PortraitButton, -1, slotInstance.PortraitHoverAnim);
+				end
+			end
 		end
 
 		if (PreGame.CanReadyLocalPlayer()) then
@@ -918,6 +1004,9 @@ function UpdateLocalPlayer( playerInfo )
 		
 		IconHookup( leader.PortraitIndex, 64, leader.IconAtlas, Controls.Portrait );
 		SimpleCivIconHookup( Matchmaking.GetLocalID(), 64, Controls.Icon);
+		if Draft_ApplyLeaderPortraitHelp ~= nil then
+			Draft_ApplyLeaderPortraitHelp(Controls.PortraitButton, civIndex, Controls.PortraitHoverAnim);
+		end
 	else   
 		--------------------------------------------------------------
 		-- Random Civ             
@@ -925,6 +1014,9 @@ function UpdateLocalPlayer( playerInfo )
 		Controls.CivLabel:LocalizeAndSetText( "TXT_KEY_RANDOM_LEADER" );
 		IconHookup( 22, 64, "LEADER_ATLAS", Controls.Portrait );
 		SimpleCivIconHookup(-1, 64, Controls.Icon);
+		if Draft_ApplyLeaderPortraitHelp ~= nil then
+			Draft_ApplyLeaderPortraitHelp(Controls.PortraitButton, -1, Controls.PortraitHoverAnim);
+		end
 	end
 	--------------------------------------------------------------
 	
@@ -1006,13 +1098,286 @@ Controls.HotJoinCancelButton:RegisterCallback( Mouse.eLClick, BackButtonClick );
 
 
 -------------------------------------------------
+-- Lobby chat history (host-synced, transferred into in-game chat on launch)
+-------------------------------------------------
+function ClearLobbyChat()
+	Controls.ChatStack:DestroyAllChildren();
+	g_ChatInstances = {};
+	g_LobbyChatHistory = {};
+	g_bRequestedLobbyChatHistory = false;
+end
+
+function AppendLobbyChatHistory( fromPlayer, text, playerName )
+	table.insert( g_LobbyChatHistory, {
+		fromPlayer = fromPlayer,
+		text = text,
+		playerName = playerName,
+	} );
+	while( #g_LobbyChatHistory > LOBBY_CHAT_HISTORY_MAX ) do
+		table.remove( g_LobbyChatHistory, 1 );
+	end
+end
+
+function PersistLobbyChatHistory()
+	if( PreGame.IsHotSeatGame() ) then
+		return;
+	end
+
+	local userData = Modding.OpenUserData( LOBBY_CHAT_USERDATA, 1 );
+	local count = #g_LobbyChatHistory;
+	userData.SetValue( "count", count );
+	for i, msg in ipairs( g_LobbyChatHistory ) do
+		userData.SetValue( "from" .. i, msg.fromPlayer );
+		userData.SetValue( "name" .. i, msg.playerName or "" );
+		userData.SetValue( "text" .. i, msg.text or "" );
+	end
+end
+
+function EncodeLobbyChatSync( fromPlayer, playerName, text )
+	local safeName = string.gsub( playerName or "", "|", "/" );
+	return LOBBY_CHAT_PREFIX .. tostring( fromPlayer ) .. "|" .. safeName .. "|" .. text;
+end
+
+function DecodeLobbyChatSync( text )
+	if( string.sub( text, 1, #LOBBY_CHAT_PREFIX ) ~= LOBBY_CHAT_PREFIX ) then
+		return nil, nil, nil;
+	end
+
+	local rest = string.sub( text, #LOBBY_CHAT_PREFIX + 1 );
+	local sep1 = string.find( rest, "|", 1, true );
+	if( sep1 == nil ) then
+		return nil, nil, nil;
+	end
+	local sep2 = string.find( rest, "|", sep1 + 1, true );
+	if( sep2 == nil ) then
+		return nil, nil, nil;
+	end
+
+	local fromPlayer = tonumber( string.sub( rest, 1, sep1 - 1 ) );
+	if( fromPlayer == nil ) then
+		return nil, nil, nil;
+	end
+	local playerName = string.sub( rest, sep1 + 1, sep2 - 1 );
+	local msgText = string.sub( rest, sep2 + 1 );
+	return fromPlayer, playerName, msgText;
+end
+
+function SendLobbyChatHistoryToPlayer( playerID )
+	if( not Matchmaking.IsHost() ) then
+		return;
+	end
+	if( playerID == Matchmaking.GetLocalID() ) then
+		return;
+	end
+
+	Network.SendChat( LOBBY_CHAT_CLEAR, -1, playerID );
+	for _, msg in ipairs( g_LobbyChatHistory ) do
+		local encoded = EncodeLobbyChatSync( msg.fromPlayer, msg.playerName, msg.text );
+		if( #encoded > 255 ) then
+			local overhead = #LOBBY_CHAT_PREFIX + #tostring( msg.fromPlayer ) + 1 + #( msg.playerName or "" ) + 1;
+			local maxText = math.max( 0, 255 - overhead );
+			encoded = EncodeLobbyChatSync( msg.fromPlayer, msg.playerName, string.sub( msg.text, 1, maxText ) );
+		end
+		Network.SendChat( encoded, -1, playerID );
+	end
+end
+
+function RequestLobbyChatHistory()
+	if( PreGame.IsHotSeatGame() or Matchmaking.IsHost() or g_bRequestedLobbyChatHistory ) then
+		return;
+	end
+	g_bRequestedLobbyChatHistory = true;
+	Network.SendChat( LOBBY_CHAT_REQ );
+end
+
+-------------------------------------------------
+-- Multiplayer Lekmod version handshake
+-------------------------------------------------
+function GetPlayerDisplayName( playerID )
+	if m_PlayerNames[ playerID ] ~= nil then
+		return m_PlayerNames[ playerID ];
+	end
+	local name = PreGame.GetNickName( playerID );
+	if name ~= nil and name ~= "" then
+		return name;
+	end
+	return "Player " .. tostring( playerID );
+end
+
+function MarkPlayerVersionVerified( playerID )
+	g_VersionVerified[ playerID ] = true;
+	g_VersionDeadline[ playerID ] = nil;
+end
+
+function StartPlayerVersionWatch( playerID )
+	if( not Matchmaking.IsHost() or PreGame.IsHotSeatGame() ) then
+		return;
+	end
+	if( playerID == Matchmaking.GetLocalID() ) then
+		MarkPlayerVersionVerified( playerID );
+		return;
+	end
+	if( g_VersionVerified[ playerID ] ) then
+		return;
+	end
+	g_VersionVerified[ playerID ] = false;
+	g_VersionDeadline[ playerID ] = LekmodVersion.HANDSHAKE_TIMEOUT;
+end
+
+function KickForVersionIssue( playerID, reasonKey, expectedVersion )
+	if( not Matchmaking.IsHost() ) then
+		return;
+	end
+	local name = GetPlayerDisplayName( playerID );
+	local msg;
+	if reasonKey == "missing" then
+		msg = Locale.ConvertTextKey( "TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK", name );
+		if msg == "TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK" then
+			msg = "Kicked " .. name .. ": missing/outdated Lekmod (no version handshake)";
+		end
+	else
+		msg = Locale.ConvertTextKey( "TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK", name, expectedVersion );
+		if msg == "TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK" then
+			msg = "Kicked " .. name .. ": version mismatch (expected " .. tostring(expectedVersion) .. ")";
+		end
+	end
+	-- Announce as yellow "Game:" chat, then kick (no modal popup).
+	Network.SendChat( LekmodVersion.EncodeGameChat( msg ) );
+	if Draft_OnPlayerKicked ~= nil then
+		Draft_OnPlayerKicked( playerID );
+	end
+	Matchmaking.KickPlayer( playerID );
+	g_VersionVerified[ playerID ] = nil;
+	g_VersionDeadline[ playerID ] = nil;
+end
+
+function HandleVersionHandshake( fromPlayer, version )
+	local localVersion = LekmodVersion.GetLocal();
+	if( Matchmaking.IsHost() ) then
+		if version ~= nil and localVersion ~= nil and LekmodVersion.Compare( version, localVersion ) == 0 then
+			MarkPlayerVersionVerified( fromPlayer );
+		else
+			KickForVersionIssue( fromPlayer, "mismatch", localVersion );
+		end
+	end
+end
+
+function SendLocalVersionHandshake()
+	if( PreGame.IsHotSeatGame() ) then
+		return;
+	end
+	Network.SendChat( LekmodVersion.GetHandshakeMessage() );
+end
+
+function VersionCheckUpdate( fDTime )
+	if( ContextPtr:IsHidden() or not Matchmaking.IsHost() or PreGame.IsHotSeatGame() ) then
+		return;
+	end
+
+	g_fVersionCheckAccum = g_fVersionCheckAccum + fDTime;
+	if( g_fVersionCheckAccum < 0.5 ) then
+		return;
+	end
+	local dt = g_fVersionCheckAccum;
+	g_fVersionCheckAccum = 0;
+
+	for playerID, deadline in pairs( g_VersionDeadline ) do
+		if( g_VersionVerified[ playerID ] ) then
+			g_VersionDeadline[ playerID ] = nil;
+		elseif( Network.IsPlayerConnected( playerID ) ) then
+			local remaining = deadline - dt;
+			if remaining <= 0 then
+				KickForVersionIssue( playerID, "missing", LekmodVersion.GetLocal() );
+			else
+				g_VersionDeadline[ playerID ] = remaining;
+			end
+		else
+			g_VersionDeadline[ playerID ] = nil;
+			g_VersionVerified[ playerID ] = nil;
+		end
+	end
+end
+
+function IsLobbyGameChat( fromPlayer, text, playerName )
+	if LekmodVersion.IsGameChat( text ) then
+		return true;
+	end
+	if playerName == LekmodVersion.GAME_CHAT_NAME then
+		return true;
+	end
+	if fromPlayer ~= nil and fromPlayer < 0 then
+		return true;
+	end
+	return false;
+end
+
+function DisplayLobbyChatMessage( fromPlayer, text, playerName, bSkipSound, bForceScrollBottom )
+	local bGameChat = IsLobbyGameChat( fromPlayer, text, playerName );
+	local body = text;
+	if LekmodVersion.IsGameChat( text ) then
+		body = LekmodVersion.GetGameChatBody( text );
+	end
+
+	local displayName = playerName or m_PlayerNames[ fromPlayer ];
+	if( not bGameChat and displayName == nil ) then
+		return;
+	end
+
+	local scrollPos = Controls.ChatScroll:GetScrollValue();
+	local bAtBottom = bForceScrollBottom or ( scrollPos >= 0.99 );
+
+	local controlTable = {};
+	ContextPtr:BuildInstanceForControl( "ChatEntry", controlTable, Controls.ChatStack );
+
+	table.insert( g_ChatInstances, controlTable );
+	if( #g_ChatInstances > LOBBY_CHAT_HISTORY_MAX ) then
+		Controls.ChatStack:ReleaseChild( g_ChatInstances[ 1 ].Box );
+		table.remove( g_ChatInstances, 1 );
+	end
+
+	if bGameChat then
+		controlTable.String:SetText( LekmodVersion.FormatGameChatDisplay( body ) );
+	else
+		controlTable.String:SetText( displayName .. ": " .. body );
+	end
+	controlTable.Box:SetSizeY( controlTable.String:GetSizeY() + 15 );
+	controlTable.Box:ReprocessAnchoring();
+
+	if( bFlipper ) then
+		controlTable.Box:SetColorChannel( 3, 0.4 );
+	end
+	bFlipper = not bFlipper;
+
+	if( not bSkipSound ) then
+		Events.AudioPlay2DSound( "AS2D_IF_MP_CHAT_DING" );
+	end
+
+	Controls.ChatStack:CalculateSize();
+	Controls.ChatScroll:CalculateInternalSize();
+	if( bAtBottom ) then
+		Controls.ChatScroll:SetScrollValue( 1 );
+	else
+		Controls.ChatScroll:SetScrollValue( scrollPos );
+	end
+end
+
+-------------------------------------------------
 -- Leave the Game
 -------------------------------------------------
 function HandleExitRequest()
 	
 	StopCountdown(); -- Make sure there is no countdown going.
-	
+	ClearLobbyChat();
+
+	-- Full draft wipe when leaving the lobby screen.
+	-- Host backing out voids the lobby for everyone; clients only clear local UI.
+	-- Do NOT reset from disconnect/kick of other players (see Draft_OnPlayerKicked).
+	-- clearPersist=true so the next new lobby doesn't inherit PreGame draft options.
 	local isHost = Matchmaking.IsHost();
+	if Draft_ResetState ~= nil then
+		Draft_ResetState(true);
+	end
+	
 	Matchmaking.LeaveMultiplayerGame();
 	if ( not PreGame.IsHotSeatGame() ) then
 		-- Refresh the lobby as we enter it
@@ -1049,6 +1414,7 @@ function OnConnect( playerID )
     	UpdateDisplay();
       BuildPlayerNames();
     	OnChat( playerID, -1, Locale.ConvertTextKey( "TXT_KEY_CONNECTED" ) );
+		StartPlayerVersionWatch( playerID );
 
     end
 end
@@ -1076,6 +1442,10 @@ function OnDisconnect( playerID )
     if( ContextPtr:IsHidden() == false ) then
 			if(Network.IsPlayerKicked(playerID)) then
 				OnChat( playerID, -1, Locale.ConvertTextKey( "TXT_KEY_KICKED" ) );
+				-- Host clears that player's bans; normal disconnect keeps slot bans.
+				if Draft_OnPlayerKicked ~= nil then
+					Draft_OnPlayerKicked(playerID);
+				end
 			else
     		OnChat( playerID, -1, Locale.ConvertTextKey( "TXT_KEY_DISCONNECTED" ) );
 			end
@@ -1118,6 +1488,10 @@ function UpdateDisplay()
 			end	        
 		else
 			Controls.LaunchButton:SetHide( true );
+		end
+
+		if Draft_OnUpdateDisplay ~= nil then
+			Draft_OnUpdateDisplay();
 		end
 	end
 end
@@ -1224,8 +1598,18 @@ Events.MultiplayerPingTimesChanged.Add( OnPingTimesChanged );
 -- Input Handler
 ----------------------------------------------------------------        
 function InputHandler( uiMsg, wParam, lParam )
+	if Draft_HandleInput ~= nil then
+		local handled = Draft_HandleInput( uiMsg, wParam, lParam );
+		if handled then
+			return true;
+		end
+	end
 	if uiMsg == KeyEvents.KeyDown then
 		if wParam == Keys.VK_ESCAPE then
+			-- Prefer closing Civilopedia over leaving the lobby.
+			if Draft_CloseCivilopedia ~= nil and Draft_CloseCivilopedia() then
+				return true;
+			end
 			if (not Matchmaking.IsLaunchingGame()) then
 				HandleExitRequest();
 			end
@@ -1260,6 +1644,44 @@ end
 -------------------------------------------------
 -------------------------------------------------
 function UpdatePageTabView(bUpdateOnly)
+	if Draft_UpdatePageTabView ~= nil and g_DraftPageMode ~= nil then
+		-- Three-mode Players / Draft Rules / Options
+		if g_DraftPageMode == "options" then
+			m_bEditOptions = true;
+		elseif g_DraftPageMode == "draft" then
+			m_bEditOptions = false;
+			Draft_UpdatePageTabView();
+			UpdatePageTitle();
+			return;
+		else
+			m_bEditOptions = false;
+		end
+		Draft_UpdatePageTabView();
+		if m_bEditOptions then
+			Controls.OptionsScrollPanel:SetSizeY( Controls.VerticalTrim:GetSizeY() - 2);
+			Controls.OptionsScrollPanel:CalculateInternalSize();
+			bIsModding = (ContextPtr:LookUpControl("../.."):GetID() == "ModMultiplayerSelectScreen");
+			if(bIsModding) then
+				Controls.ModsButton:SetHide( false );
+			else
+				Controls.ModsButton:SetHide( true );
+			end
+			PopulateMapSizePulldown();
+			RefreshMapScripts();	
+			PreGame.SetRandomMapScript(false);
+			UpdateGameOptionsDisplay(bUpdateOnly);	
+		else
+			if (PreGame.IsHotSeatGame()) then
+				local prevCursor = UIManager:SetUICursor( 1 );
+				local bChanged = Modding.ActivateAllowedDLC();																		
+				UIManager:SetUICursor( prevCursor );
+				Events.SystemUpdateUI( SystemUpdateUIType.RestoreUI, "StagingRoom" );
+			end
+		end
+		UpdatePageTitle();
+		return;
+	end
+
 	Controls.Host:SetHide( m_bEditOptions );
 	Controls.ListingScrollPanel:SetHide( m_bEditOptions );
 	Controls.OptionsScrollPanel:SetHide( not m_bEditOptions );
@@ -1322,9 +1744,8 @@ Controls.OptionsPageTab:RegisterCallback( Mouse.eLClick, OnOptionsPageTab );
 function ShowHideHandler( bIsHide, bIsInit )
 
 		--print("ShowHideHandler Hide: " .. tostring(bIsHide) .. " Init: " .. tostring(bIsInit));
-    if( bIsHide ) then
-			Controls.ChatStack:DestroyAllChildren();
-    end
+    -- Do not clear chat on hide: PushModal(..., true) for ConfirmKick temporarily hides
+    -- this screen and wiping chat there is what cleared the lobby on kick.
     
     -- Create slot instances.
     if ( bIsInit ) then
@@ -1340,6 +1761,24 @@ function ShowHideHandler( bIsHide, bIsInit )
     end
     
     if( not bIsHide ) then
+		-- Returning from Civilopedia (or other temporary overlays) must not run the full
+		-- lobby reinit — ActivateDLC / Draft_Init / BuildSlots wipe and rebuild the UI.
+		local lightReturn = (g_SkipStagingFullRefresh == true);
+		g_SkipStagingFullRefresh = false;
+
+		if lightReturn then
+			SetInLobby( true );
+			AdjustScreenSize();
+			if UpdateDisplay ~= nil then
+				UpdateDisplay();
+			end
+			if Draft_OnUpdateDisplay ~= nil then
+				Draft_OnUpdateDisplay();
+			end
+			UIManager:SetUICursor( 0 );
+			return;
+		end
+
 		if( Matchmaking.IsHost() and
 			not IsInGameScreen() and
 			PreGame.GetGameOption("GAMEOPTION_PITBOSS") == 1 and
@@ -1371,6 +1810,7 @@ function ShowHideHandler( bIsHide, bIsInit )
 		
 		SetInLobby( true );
 		m_bEditOptions = false;
+		g_DraftPageMode = "players";
 		ShowHideExitButton();
 		ShowHideBackButton();
 		ShowHideInviteButton();		
@@ -1383,9 +1823,24 @@ function ShowHideHandler( bIsHide, bIsInit )
 		ValidateCivSelections();
    		BuildSlots();		-- Populate the civs for the slots.  This can change so it must be done every time.
         BuildPlayerNames();
+		if Draft_Init ~= nil then
+			Draft_Init();
+		end
 		UpdateDisplay();
 		ShowHideSaveButton();
 		UIManager:SetUICursor( 0 );
+		RequestLobbyChatHistory();
+		SendLocalVersionHandshake();
+		if( Matchmaking.IsHost() and not PreGame.IsHotSeatGame() ) then
+			MarkPlayerVersionVerified( Matchmaking.GetLocalID() );
+			-- Watch any humans already connected when we open/refresh the lobby.
+			for i = 0, GameDefines.MAX_MAJOR_CIVS - 1 do
+				if( i ~= Matchmaking.GetLocalID() and Network.IsPlayerConnected( i ) ) then
+					StartPlayerVersionWatch( i );
+				end
+			end
+			EnsureStagingUpdate();
+		end
 	end
 
 end
@@ -1398,6 +1853,7 @@ function UpdateOptions()
 
 	-- Set Game Name
 	local strGameName = Matchmaking.GetCurrentGameName();
+
 	Controls.NameLabel:SetText( strGameName );
 	
 	-- Game State Indicator
@@ -1534,22 +1990,23 @@ function UpdateOptions()
     end
     
     for option in GameInfo.GameOptions{Visible = 1} do	
-			if( option.Type ~= "GAMEOPTION_END_TURN_TIMER_ENABLED" 
-					and option.Type ~= "GAMEOPTION_SIMULTANEOUS_TURNS"
-					and option.Type ~= "GAMEOPTION_DYNAMIC_TURNS") then 
-				local savedValue = PreGame.GetGameOption(option.Type);
-				if(savedValue ~= nil and savedValue == 1) then
-					local controlTable = g_AdvancedOptionIM:GetInstance();
-					g_AdvancedOptionsList[count] = controlTable;
-					controlTable.Text:LocalizeAndSetText(option.Description);
-					count = count + 1;
-				end
+		if( option.Type ~= "GAMEOPTION_END_TURN_TIMER_ENABLED" 
+				and option.Type ~= "GAMEOPTION_SIMULTANEOUS_TURNS"
+				and option.Type ~= "GAMEOPTION_DYNAMIC_TURNS") then 
+			local savedValue = PreGame.GetGameOption(option.Type);
+			if(savedValue ~= nil and savedValue == 1) then
+				local controlTable = g_AdvancedOptionIM:GetInstance();
+				g_AdvancedOptionsList[count] = controlTable;
+				controlTable.Text:LocalizeAndSetText(option.Description);
+				controlTable.Text:LocalizeAndSetToolTip(option.Help);
+				count = count + 1;
 			end
 		end
-		
-		-- Update scrollable panel
-		Controls.AdvancedOptions:CalculateSize();
-		Controls.GameOptionsSummary:CalculateInternalSize();
+	end
+	
+	-- Update scrollable panel
+	Controls.AdvancedOptions:CalculateSize();
+	Controls.GameOptionsSummary:CalculateInternalSize();
 end
 
 
@@ -1561,14 +2018,62 @@ function PopulateCivPulldown( pullDown, playerID )
 
 	pullDown:ClearEntries();
 
-    ------------------------------------------------------------------------------------------------
-    -- set up the random slot
-    ------------------------------------------------------------------------------------------------
-    pullDown:BuildEntry( "InstanceOne", controlTable );
-    controlTable.Button:SetVoids( playerID, -1 );
+	local draftLocked = Draft_IsDraftLocked ~= nil and Draft_IsDraftLocked();
+	local realPlayerID = GetPlayerIDBySelectionIndex(playerID);
+	local draftPool = Draft_GetPoolForPlayer ~= nil and Draft_GetPoolForPlayer(realPlayerID) or nil;
+	local allowSet = nil;
+	if draftLocked and draftPool ~= nil and #draftPool > 0 then
+		allowSet = {};
+		for _, id in ipairs(draftPool) do
+			allowSet[id] = true;
+		end
+	end
 
-    controlTable.Button:SetText( Locale.Lookup( "TXT_KEY_RANDOM_LEADER" ) );
-    controlTable.Button:SetToolTipString( Locale.Lookup( "TXT_KEY_RANDOM_LEADER_HELP" ) );
+	local function FillCivPullEntry(entry, civID, title, tooltip)
+		if entry.CivName ~= nil then
+			entry.CivName:SetText(title);
+		else
+			entry.Button:SetText(title);
+		end
+		if entry.CivIcon ~= nil then
+			if civID == nil or civID < 0 then
+				SimpleCivIconHookup(-1, 32, entry.CivIcon);
+			else
+				local civ = GameInfo.Civilizations[civID];
+				if civ ~= nil then
+					IconHookup(civ.PortraitIndex, 32, civ.IconAtlas, entry.CivIcon);
+				else
+					SimpleCivIconHookup(-1, 32, entry.CivIcon);
+				end
+			end
+		end
+		entry.Button:SetToolTipString(tooltip or "");
+		local bw = entry.Button:GetSizeVal() - 50;
+		if entry.CivName ~= nil and entry.CivName.SetTruncateWidth ~= nil then
+			entry.CivName:SetTruncateWidth(bw);
+		else
+			local textControl = entry.Button:GetTextControl();
+			if textControl ~= nil then
+				textControl:SetTruncateWidth(bw);
+			end
+		end
+	end
+
+    ------------------------------------------------------------------------------------------------
+    -- set up the random slot (disabled while draft-locked)
+    ------------------------------------------------------------------------------------------------
+	if not draftLocked then
+		controlTable = {};
+		local usedCustom = pcall(function()
+			pullDown:BuildEntry( "CivPullEntry", controlTable );
+		end);
+		if (not usedCustom) or controlTable.Button == nil then
+			controlTable = {};
+			pullDown:BuildEntry( "InstanceOne", controlTable );
+		end
+		controlTable.Button:SetVoids( playerID, -1 );
+		FillCivPullEntry(controlTable, -1, Locale.Lookup( "TXT_KEY_RANDOM_LEADER" ), Locale.Lookup( "TXT_KEY_RANDOM_LEADER_HELP" ));
+	end
 
 
 	local civEntries = {};
@@ -1583,10 +2088,12 @@ function PopulateCivPulldown( pullDown, playerID )
 								Civilizations.Type = Civilization_Leaders.CivilizationType AND
 								Leaders.Type = Civilization_Leaders.LeaderheadType
 						]]) do
-						
-		local title = Locale.Lookup("TXT_KEY_RANDOM_LEADER_CIV", Locale.Lookup(row.LeaderDescription), Locale.Lookup(row.CivShortDescription)); 
 
-		table.insert(civEntries, {ID = row.CivID, Title = title, Description = Locale.Lookup(row.CivDescription), ShortDescription = Locale.Lookup(row.CivShortDescription)});						
+		if allowSet == nil or allowSet[row.CivID] then
+			local title = Locale.Lookup("TXT_KEY_RANDOM_LEADER_CIV", Locale.Lookup(row.LeaderDescription), Locale.Lookup(row.CivShortDescription)); 
+
+			table.insert(civEntries, {ID = row.CivID, Title = title, Description = Locale.Lookup(row.CivDescription), ShortDescription = Locale.Lookup(row.CivShortDescription)});
+		end
 	end
 	
 -- Sorting Civs by Short Description
@@ -1611,17 +2118,16 @@ function PopulateCivPulldown( pullDown, playerID )
 	for i,v in ipairs(civEntries) do
 		
 		local controlTable = {};
-        pullDown:BuildEntry( "InstanceOne", controlTable );
+		local usedCustom = pcall(function()
+			pullDown:BuildEntry( "CivPullEntry", controlTable );
+		end);
+		if (not usedCustom) or controlTable.Button == nil then
+			controlTable = {};
+			pullDown:BuildEntry( "InstanceOne", controlTable );
+		end
         
         controlTable.Button:SetVoids( playerID, v.ID );
-        controlTable.Button:SetText(v.Title);
-        
-        local bw,bh = (controlTable.Button:GetSizeVal() - 20);
-        
-        local textControl = controlTable.Button:GetTextControl();
-        textControl:SetTruncateWidth(bw);
-        
-        controlTable.Button:SetToolTipString(v.Description);
+		FillCivPullEntry(controlTable, v.ID, v.Title, v.Description);
 	end
 
     pullDown:CalculateInternals();
@@ -1807,33 +2313,79 @@ end
 
 -------------------------------------------------
 -------------------------------------------------
-local bFlipper = false;
 function OnChat( fromPlayer, toPlayer, text, eTargetType )
-	if( ContextPtr:IsHidden() == false and m_PlayerNames[ fromPlayer ] ~= nil ) then
-		local controlTable = {};
-		ContextPtr:BuildInstanceForControl( "ChatEntry", controlTable, Controls.ChatStack );
-	    
-		table.insert( g_ChatInstances, controlTable );
-		if( #g_ChatInstances > 100 ) then
-	    
-			Controls.ChatStack:ReleaseChild( g_ChatInstances[ 1 ].Box );
-			table.remove( g_ChatInstances, 1 );
+	if( text == nil or text == "" ) then
+		return;
+	end
+
+	-- Lekmod version handshake (must not show in chat).
+	local handshakeVersion = LekmodVersion.ParseHandshake( text );
+	if( handshakeVersion ~= nil or (text ~= nil and string.sub(text, 1, #LekmodVersion.HANDSHAKE_PREFIX) == LekmodVersion.HANDSHAKE_PREFIX) ) then
+		HandleVersionHandshake( fromPlayer, handshakeVersion );
+		return;
+	end
+
+	-- System "Game:" announcements (kicks, warnings).
+	if LekmodVersion.IsGameChat( text ) then
+		local body = LekmodVersion.GetGameChatBody( text );
+		AppendLobbyChatHistory( -1, body, LekmodVersion.GAME_CHAT_NAME );
+		if( ContextPtr:IsHidden() == false ) then
+			DisplayLobbyChatMessage( -1, body, LekmodVersion.GAME_CHAT_NAME, false, true );
 		end
-	    
-		controlTable.String:SetText( m_PlayerNames[ fromPlayer ] .. ": " .. text );
-		controlTable.Box:SetSizeY( controlTable.String:GetSizeY() + 15 );
-		controlTable.Box:ReprocessAnchoring();
+		return;
+	end
 
-		if( bFlipper ) then
-			controlTable.Box:SetColorChannel( 3, 0.4 );
+	-- Civ draft protocol (must not show in chat).
+	if Draft_IsProtocol ~= nil and Draft_IsProtocol( text ) then
+		Draft_HandleProtocol( fromPlayer, text );
+		return;
+	end
+
+	-- Joiner asked for history: host privately dumps the buffer.
+	if( text == LOBBY_CHAT_REQ ) then
+		if( Matchmaking.IsHost() ) then
+			SendLobbyChatHistoryToPlayer( fromPlayer );
 		end
-		bFlipper = not bFlipper;
+		return;
+	end
 
-		Events.AudioPlay2DSound( "AS2D_IF_MP_CHAT_DING" );		
+	-- Host told joiner to reset before applying the dump.
+	if( text == LOBBY_CHAT_CLEAR ) then
+		if( not Matchmaking.IsHost() ) then
+			Controls.ChatStack:DestroyAllChildren();
+			g_ChatInstances = {};
+			g_LobbyChatHistory = {};
+		end
+		return;
+	end
 
-		Controls.ChatStack:CalculateSize();
-		Controls.ChatScroll:CalculateInternalSize();
-		Controls.ChatScroll:SetScrollValue( 1 );
+	-- Encoded history entry from host → joiner.
+	local syncFromPlayer, syncName, syncText = DecodeLobbyChatSync( text );
+	if( syncFromPlayer ~= nil and syncText ~= nil ) then
+		if( Matchmaking.IsHost() ) then
+			return;
+		end
+		if syncName == LekmodVersion.GAME_CHAT_NAME or syncFromPlayer < 0 then
+			syncName = LekmodVersion.GAME_CHAT_NAME;
+			syncFromPlayer = -1;
+		else
+			syncName = syncName or m_PlayerNames[ syncFromPlayer ] or ( "Player " .. tostring( syncFromPlayer ) );
+		end
+		AppendLobbyChatHistory( syncFromPlayer, syncText, syncName );
+		if( ContextPtr:IsHidden() == false ) then
+			DisplayLobbyChatMessage( syncFromPlayer, syncText, syncName, true, true );
+		end
+		return;
+	end
+
+	local playerName = m_PlayerNames[ fromPlayer ];
+	if( playerName == nil ) then
+		return;
+	end
+
+	AppendLobbyChatHistory( fromPlayer, text, playerName );
+	if( ContextPtr:IsHidden() == false ) then
+		DisplayLobbyChatMessage( fromPlayer, text, playerName, false, false );
 	end
 end
 Events.GameMessageChat.Add( OnChat );
@@ -1843,6 +2395,16 @@ Events.GameMessageChat.Add( OnChat );
 -------------------------------------------------
 function SendChat( text )
     if( string.len( text ) > 0 ) then
+		local syncFromPlayer = DecodeLobbyChatSync( text );
+		local handshakeVersion = LekmodVersion.ParseHandshake( text );
+		-- Never let players manually send protocol messages.
+		if( text == LOBBY_CHAT_REQ or text == LOBBY_CHAT_CLEAR or syncFromPlayer ~= nil or handshakeVersion ~= nil
+			or string.sub(text, 1, #LekmodVersion.HANDSHAKE_PREFIX) == LekmodVersion.HANDSHAKE_PREFIX
+			or LekmodVersion.IsGameChat( text )
+			or (Draft_IsProtocol ~= nil and Draft_IsProtocol( text )) ) then
+			Controls.ChatEntry:ClearString();
+			return;
+		end
         Network.SendChat( text );
     end
     Controls.ChatEntry:ClearString();
@@ -1916,6 +2478,10 @@ function CreateSlots()
 	    
 		m_SlotInstances[i] = instance;
 	end
+
+	if Draft_CreateBanSlots ~= nil then
+		Draft_CreateBanSlots();
+	end
 end
 
 ----------------------------------------------------------------
@@ -1935,6 +2501,9 @@ function BuildSlots()
 		instance.EnableCheck:SetVoid1( i );
 		instance.KickButton:SetVoid1( i );
 		instance.EditButton:SetVoid1( i );
+		if Draft_WireLeaderPortraitButton ~= nil then
+			Draft_WireLeaderPortraitButton(instance.PortraitButton);
+		end
 	    
 	end
 
@@ -1942,6 +2511,9 @@ function BuildSlots()
 	PopulateCivPulldown( Controls.CivPulldown, 0 );
 	PopulateTeamPulldown( Controls.TeamPulldown, 0 );
 	PopulateHandicapPulldown( Controls.HandicapPulldown, 0 );
+	if Draft_WireLeaderPortraitButton ~= nil then
+		Draft_WireLeaderPortraitButton(Controls.PortraitButton);
+	end
 end
 
 -------------------------------------------------
@@ -1973,26 +2545,31 @@ Events.PlayerVersionMismatchEvent.Add( OnVersionMismatch );
 -- Adjust for resolution
 -----------------------------------------------------------------
 function AdjustScreenSize()
-    local _, screenY = UIManager:GetScreenSizeVal();
-    
-    local TOP_COMPENSATION = 52 + ((screenY - 768) * 0.3 );
-    local TOP_FRAME = 108;
-    local BOTTOM_COMPENSATION = 240;
-    local LOCAL_SLOT_COMPENSATION = 113;
-
-	if ( Controls.ChatBox:IsHidden() ) then
-		BOTTOM_COMPENSATION = 80;
+	-- Height + width (1280x720 clamp) are applied in Draft_AdjustScreenSize so
+	-- column offsets stay aligned with the scaled MainGrid.
+	if Draft_AdjustScreenSize ~= nil then
+		Draft_AdjustScreenSize();
+	else
+		local _, screenY = UIManager:GetScreenSizeVal();
+		local TOP_COMPENSATION = 52 + ((screenY - 768) * 0.3 );
+		local LIST_TOP = 201;
+		local CHAT_TOP_FROM_BOTTOM = 282;
+		if ( Controls.ChatBox:IsHidden() ) then
+			CHAT_TOP_FROM_BOTTOM = 80;
+		end
+		local mainH = screenY - TOP_COMPENSATION;
+		local listH = mainH - LIST_TOP - CHAT_TOP_FROM_BOTTOM;
+		local trimH = mainH - 75 - CHAT_TOP_FROM_BOTTOM;
+		Controls.MainGrid:SetSizeY( mainH );
+		Controls.ListingScrollPanel:SetSizeY( listH );
+		if Controls.ListingScrollBar ~= nil then
+			Controls.ListingScrollBar:SetSizeY( math.max(40, listH - 36) );
+		end
+		Controls.ListingScrollPanel:CalculateInternalSize();
+		Controls.GameOptionsSummary:SetSizeY( trimH - 8 );
+		Controls.GameOptionsSummary:CalculateInternalSize();
+		Controls.VerticalTrim:SetSizeY( trimH );
 	end
-	
-    Controls.MainGrid:SetSizeY( screenY - TOP_COMPENSATION );
-    
-    Controls.ListingScrollPanel:SetSizeY( screenY - TOP_COMPENSATION - LOCAL_SLOT_COMPENSATION - BOTTOM_COMPENSATION - TOP_FRAME );
-    Controls.ListingScrollPanel:CalculateInternalSize();
-    
-    Controls.GameOptionsSummary:SetSizeY( screenY - TOP_COMPENSATION - BOTTOM_COMPENSATION - TOP_FRAME - 8 );
-    Controls.GameOptionsSummary:CalculateInternalSize();
-    
-    Controls.VerticalTrim:SetSizeY( screenY - TOP_COMPENSATION - BOTTOM_COMPENSATION - TOP_FRAME );
 end
 
 

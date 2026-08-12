@@ -5,6 +5,9 @@
 LekmodVersion = LekmodVersion or {}
 
 LekmodVersion.HANDSHAKE_PREFIX = "#LEKVER#"
+-- System / "Game:" chat lines (kick notices, ui_check warnings, etc.).
+LekmodVersion.GAME_CHAT_PREFIX = "#LGAME#"
+LekmodVersion.GAME_CHAT_NAME = "Game"
 LekmodVersion.VERSIONS_PAGE_URL = "https://github.com/EnormousApplePie/Lekmod/blob/main/LekmodInstaller/github_setup/versions.json"
 -- FrontEnd fetches these via undocumented vanilla Network.HttpRequest (Civ5-Patch pattern).
 LekmodVersion.VERSIONS_RAW_URLS = {
@@ -43,6 +46,29 @@ function LekmodVersion.ParseHandshake(text)
 		return nil
 	end
 	return LekmodVersion.Normalize(string.sub(text, #prefix + 1))
+end
+
+function LekmodVersion.IsGameChat(text)
+	if text == nil then
+		return false
+	end
+	local prefix = LekmodVersion.GAME_CHAT_PREFIX
+	return string.sub(text, 1, #prefix) == prefix
+end
+
+function LekmodVersion.GetGameChatBody(text)
+	if not LekmodVersion.IsGameChat(text) then
+		return text
+	end
+	return string.sub(text, #LekmodVersion.GAME_CHAT_PREFIX + 1)
+end
+
+function LekmodVersion.EncodeGameChat(body)
+	return LekmodVersion.GAME_CHAT_PREFIX .. tostring(body or "")
+end
+
+function LekmodVersion.FormatGameChatDisplay(body)
+	return "[COLOR_YELLOW]" .. LekmodVersion.GAME_CHAT_NAME .. ": " .. tostring(body or "") .. "[ENDCOLOR]"
 end
 
 function LekmodVersion.Compare(a, b)

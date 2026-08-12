@@ -1,6 +1,8 @@
 ----------------------------------------------------------------        
 -- Globals
 ----------------------------------------------------------------   
+include( "Lekmod_version.lua" );
+
 local g_joinFailed = false;		-- Are we attempting to close this page after a join failure?
 															-- Used to prevent the ActivateAllowedDLC mechanic in ShowHideHander 
 															-- from restoring the page after a join failed.  This can occur
@@ -125,9 +127,18 @@ function OnConnectionCompete()
         UIManager:DequeuePopup( ContextPtr );
 	end
 
-    -- TOURNAMENT MOD:
-    Network.SendChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT"))
+    -- Version handshake so hosts can detect vanilla / mismatched Lekmod clients.
+    Network.SendChat(LekmodVersion.GetHandshakeMessage());
 
+    -- Warn lobby if ui_check.bat was never run (FrontEnd post-check sets LekmodUiCheck.done).
+    local uiCheckDone = false;
+    pcall(function()
+        local userData = Modding.OpenUserData("LekmodUiCheck", 1);
+        uiCheckDone = (tonumber(userData.GetValue("done")) == 1);
+    end);
+    if not uiCheckDone then
+        Network.SendChat(LekmodVersion.EncodeGameChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT")));
+    end
 end
 
 -------------------------------------------------
@@ -154,6 +165,30 @@ function OnVersionMismatch( iPlayerID, playerName, bIsHost )
 end
 Events.PlayerVersionMismatchEvent.Add( OnVersionMismatch );
 
+-------------------------------------------------
+-- 
+-------------------------------------------------
+
+
+function checkLekmodMismatch(player_id)
+
+	local current_game_version = Matchmaking.GetCurrentGameName();
+	print("current_game_version: " .. current_game_version);
+	local lekmod_version = Locale.ConvertTextKey("TXT_KEY_LEKMOD_VERSION");
+	print("lekmod_version: " .. lekmod_version);
+	--if not host
+	if not Matchmaking.IsHost() then
+		-- check if the game name includes the lekmod version
+		if not string.find(current_game_version, lekmod_version) then
+			-- did not find the lekmod version in the game name, assume player does not have it, kick player
+			Events.FrontEndPopup.CallImmediate( Locale.ConvertTextKey( "TXT_KEY_MP_VERSION_MISMATCH_FOR_PLAYER" ) );
+			g_joinFailed = true;
+			Matchmaking.LeaveMultiplayerGame();
+			UIManager:DequeuePopup( ContextPtr );
+		end
+	end
+
+end
 -------------------------------------------------
 -- Show / Hide Handler
 -------------------------------------------------
@@ -192,6 +227,8 @@ function RegisterEvents()
     Events.MultiplayerNetRegistered.Add( OnNetRegistered );   
     Events.MultiplayerConnectionFailed.Add( OnMultiplayerConnectionFailed );
     Events.MultiplayerGameAbandoned.Add( OnMultiplayerGameAbandoned );
+
+	Events.MultiplayerJoinRoomComplete.Add( checkLekmodMismatch );
 end
 
 
@@ -205,6 +242,8 @@ function UnregisterEvents()
 		Events.MultiplayerNetRegistered.Remove( OnNetRegistered );   
     Events.MultiplayerConnectionFailed.Remove( OnMultiplayerConnectionFailed );
     Events.MultiplayerGameAbandoned.Remove( OnMultiplayerGameAbandoned );
+
+	Events.MultiplayerJoinRoomComplete.Remove( checkLekmodMismatch );
 end
 
 

@@ -31,6 +31,7 @@ local bLargeEspionage = EUI_options.GetValue('DB_bLargeEspionage') or 0;
 include( "IconSupport" );
 include( "SupportFunctions"  );
 include( "InstanceManager" );
+include( "Lekmod_version.lua" );
 local g_ChatInstances = {};
 
 local g_iChatTeam   = -1;
@@ -169,32 +170,38 @@ function OnChat( fromPlayer, toPlayer, text, eTargetType, bSkipSound, iTurn, iTi
         Controls.ChatStack:ReleaseChild( g_ChatInstances[ 1 ].Box );
         table.remove( g_ChatInstances, 1 );
     end
-    
-    TruncateString( controlTable.String, 200, Players[fromPlayer]:GetNickName() );
-    local fromName = controlTable.String:GetText();
-    
-    if( eTargetType == ChatTargetTypes.CHATTARGET_TEAM ) then
-        controlTable.String:SetColorByName( "Green_Chat" );
-        controlTable.String:SetText( fromName .. ": " .. text ); 
-        
-    elseif( eTargetType == ChatTargetTypes.CHATTARGET_PLAYER ) then
-    
-        local toName;
-        if( toPlayer == g_iLocalPlayer ) then
-            toName = Locale.ConvertTextKey( "TXT_KEY_YOU" );
-        else
-            TruncateString( controlTable.String, 200, Players[toPlayer]:GetNickName() );
-            toName = Locale.ConvertTextKey( "TXT_KEY_DIPLO_TO_PLAYER", controlTable.String:GetText() );
-        end
-        controlTable.String:SetText( fromName .. " (" .. toName .. "): " .. text ); 
-        controlTable.String:SetColorByName( "Magenta_Chat" );
-        
-    elseif( fromPlayer == g_iLocalPlayer ) then
-        controlTable.String:SetColorByName( "Gray_Chat" );
-        
-        controlTable.String:SetText( fromName .. ": " .. text ); 
+
+    local bGameChat = LekmodVersion.IsGameChat( text ) or (fromPlayer ~= nil and fromPlayer < 0);
+    if bGameChat then
+        local body = LekmodVersion.IsGameChat( text ) and LekmodVersion.GetGameChatBody( text ) or text;
+        controlTable.String:SetText( LekmodVersion.FormatGameChatDisplay( body ) );
     else
-        controlTable.String:SetText( fromName .. ": " .. text ); 
+        TruncateString( controlTable.String, 200, Players[fromPlayer]:GetNickName() );
+        local fromName = controlTable.String:GetText();
+        
+        if( eTargetType == ChatTargetTypes.CHATTARGET_TEAM ) then
+            controlTable.String:SetColorByName( "Green_Chat" );
+            controlTable.String:SetText( fromName .. ": " .. text ); 
+            
+        elseif( eTargetType == ChatTargetTypes.CHATTARGET_PLAYER ) then
+        
+            local toName;
+            if( toPlayer == g_iLocalPlayer ) then
+                toName = Locale.ConvertTextKey( "TXT_KEY_YOU" );
+            else
+                TruncateString( controlTable.String, 200, Players[toPlayer]:GetNickName() );
+                toName = Locale.ConvertTextKey( "TXT_KEY_DIPLO_TO_PLAYER", controlTable.String:GetText() );
+            end
+            controlTable.String:SetText( fromName .. " (" .. toName .. "): " .. text ); 
+            controlTable.String:SetColorByName( "Magenta_Chat" );
+            
+        elseif( fromPlayer == g_iLocalPlayer ) then
+            controlTable.String:SetColorByName( "Gray_Chat" );
+            
+            controlTable.String:SetText( fromName .. ": " .. text ); 
+        else
+            controlTable.String:SetText( fromName .. ": " .. text ); 
+        end
     end
       
     controlTable.Box:SetSizeY( controlTable.String:GetSizeY() + 8 );
@@ -207,7 +214,7 @@ function OnChat( fromPlayer, toPlayer, text, eTargetType, bSkipSound, iTurn, iTi
     
     if ( bSkipSound ~= true ) then
 	    Events.AudioPlay2DSound( "AS2D_IF_MP_CHAT_DING" );
-    end	
+    end 
 
     -- set tooltip with message timestamp info, either historical or generated ATM
     if ( iTurn == nil or iTimestamp == nil ) then
@@ -229,6 +236,10 @@ Events.GameMessageChat.Add( OnChat );
 -------------------------------------------------
 function SendChat( text )
     if( string.len( text ) > 0 ) then
+        if LekmodVersion.IsGameChat( text ) then
+            Controls.ChatEntry:ClearString();
+            return;
+        end
         local iTarget = ChatTargetTypes.NO_CHATTARGET;
         local iToPlayerOrTeam = -1;
         if (g_iChatTeam ~= -1) then
@@ -636,26 +647,38 @@ end
 function ImportLobbyChatHistory()
     local userData = Modding.OpenUserData("LekmodLobbyChat", 1);
     local count = tonumber(userData.GetValue("count") or 0);
-    local fallbackMessages = {};
+    local messages = {};
     if count == nil or count <= 0 then
-        return fallbackMessages;
+        return messages;
     end
 
     local hasReplayApi = Game.AddChatReplayMessage ~= nil;
     for i = 1, count do
         local fromPlayer = tonumber(userData.GetValue("from" .. i) or -1);
         local text = userData.GetValue("text" .. i) or "";
-        if fromPlayer ~= nil and fromPlayer >= 0 and text ~= "" then
+        local name = userData.GetValue("name" .. i) or "";
+        local bGameChat = (fromPlayer ~= nil and fromPlayer < 0) or name == LekmodVersion.GAME_CHAT_NAME or LekmodVersion.IsGameChat( text );
+        if text ~= "" and (bGameChat or (fromPlayer ~= nil and fromPlayer >= 0)) then
+            if bGameChat then
+                fromPlayer = -1;
+                if LekmodVersion.IsGameChat( text ) then
+                    text = LekmodVersion.GetGameChatBody( text );
+                end
+            end
+            table.insert(messages, { fromPlayer = fromPlayer, text = text });
+            -- Persist into replay for save/reload (display is done via OnChat below).
             if hasReplayApi then
-                Game.AddChatReplayMessage(fromPlayer, text, ChatTargetTypes.CHATTARGET_ALL, -1);
-            else
-                table.insert(fallbackMessages, { fromPlayer = fromPlayer, text = text });
+                pcall(function()
+                    local replayText = bGameChat and LekmodVersion.EncodeGameChat( text ) or text;
+                    local replayFrom = bGameChat and Game.GetActivePlayer() or fromPlayer;
+                    Game.AddChatReplayMessage(replayFrom, replayText, ChatTargetTypes.CHATTARGET_ALL, -1);
+                end);
             end
         end
     end
 
     userData.SetValue("count", 0);
-    return fallbackMessages;
+    return messages;
 end
 
 -- NEW: populate Emote Picker
@@ -670,8 +693,9 @@ end
 Controls.EmotesScrollPanel:ReprocessAnchoring()
 Controls.EmotesScrollPanel:CalculateInternalSize()
 
-local lobbyChatFallback = ImportLobbyChatHistory();
+-- Load any existing replay chat first, then inject lobby history into the visible chat.
 LoadChatMessages();
-for _, msg in ipairs(lobbyChatFallback) do
+local lobbyChatMessages = ImportLobbyChatHistory();
+for _, msg in ipairs(lobbyChatMessages) do
     OnChat(msg.fromPlayer, -1, msg.text, ChatTargetTypes.CHATTARGET_ALL, true, 0, 0);
 end

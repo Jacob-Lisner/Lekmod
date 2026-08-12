@@ -130,9 +130,15 @@ function OnConnectionCompete()
     -- Version handshake so hosts can detect vanilla / mismatched Lekmod clients.
     Network.SendChat(LekmodVersion.GetHandshakeMessage());
 
-    -- TOURNAMENT MOD:
-    Network.SendChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT"))
-    
+    -- Warn lobby if ui_check.bat was never run (FrontEnd post-check sets LekmodUiCheck.done).
+    local uiCheckDone = false;
+    pcall(function()
+        local userData = Modding.OpenUserData("LekmodUiCheck", 1);
+        uiCheckDone = (tonumber(userData.GetValue("done")) == 1);
+    end);
+    if not uiCheckDone then
+        Network.SendChat(LekmodVersion.EncodeGameChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT")));
+    end
 end
 
 -------------------------------------------------
