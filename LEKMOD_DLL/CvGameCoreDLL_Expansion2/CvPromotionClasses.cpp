@@ -206,6 +206,10 @@ CvPromotionEntry::CvPromotionEntry():
 	m_piUnitCombatModifierPercent(NULL),
 	m_piUnitClassModifierPercent(NULL),
 	m_piDomainModifierPercent(NULL),
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	m_piDomainAttackPercent(NULL),
+	m_piDomainDefensePercent(NULL),
+#endif
 	m_piFeaturePassableTech(NULL),
 	m_piUnitClassAttackModifier(NULL),
 	m_piUnitClassDefenseModifier(NULL),
@@ -248,6 +252,10 @@ CvPromotionEntry::~CvPromotionEntry(void)
 	SAFE_DELETE_ARRAY(m_piUnitCombatModifierPercent);
 	SAFE_DELETE_ARRAY(m_piUnitClassModifierPercent);
 	SAFE_DELETE_ARRAY(m_piDomainModifierPercent);
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	SAFE_DELETE_ARRAY(m_piDomainAttackPercent);
+	SAFE_DELETE_ARRAY(m_piDomainDefensePercent);
+#endif
 	SAFE_DELETE_ARRAY(m_piFeaturePassableTech);
 	SAFE_DELETE_ARRAY(m_piUnitClassAttackModifier);
 	SAFE_DELETE_ARRAY(m_piUnitClassDefenseModifier);
@@ -767,7 +775,38 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	//UnitPromotions_Domains
 	{
 		kUtility.InitializeArray(m_piDomainModifierPercent, NUM_DOMAIN_TYPES, 0);
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+		kUtility.InitializeArray(m_piDomainAttackPercent, NUM_DOMAIN_TYPES, 0);
+		kUtility.InitializeArray(m_piDomainDefensePercent, NUM_DOMAIN_TYPES, 0);
 
+		std::string sqlKey = "UnitPromotions_Domains_AttackDefense";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if(pResults == NULL)
+		{
+			const char* szSQL = "select Domains.ID, Modifier, Attack, Defense from UnitPromotions_Domains inner join Domains on DomainType = Domains.Type where PromotionType = ?;";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+
+		CvAssert(pResults);
+		if(!pResults) return false;
+
+		pResults->Bind(1, szPromotionType);
+
+		while(pResults->Step())
+		{
+			const int iDomainID = pResults->GetInt(0);
+			CvAssert(iDomainID > -1 && iDomainID < NUM_DOMAIN_TYPES);
+
+			if (iDomainID > -1 && iDomainID < NUM_DOMAIN_TYPES)
+			{
+				m_piDomainModifierPercent[iDomainID] = pResults->GetInt("Modifier");
+				m_piDomainAttackPercent[iDomainID] = pResults->GetInt("Attack");
+				m_piDomainDefensePercent[iDomainID] = pResults->GetInt("Defense");
+			}
+		}
+
+		pResults->Reset();
+#else
 		std::string sqlKey = "m_piDomainModifierPercent";
 		Database::Results* pResults = kUtility.GetResults(sqlKey);
 		if(pResults == NULL)
@@ -792,6 +831,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 		}
 
 		pResults->Reset();
+#endif
 	}
 
 	//UnitPromotions_UnitCombatMods
@@ -2057,6 +2097,52 @@ int CvPromotionEntry::GetDomainModifierPercent(int i) const
 	return -1;
 }
 
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+/// Percentage bonus when attacking a specific domain
+#ifdef AUI_WARNING_FIXES
+int CvPromotionEntry::GetDomainAttackPercent(uint i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+
+	if (i < NUM_DOMAIN_TYPES && m_piDomainAttackPercent)
+#else
+int CvPromotionEntry::GetDomainAttackPercent(int i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+
+	if(i > -1 && i < NUM_DOMAIN_TYPES && m_piDomainAttackPercent)
+#endif
+	{
+		return m_piDomainAttackPercent[i];
+	}
+
+	return -1;
+}
+
+/// Percentage bonus when defending against a specific domain
+#ifdef AUI_WARNING_FIXES
+int CvPromotionEntry::GetDomainDefensePercent(uint i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+
+	if (i < NUM_DOMAIN_TYPES && m_piDomainDefensePercent)
+#else
+int CvPromotionEntry::GetDomainDefensePercent(int i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+
+	if(i > -1 && i < NUM_DOMAIN_TYPES && m_piDomainDefensePercent)
+#endif
+	{
+		return m_piDomainDefensePercent[i];
+	}
+
+	return -1;
+}
+#endif
+
 /// Percentage bonus when attacking a specific unit class
 #ifdef AUI_WARNING_FIXES
 int CvPromotionEntry::GetUnitClassAttackModifier(uint i) const
@@ -2567,6 +2653,48 @@ int CvUnitPromotions::GetUnitClassDefenseMod(UnitClassTypes eUnitClass) const
 	}
 	return iSum;
 }
+
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+/// Advantage percent when attacking units of the specified domain
+int CvUnitPromotions::GetDomainAttackMod(DomainTypes eDomain) const
+{
+	int iSum = 0;
+#ifdef AUI_WARNING_FIXES
+	for (uint iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#else
+	for(int iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#endif
+	{
+		PromotionTypes ePromotion = (PromotionTypes)iLoop;
+		CvPromotionEntry* promotion = GC.getPromotionInfo(ePromotion);
+		if(promotion && HasPromotion(ePromotion))
+		{
+			iSum += promotion->GetDomainAttackPercent(eDomain);
+		}
+	}
+	return iSum;
+}
+
+/// Advantage percent when defending against units of the specified domain
+int CvUnitPromotions::GetDomainDefenseMod(DomainTypes eDomain) const
+{
+	int iSum = 0;
+#ifdef AUI_WARNING_FIXES
+	for (uint iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#else
+	for(int iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#endif
+	{
+		PromotionTypes ePromotion = (PromotionTypes)iLoop;
+		CvPromotionEntry* promotion = GC.getPromotionInfo(ePromotion);
+		if(promotion && HasPromotion(ePromotion))
+		{
+			iSum += promotion->GetDomainDefensePercent(eDomain);
+		}
+	}
+	return iSum;
+}
+#endif
 
 // Swap to a new promotion after a combat - returns new promotion we switched to
 PromotionTypes CvUnitPromotions::ChangePromotionAfterCombat(PromotionTypes eIndex)

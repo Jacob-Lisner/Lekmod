@@ -14567,6 +14567,15 @@ int CvUnit::GetMaxAttackStrength(const CvCombatInfo& kInfo, CvCombatModifierList
 		{
 			GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_ATTACKMOD_UNIT_CLASS", iTempModifier, GC.getUnitClassInfo(defender.getUnitClassType())->GetDescription());
 		}
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+		// Domain Attack Modifier (UnitPromotions_Domains.Attack)
+		iTempModifier = domainAttackModifier(defender.getDomainType());
+		iModifier += iTempModifier;
+		if (kModifierList && iTempModifier)
+		{
+			GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_ATTACKMOD_DOMAIN", iTempModifier, GC.getUnitDomainInfo(defender.getDomainType())->GetDescription());
+		}
+#endif
 
 		// Bonus VS fortified
 		if (defender.getFortifyTurns() > 0)
@@ -14809,6 +14818,15 @@ int CvUnit::GetMaxDefenseStrength(const CvCombatInfo& kInfo, CvCombatModifierLis
 		{
 			GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_DEFENSEMOD_UNIT_CLASS", iTempModifier, GC.getUnitClassInfo(attacker.getUnitClassType())->GetDescription());
 		}
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+		// Domain Defense Modifier (UnitPromotions_Domains.Defense)
+		iTempModifier = domainDefenseModifier(attacker.getDomainType());
+		iModifier += iTempModifier;
+		if (kModifierList && iTempModifier)
+		{
+			GC.getGame().BuildCombatModHelpText(*kModifierList, "TXT_KEY_DEFENSEMOD_DOMAIN", iTempModifier, GC.getUnitDomainInfo(attacker.getDomainType())->GetDescription());
+		}
+#endif
 	}
 	////////////////////////
 	// KNOWN ATTACKER (CITY)
@@ -16895,6 +16913,26 @@ int CvUnit::domainModifier(DomainTypes eDomain) const
 	CvAssertMsg(eDomain < NUM_DOMAIN_TYPES, "eDomain is expected to be within maximum bounds (invalid Index)");
 	return (getExtraDomainModifier(eDomain));
 }
+
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+//	--------------------------------------------------------------------------------
+int CvUnit::domainAttackModifier(DomainTypes eDomain) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eDomain >= 0, "eDomain is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eDomain < NUM_DOMAIN_TYPES, "eDomain is expected to be within maximum bounds (invalid Index)");
+	return m_Promotions.GetDomainAttackMod(eDomain);
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::domainDefenseModifier(DomainTypes eDomain) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eDomain >= 0, "eDomain is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eDomain < NUM_DOMAIN_TYPES, "eDomain is expected to be within maximum bounds (invalid Index)");
+	return m_Promotions.GetDomainDefenseMod(eDomain);
+}
+#endif
 
 
 //	--------------------------------------------------------------------------------

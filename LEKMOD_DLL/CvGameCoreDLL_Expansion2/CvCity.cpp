@@ -6354,12 +6354,28 @@ int CvCity::GetFaithPurchaseCost(BuildingTypes eBuilding)
 	EraTypes eEra = GET_TEAM(GET_PLAYER(getOwner()).getTeam()).GetCurrentEra();
 	int iMultiplier = GC.getEraInfo(eEra)->getFaithCostMultiplier();
 	iCost = iCost * iMultiplier / 100;
+#if defined(LEKMOD_FAITH_COST_MOD_RELIGIOUS_ONLY)
+	// Policy/trait FaithCostModifier (Mandate of Heaven, etc.) only for faith-native
+	// religious buildings (Pagoda, Cathedral, Houses of Worship, …): FaithCost>0,
+	// UnlockedByBelief, and not buildable with production (Cost==-1). Excludes
+	// Work Ethic factories/workshops and Lekmod faith-purchasable national wonders.
+	if (pkBuildingInfo->GetFaithCost() > 0 && pkBuildingInfo->IsUnlockedByBelief() && pkBuildingInfo->GetProductionCost() == -1)
+	{
+#if !defined(TRAITIFY) //FaithCostModifier Buildings
+		iMultiplier = (100 + GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_FAITH_COST_MODIFIER));
+#else
+		iMultiplier = (100 + GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_FAITH_COST_MODIFIER) + GET_PLAYER(getOwner()).GetPlayerTraits()->GetFaithCostModifier());
+#endif
+		iCost = iCost * iMultiplier / 100;
+	}
+#else
 #if !defined(TRAITIFY) //FaithCostModifier Buildings
 	iMultiplier = (100 + GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_FAITH_COST_MODIFIER));
 #else
 	iMultiplier = (100 + GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_FAITH_COST_MODIFIER) + GET_PLAYER(getOwner()).GetPlayerTraits()->GetFaithCostModifier());
 #endif
 	iCost = iCost * iMultiplier / 100;
+#endif
 
 	// Adjust for game speed
 	iCost *= GC.getGame().getGameSpeedInfo().getConstructPercent();

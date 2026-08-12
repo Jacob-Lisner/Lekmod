@@ -422,6 +422,15 @@ public:
 	void setOption(GameOptionTypes eIndex, bool bEnabled);
 	void setOption(const char* pszOption, bool bEnabled);
 
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+	// Last human simultaneous-activation order (index 0 = first activated). Used for WC host / 2nd-proposer ties.
+	void StoreTurnActivationOrder(const int* aiShuffle);
+	int GetTurnActivationOrderIndex(PlayerTypes ePlayer) const;
+	bool IsRandomizedTurnActivationOrderEnabled() const;
+	// Prefer eA over eB: earlier activation if option on, else lower player ID.
+	bool IsPreferredByTurnActivationOrder(PlayerTypes eA, PlayerTypes eB) const;
+#endif
+
 	bool isMPOption(MultiplayerOptionTypes eIndex) const;
 	void setMPOption(MultiplayerOptionTypes eIndex, bool bEnabled);
 
@@ -699,6 +708,10 @@ protected:
 	int m_iNumVictoryVotesExpected;
 	int m_iVotesNeededForDiploVictory;
 	int m_iMapScoreMod;
+
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+	int m_aiTurnActivationOrder[MAX_PLAYERS];
+#endif
 
 	unsigned int m_uiInitialTime;
 #ifdef GAME_UPDATE_TURN_TIMER_ONCE_PER_TURN

@@ -1586,6 +1586,21 @@ int CvUnitEntry::DoUpdatePower(int iMeleeStrength, int iRangedStrength) const
 					iTemp /= 100;
 					iPower += iTemp;
 				}
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+				// Domain attack/defense - approximate with same quarter weight as general Modifier
+				if(kPromotion->GetDomainAttackPercent(iLoop) > 0)
+				{
+					iTemp = (iPower * kPromotion->GetDomainAttackPercent(iLoop) / 4);
+					iTemp /= 100;
+					iPower += iTemp;
+				}
+				if(kPromotion->GetDomainDefensePercent(iLoop) > 0)
+				{
+					iTemp = (iPower * kPromotion->GetDomainDefensePercent(iLoop) / 4);
+					iTemp /= 100;
+					iPower += iTemp;
+				}
+#endif
 			}
 		}
 	}

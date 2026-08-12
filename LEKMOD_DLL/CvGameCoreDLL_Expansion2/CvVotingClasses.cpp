@@ -3334,9 +3334,42 @@ void CvLeague::AssignSecondProposalPrivilege()
 			CvAssertMsg(it->iProposals == 0, "Found a member with remaining proposals that should not have them. Please send Anton your save file and version.");
 		}
 	}
-	vpPossibleProposers.SortItems();
 
 	int iPrivileges = GetNumProposersPerSession() - 1;
+
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+	// Highest votes; ties break by activation order (option on) or lower player ID (option off).
+	while (iPrivileges > 0)
+	{
+		Member* pBest = NULL;
+		PlayerTypes eBest = NO_PLAYER;
+		int iBestVotes = -1;
+		for (int i = 0; i < vpPossibleProposers.size(); i++)
+		{
+			Member* pMember = vpPossibleProposers.GetElement(i);
+			if (pMember->bMayPropose)
+			{
+				continue;
+			}
+			const int iVotes = vpPossibleProposers.GetWeight(i);
+			const PlayerTypes ePlayer = pMember->ePlayer;
+			if (iVotes > iBestVotes || (iVotes == iBestVotes && GC.getGame().IsPreferredByTurnActivationOrder(ePlayer, eBest)))
+			{
+				iBestVotes = iVotes;
+				pBest = pMember;
+				eBest = ePlayer;
+			}
+		}
+		if (pBest == NULL)
+		{
+			break;
+		}
+		pBest->bMayPropose = true;
+		pBest->iProposals = GC.getLEAGUE_MEMBER_PROPOSALS_BASE();
+		iPrivileges--;
+	}
+#else
+	vpPossibleProposers.SortItems();
 
 	/*// Host gets one
 	PlayerTypes eHost = GetHostMember();
@@ -3363,6 +3396,7 @@ void CvLeague::AssignSecondProposalPrivilege()
 			iPrivileges--;
 		}
 	}
+#endif
 
 	CvAssert(iPrivileges == 0);
 }
@@ -6065,6 +6099,38 @@ void CvLeague::AssignProposalPrivileges()
 	}
 	else
 	{
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+		// SP: same vote + activation-order (or slot) tie-break as AssignSecondProposalPrivilege
+		while (iPrivileges > 0)
+		{
+			Member* pBest = NULL;
+			PlayerTypes eBest = NO_PLAYER;
+			int iBestVotes = -1;
+			for (int i = 0; i < vpPossibleProposers.size(); i++)
+			{
+				Member* pMember = vpPossibleProposers.GetElement(i);
+				if (pMember->bMayPropose)
+				{
+					continue;
+				}
+				const int iVotes = vpPossibleProposers.GetWeight(i);
+				const PlayerTypes ePlayer = pMember->ePlayer;
+				if (iVotes > iBestVotes || (iVotes == iBestVotes && GC.getGame().IsPreferredByTurnActivationOrder(ePlayer, eBest)))
+				{
+					iBestVotes = iVotes;
+					pBest = pMember;
+					eBest = ePlayer;
+				}
+			}
+			if (pBest == NULL)
+			{
+				break;
+			}
+			pBest->bMayPropose = true;
+			pBest->iProposals = GC.getLEAGUE_MEMBER_PROPOSALS_BASE();
+			iPrivileges--;
+		}
+#else
 		for (int i = 0; i < vpPossibleProposers.size(); i++)
 		{
 			if (iPrivileges == 0)
@@ -6080,6 +6146,7 @@ void CvLeague::AssignProposalPrivileges()
 				iPrivileges--;
 			}
 		}
+#endif
 
 		CvAssert(iPrivileges == 0);
 	}
@@ -7328,7 +7395,27 @@ void CvGameLeagues::DoTurn()
 #ifdef AUI_VOTING_RANDOMIZED_LEAGUE_FOUNDER
 			if (vePossibleFounders.size() > 0)
 			{
-				FoundLeague(vePossibleFounders.at(uint(GC.getGame().getJonRandNum(int(vePossibleFounders.size()), NULL))));
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+				// With randomized activation order: earliest activator among eligible founders
+				// (same-turn unlock race), matching wonder-race semantics. Otherwise keep AUI random.
+				if (GC.getGame().IsRandomizedTurnActivationOrderEnabled())
+				{
+					PlayerTypes eBestFounder = vePossibleFounders[0];
+					for (uint iFounder = 1; iFounder < vePossibleFounders.size(); iFounder++)
+					{
+						PlayerTypes eCandidate = vePossibleFounders[iFounder];
+						if (GC.getGame().IsPreferredByTurnActivationOrder(eCandidate, eBestFounder))
+						{
+							eBestFounder = eCandidate;
+						}
+					}
+					FoundLeague(eBestFounder);
+				}
+				else
+#endif
+				{
+					FoundLeague(vePossibleFounders.at(uint(GC.getGame().getJonRandNum(int(vePossibleFounders.size()), NULL))));
+				}
 			}
 #endif
 		}

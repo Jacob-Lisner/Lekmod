@@ -1109,6 +1109,13 @@ void CvGame::uninit()
 	m_iVotesNeededForDiploVictory = 0;
 	m_iMapScoreMod = 0;
 
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+	for (int iActivation = 0; iActivation < MAX_PLAYERS; iActivation++)
+	{
+		m_aiTurnActivationOrder[iActivation] = iActivation;
+	}
+#endif
+
 	m_uiInitialTime = 0;
 #ifdef GAME_UPDATE_TURN_TIMER_ONCE_PER_TURN
 	m_fPreviousTurnLen = 0.0f;
@@ -7960,6 +7967,62 @@ void CvGame::setOption(const char* pszOption, bool bEnabled)
 	CvPreGame::SetGameOption(pszOption, (int)bEnabled);
 }
 
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+//	--------------------------------------------------------------------------------
+void CvGame::StoreTurnActivationOrder(const int* aiShuffle)
+{
+	if (aiShuffle == NULL)
+	{
+		return;
+	}
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		m_aiTurnActivationOrder[i] = aiShuffle[i];
+	}
+}
+
+//	--------------------------------------------------------------------------------
+int CvGame::GetTurnActivationOrderIndex(PlayerTypes ePlayer) const
+{
+	if (ePlayer < 0 || ePlayer >= MAX_PLAYERS)
+	{
+		return MAX_PLAYERS;
+	}
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (m_aiTurnActivationOrder[i] == (int)ePlayer)
+		{
+			return i;
+		}
+	}
+	return (int)ePlayer;
+}
+
+//	--------------------------------------------------------------------------------
+bool CvGame::IsRandomizedTurnActivationOrderEnabled() const
+{
+	return isOption("GAMEOPTION_SIMULTANEOUS_PLAYER_TURN_ACTIVATION_ORDER_RANDOMIZED");
+}
+
+//	--------------------------------------------------------------------------------
+bool CvGame::IsPreferredByTurnActivationOrder(PlayerTypes eA, PlayerTypes eB) const
+{
+	if (eB == NO_PLAYER)
+	{
+		return true;
+	}
+	if (eA == NO_PLAYER)
+	{
+		return false;
+	}
+	if (IsRandomizedTurnActivationOrderEnabled())
+	{
+		return GetTurnActivationOrderIndex(eA) < GetTurnActivationOrderIndex(eB);
+	}
+	return ((int)eA < (int)eB);
+}
+#endif
+
 
 //	--------------------------------------------------------------------------------
 bool CvGame::isMPOption(MultiplayerOptionTypes eIndex) const
@@ -9516,6 +9579,9 @@ void CvGame::updateMoves()
 					aiShuffle[iI] = iI;
 				}
 			}
+#if defined(LEKMOD_WC_RESPECT_ACTIVATION_ORDER)
+			StoreTurnActivationOrder(aiShuffle);
+#endif
 
 			for (int iJ = 0; iJ < MAX_PLAYERS; iJ++)
 			{

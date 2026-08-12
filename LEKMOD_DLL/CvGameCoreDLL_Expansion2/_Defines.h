@@ -342,6 +342,9 @@
 
 /// Randomizes the order in which player turns activate in simultaneous mode. E.g. this makes it so that the host no longer wins wonder races against all other players if they finish a wonder the same turn as another player.
 #define NQM_GAME_RANDOMIZE_TURN_ACTIVATION_ORDER_IN_SIMULTANEOUS
+// World Congress founding + 2nd proposer vote ties respect GAMEOPTION_SIMULTANEOUS_PLAYER_TURN_ACTIVATION_ORDER_RANDOMIZED
+// (persist human activation shuffle; option on = activation order, option off = slot ID / existing random founder)
+#define LEKMOD_WC_RESPECT_ACTIVATION_ORDER
 /*
 /// Anti-air ground/sea units can no longer intercept planes after they move until the player ends their turn. This should only affect simultaneous mode and stops players from deliberately moving in AA after another player has done air sweeps.
 #define NQM_UNIT_NO_AA_INTERCEPT_AFTER_MOVE_BEFORE_TURN_END
@@ -949,6 +952,9 @@
 #define LEKMOD_BUILDING_GP_EXPEND_YIELD
 // Units or Buildings with a faith cost no longer need a religion to be purchased unless unlocked by a belief
 #define LEKMOD_FAITH_PURCHASE_NO_RELIGION
+// Policy/trait FaithCostModifier (Mandate of Heaven, etc.) only discounts faith-only religious
+// buildings (FaithCost>0 + UnlockedByBelief + Cost==-1), not Work Ethic factories / NW faith buys
+#define LEKMOD_FAITH_COST_MOD_RELIGIOUS_ONLY
 // New ancient ruin rewards that can be specified in xml
 #define LEKMOD_NEW_ANCIENT_RUIN_REWARDS
 // Fixes a rare events where players could get the oxford university building for free with the legalism policy
@@ -1238,6 +1244,8 @@ romania and brazil traits are double counted
 #define LEKMOD_UNIT_STRENGTH_PROMOTION_ERA
 
 #define LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS
+// UnitPromotions_Domains: Attack / Defense columns (like UnitClasses); Modifier still applies to both sides
+#define LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE
 #define GAMEOPTION_NO_COMBAT_RANDOMNESS "GAMEOPTION_LEKMOD_NO_COMBAT_RANDOMNESS"
 // Push out the hard coded culture classes aspects into the dll.
 #define LEKMOD_CULTURE_CLASSES_DATABASE

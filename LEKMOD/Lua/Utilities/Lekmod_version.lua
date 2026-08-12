@@ -4,6 +4,9 @@
 
 LekmodVersion = LekmodVersion or {}
 
+-- Technical version for MP handshake / update checks (display titles live in TXT_KEY_LEKMOD_*).
+LekmodVersion.LOCAL_VERSION = "v35.002"
+
 LekmodVersion.HANDSHAKE_PREFIX = "#LEKVER#"
 -- System / "Game:" chat lines (kick notices, ui_check warnings, etc.).
 LekmodVersion.GAME_CHAT_PREFIX = "#LGAME#"
@@ -29,6 +32,9 @@ function LekmodVersion.Normalize(versionText)
 end
 
 function LekmodVersion.GetLocal()
+	if LekmodVersion.LOCAL_VERSION ~= nil then
+		return LekmodVersion.Normalize(LekmodVersion.LOCAL_VERSION) or LekmodVersion.LOCAL_VERSION;
+	end
 	local raw = Locale.Lookup("TXT_KEY_LEKMOD_VERSION")
 	return LekmodVersion.Normalize(raw) or raw
 end

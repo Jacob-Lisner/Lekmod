@@ -233,6 +233,10 @@ public:
 	int GetUnitCombatModifierPercent(uint i) const;
 	int GetUnitClassModifierPercent(uint i) const;
 	int GetDomainModifierPercent(uint i) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int GetDomainAttackPercent(uint i) const;
+	int GetDomainDefensePercent(uint i) const;
+#endif
 	int GetFeaturePassableTech(uint i) const;
 	int GetUnitClassAttackModifier(uint i) const;
 	int GetUnitClassDefenseModifier(uint i) const;
@@ -253,6 +257,10 @@ public:
 	int GetUnitCombatModifierPercent(int i) const;
 	int GetUnitClassModifierPercent(int i) const;
 	int GetDomainModifierPercent(int i) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int GetDomainAttackPercent(int i) const;
+	int GetDomainDefensePercent(int i) const;
+#endif
 	int GetFeaturePassableTech(int i) const;
 	int GetUnitClassAttackModifier(int i) const;
 	int GetUnitClassDefenseModifier(int i) const;
@@ -479,6 +487,10 @@ protected:
 	int* m_piUnitCombatModifierPercent;
 	int* m_piUnitClassModifierPercent;
 	int* m_piDomainModifierPercent;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int* m_piDomainAttackPercent;
+	int* m_piDomainDefensePercent;
+#endif
 
 	int* m_piUnitClassAttackModifier;
 	int* m_piUnitClassDefenseModifier;
@@ -559,6 +571,10 @@ public:
 
 	int GetUnitClassAttackMod(UnitClassTypes eUnitClass) const;
 	int GetUnitClassDefenseMod(UnitClassTypes eUnitClass) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int GetDomainAttackMod(DomainTypes eDomain) const;
+	int GetDomainDefenseMod(DomainTypes eDomain) const;
+#endif
 
 	PromotionTypes ChangePromotionAfterCombat(PromotionTypes eIndex);
 

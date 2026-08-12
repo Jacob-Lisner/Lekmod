@@ -30127,7 +30127,7 @@
 			<BeliefType>BELIEF_EARTH_MOTHER</BeliefType> 
 			<ResourceType>RESOURCE_IRON</ResourceType> 
 			<YieldType>YIELD_FAITH</YieldType> 
-			<Yield>2</Yield> 
+			<Yield>1</Yield> 
 		</Row>
 		<Row> 
 			<BeliefType>BELIEF_FORMAL_LITURGY</BeliefType> 
@@ -31113,7 +31113,7 @@
 			<Description>TXT_KEY_BELIEF_PROMISED_LAND</Description>
 			<ShortDescription>TXT_KEY_BELIEF_PROMISED_LAND_SHORT</ShortDescription>
 			<Founder>true</Founder>
-			<GoldPerFirstCityConversion>100</GoldPerFirstCityConversion>
+			<GoldPerFirstCityConversion>60</GoldPerFirstCityConversion>
 			<SpreadModifierOwnedCities>100</SpreadModifierOwnedCities>
 		</Row>
 		<Row>
@@ -42062,7 +42062,7 @@
 			<Help>TXT_KEY_BUILDING_LIBRARY_HELP</Help> 
 			<GoldMaintenance>1</GoldMaintenance> 
 			<Cost>75</Cost> 
-			<FaithCost>60</FaithCost> 
+			<FaithCost>48</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -42081,7 +42081,7 @@
 			<Strategy>TXT_KEY_BUILDING_PAPER_MAKER_STRATEGY</Strategy> 
 			<Help>TXT_KEY_BUILDING_PAPER_MAKER_HELP</Help> 
 			<Cost>75</Cost> 
-			<FaithCost>60</FaithCost> 
+			<FaithCost>48</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -42102,7 +42102,7 @@
 			<GoldMaintenance>1</GoldMaintenance> 
 			<NeverCapture>true</NeverCapture> 
 			<Cost>75</Cost> 
-			<FaithCost>60</FaithCost> 
+			<FaithCost>48</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier> 
 			<FreeStartEra>ERA_INDUSTRIAL</FreeStartEra> 
@@ -42120,7 +42120,7 @@
 			<Description>TXT_KEY_BUILDING_AKKAD_LIBRARY</Description>
 			<Help>TXT_KEY_BUILDING_AKKAD_LIBRARY_HELP</Help> 
 			<Cost>60</Cost> 
-			<FaithCost>48</FaithCost> 
+			<FaithCost>38</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43159,7 +43159,7 @@
 			<Help>TXT_KEY_BUILDING_WORKSHOP_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>120</Cost> 
-			<FaithCost>200</FaithCost> 
+			<FaithCost>160</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43182,7 +43182,7 @@
 			<Help>TXT_KEY_BUILDING_LONGHOUSE_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>75</Cost> 
-			<FaithCost>100</FaithCost> 
+			<FaithCost>80</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43205,7 +43205,7 @@
 			<Help>TXT_KEY_BUILDING_CORALSHOP_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>120</Cost> 
-			<FaithCost>200</FaithCost> 
+			<FaithCost>160</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43319,7 +43319,7 @@
 			<Help>TXT_KEY_BUILDING_UNIVERSITY_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>160</Cost> 
-			<FaithCost>220</FaithCost> 
+			<FaithCost>176</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>15</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43339,7 +43339,7 @@
 			<Strategy>TXT_KEY_BUILDING_WAT_STRATEGY</Strategy> 
 			<Help>TXT_KEY_BUILDING_WAT_HELP</Help> 
 			<Cost>120</Cost> 
-			<FaithCost>165</FaithCost> 
+			<FaithCost>132</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>15</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43360,7 +43360,7 @@
 			<Help>TXT_KEY_BUILDING_AYYUBIDS_UNIVERSITYH_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>160</Cost> 
-			<FaithCost>220</FaithCost> 
+			<FaithCost>176</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>15</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43540,7 +43540,7 @@
 			<Help>TXT_KEY_BUILDING_OBSERVATORY_HELP</Help> 
 			<GoldMaintenance>1</GoldMaintenance> 
 			<Cost>200</Cost> 
-			<FaithCost>260</FaithCost> 
+			<FaithCost>208</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>15</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43557,7 +43557,7 @@
 			<Help>TXT_KEY_BUILDING_ARMENIA_OBSERVATORY_HELP</Help> 
 			<GoldMaintenance>1</GoldMaintenance> 
 			<Cost>200</Cost> 
-			<FaithCost>260</FaithCost> 
+			<FaithCost>208</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>15</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43887,7 +43887,7 @@
 			<Help>TXT_KEY_BUILDING_WINDMILL_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>250</Cost> 
-			<FaithCost>320</FaithCost> 
+			<FaithCost>250</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43909,7 +43909,7 @@
 			<Help>TXT_KEY_BUILDING_COFFEE_HOUSE_HELP</Help> 
 			<GoldMaintenance>2</GoldMaintenance> 
 			<Cost>150</Cost> 
-			<FaithCost>188</FaithCost> 
+			<FaithCost>150</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -43930,7 +43930,7 @@
 			<Strategy>TXT_KEY_BUILDING_HACIENDA_STRATEGY</Strategy> 
 			<Help>TXT_KEY_BUILDING_HACIENDA_STRATEGY</Help> 
 			<Cost>250</Cost> 
-			<FaithCost>320</FaithCost> 
+			<FaithCost>250</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief> 
 			<HurryCostModifier>25</HurryCostModifier>
 			<ConquestProb>66</ConquestProb> 
@@ -44053,7 +44053,7 @@
 			<Help>TXT_KEY_BUILDING_PUBLIC_SCHOOL_HELP</Help> 
 			<GoldMaintenance>3</GoldMaintenance> 
 			<Cost>300</Cost> 
-			<FaithCost>380</FaithCost> 
+			<FaithCost>300</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>66</ConquestProb>
 			<PrereqTech>TECH_SCIENTIFIC_THEORY</PrereqTech> 
@@ -44094,7 +44094,7 @@
 			<Help>TXT_KEY_BUILDING_FACTORY_HELP</Help> 
 			<GoldMaintenance>3</GoldMaintenance> 
 			<Cost>360</Cost> 
-			<FaithCost>450</FaithCost> 
+			<FaithCost>360</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>66</ConquestProb> 
 			<XBuiltTriggersIdeologyChoice>3</XBuiltTriggersIdeologyChoice> 
@@ -44115,7 +44115,7 @@
 			<Help>TXT_KEY_BUILDING_PRUSSIAN_FACTORY_HELP</Help> 
 			<GoldMaintenance>3</GoldMaintenance> 
 			<Cost>270</Cost> 
-			<FaithCost>340</FaithCost> 
+			<FaithCost>216</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>66</ConquestProb> 
 			<XBuiltTriggersIdeologyChoice>3</XBuiltTriggersIdeologyChoice> 
@@ -44135,7 +44135,7 @@
 			<Strategy>TXT_KEY_BUILDING_COOPERATIVE_STRATEGY</Strategy>
 			<Help>TXT_KEY_BUILDING_COOPERATIVE_HELP</Help>
 			<Cost>360</Cost> 
-			<FaithCost>450</FaithCost> 
+			<FaithCost>360</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>66</ConquestProb> 
 			<Happiness>2</Happiness> 
@@ -44225,7 +44225,7 @@
 			<GoldMaintenance>3</GoldMaintenance> 
 			<River>true</River> 
 			<Cost>360</Cost> 
-			<FaithCost>533</FaithCost> 
+			<FaithCost>360</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>66</ConquestProb> 
 			<PrereqTech>TECH_ELECTRICITY</PrereqTech> 
@@ -44421,7 +44421,7 @@
 			<Help>TXT_KEY_BUILDING_LABORATORY_HELP</Help> 
 			<GoldMaintenance>3</GoldMaintenance> 
 			<Cost>500</Cost> 
-			<FaithCost>630</FaithCost> 
+			<FaithCost>500</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>66</ConquestProb> 
 			<PrereqTech>TECH_PLASTIC</PrereqTech> 
@@ -185286,11 +185286,6 @@
 			<BuildingClassType>BUILDINGCLASS_UNIVERSITY</BuildingClassType> 
 			<ProductionModifier>15</ProductionModifier> 
 		</Row>
-		<Row> 
-			<PolicyType>POLICY_LIBERTY_FINISHER</PolicyType> 
-			<BuildingClassType>BUILDINGCLASS_FACTORY</BuildingClassType> 
-			<ProductionModifier>15</ProductionModifier> 
-		</Row>
 		<!-- Military Tradition -->
 		<Row> 
 			<PolicyType>POLICY_MILITARY_TRADITION</PolicyType> 
@@ -185725,12 +185720,6 @@
 			<YieldType>YIELD_FOOD</YieldType> 
 			<YieldChange>1</YieldChange> 
 		</Row>
-		<Row> 
-			<PolicyType>POLICY_HONOR_FINISHER</PolicyType> 
-			<BuildingClassType>BUILDINGCLASS_COURTHOUSE</BuildingClassType> 
-			<YieldType>YIELD_FOOD</YieldType> 
-			<YieldChange>1</YieldChange> 
-		</Row>
 		<!-- Piety Opener -->
 		 <Row> 
 			<PolicyType>POLICY_PIETY</PolicyType> 
@@ -186110,6 +186099,11 @@
 			<PolicyType>POLICY_MARITIME_INFRASTRUCTURE</PolicyType> 
 			<YieldType>YIELD_PRODUCTION</YieldType> 
 			<Yield>2</Yield> 
+		</Row>
+		<Row>
+			<PolicyType>POLICY_HONOR_FINISHER</PolicyType> 
+			<YieldType>YIELD_FOOD</YieldType> 
+			<Yield>1</Yield> 
 		</Row>
 	</Policy_CityYieldChanges> 
 
@@ -242786,405 +242780,6 @@
 			<EmbarkedUnitReceivesMovement>false</EmbarkedUnitReceivesMovement> 
 			<HeavyChargeDownhill>0</HeavyChargeDownhill> 
 		</Row>
-		<Row> 
-			<ID>271</ID> 
-			<Type>PROMOTION_ANTI_NAVAL_1</Type> 
-			<Description>TXT_KEY_ANTINAVAL_PROMO_1</Description> 
-			<Help>TXT_KEY_ANTINAVAL_PROMO_HELP</Help> 
-			<PortraitIndex>52</PortraitIndex> 
-			<IconAtlas>PROMOTION_ATLAS</IconAtlas> 
-			<HotKeyPriority>0</HotKeyPriority> 
-			<HotKeyPriorityAlt>0</HotKeyPriorityAlt> 
-			<OrderPriority>3</OrderPriority> 
-			<AltDown>false</AltDown> 
-			<AltDownAlt>false</AltDownAlt> 
-			<ShiftDown>false</ShiftDown> 
-			<ShiftDownAlt>false</ShiftDownAlt> 
-			<CtrlDown>false</CtrlDown> 
-			<CtrlDownAlt>false</CtrlDownAlt> 
-			<Sound>AS2D_IF_LEVELUP</Sound> 
-			<CannotBeChosen>false</CannotBeChosen> 
-			<LostWithUpgrade>false</LostWithUpgrade> 
-			<NotWithUpgrade>false</NotWithUpgrade> 
-			<InstaHeal>false</InstaHeal> 
-			<Leader>false</Leader> 
-			<Blitz>false</Blitz> 
-			<Amphib>false</Amphib> 
-			<River>false</River> 
-			<EnemyRoute>false</EnemyRoute> 
-			<RivalTerritory>false</RivalTerritory> 
-			<MustSetUpToRangedAttack>false</MustSetUpToRangedAttack> 
-			<RangedSupportFire>false</RangedSupportFire> 
-			<CanMoveAfterAttacking>false</CanMoveAfterAttacking> 
-			<AlwaysHeal>false</AlwaysHeal> 
-			<HealOutsideFriendly>false</HealOutsideFriendly> 
-			<HillsDoubleMove>false</HillsDoubleMove> 
-			<RoughTerrainEndsTurn>false</RoughTerrainEndsTurn> 
-			<IgnoreTerrainCost>false</IgnoreTerrainCost> 
-			<HoveringUnit>false</HoveringUnit> 
-			<FlatMovementCost>false</FlatMovementCost> 
-			<CanMoveImpassable>false</CanMoveImpassable> 
-			<NoCapture>false</NoCapture> 
-			<OnlyDefensive>false</OnlyDefensive> 
-			<NoDefensiveBonus>false</NoDefensiveBonus> 
-			<NukeImmune>false</NukeImmune> 
-			<HiddenNationality>false</HiddenNationality> 
-			<AlwaysHostile>false</AlwaysHostile> 
-			<NoRevealMap>false</NoRevealMap> 
-			<Recon>false</Recon> 
-			<CanMoveAllTerrain>false</CanMoveAllTerrain> 
-			<FreePillageMoves>false</FreePillageMoves> 
-			<AirSweepCapable>false</AirSweepCapable> 
-			<AllowsEmbarkation>false</AllowsEmbarkation> 
-			<EmbarkedAllWater>false</EmbarkedAllWater> 
-			<HealIfDestroyExcludesBarbarians>false</HealIfDestroyExcludesBarbarians> 
-			<RangeAttackIgnoreLOS>false</RangeAttackIgnoreLOS> 
-			<CityAttackOnly>false</CityAttackOnly> 
-			<CaptureDefeatedEnemy>false</CaptureDefeatedEnemy> 
-			<HealOnPillage>false</HealOnPillage> 
-			<IgnoreGreatGeneralBenefit>false</IgnoreGreatGeneralBenefit> 
-			<IgnoreZOC>false</IgnoreZOC> 
-			<HasPostCombatPromotions>false</HasPostCombatPromotions> 
-			<PostCombatPromotionsExclusive>false</PostCombatPromotionsExclusive> 
-			<RangedAttackModifier>0</RangedAttackModifier> 
-			<InterceptionCombatModifier>0</InterceptionCombatModifier> 
-			<InterceptionDefenseDamageModifier>0</InterceptionDefenseDamageModifier> 
-			<AirSweepCombatModifier>0</AirSweepCombatModifier> 
-			<ExtraAttacks>0</ExtraAttacks> 
-			<ExtraNavalMovement>0</ExtraNavalMovement> 
-			<VisibilityChange>0</VisibilityChange> 
-			<MovesChange>0</MovesChange> 
-			<MoveDiscountChange>0</MoveDiscountChange> 
-			<RangeChange>0</RangeChange> 
-			<InterceptChanceChange>0</InterceptChanceChange> 
-			<NumInterceptionChange>0</NumInterceptionChange> 
-			<EvasionChange>0</EvasionChange> 
-			<CargoChange>0</CargoChange> 
-			<EnemyHealChange>0</EnemyHealChange> 
-			<NeutralHealChange>0</NeutralHealChange> 
-			<FriendlyHealChange>0</FriendlyHealChange> 
-			<SameTileHealChange>0</SameTileHealChange> 
-			<AdjacentTileHealChange>0</AdjacentTileHealChange> 
-			<EnemyDamageChance>0</EnemyDamageChance> 
-			<NeutralDamageChance>0</NeutralDamageChance> 
-			<EnemyDamage>0</EnemyDamage> 
-			<NeutralDamage>0</NeutralDamage> 
-			<CombatPercent>0</CombatPercent> 
-			<CityAttack>0</CityAttack> 
-			<CityDefense>0</CityDefense> 
-			<RangedDefenseMod>0</RangedDefenseMod> 
-			<HillsAttack>0</HillsAttack> 
-			<HillsDefense>0</HillsDefense> 
-			<OpenAttack>0</OpenAttack> 
-			<OpenRangedAttackMod>0</OpenRangedAttackMod> 
-			<OpenDefense>0</OpenDefense> 
-			<RoughAttack>0</RoughAttack> 
-			<RoughRangedAttackMod>0</RoughRangedAttackMod> 
-			<RoughDefense>0</RoughDefense> 
-			<AttackFortifiedMod>0</AttackFortifiedMod> 
-			<AttackWoundedMod>0</AttackWoundedMod> 
-			<FlankAttackModifier>0</FlankAttackModifier> 
-			<NearbyEnemyCombatMod>0</NearbyEnemyCombatMod> 
-			<NearbyEnemyCombatRange>0</NearbyEnemyCombatRange> 
-			<UpgradeDiscount>0</UpgradeDiscount> 
-			<ExperiencePercent>0</ExperiencePercent> 
-			<AdjacentMod>0</AdjacentMod> 
-			<AttackMod>0</AttackMod> 
-			<DefenseMod>0</DefenseMod> 
-			<DropRange>0</DropRange> 
-			<GreatGeneral>false</GreatGeneral> 
-			<GreatAdmiral>false</GreatAdmiral> 
-			<GreatGeneralModifier>0</GreatGeneralModifier> 
-			<GreatGeneralReceivesMovement>false</GreatGeneralReceivesMovement> 
-			<GreatGeneralCombatModifier>0</GreatGeneralCombatModifier> 
-			<FriendlyLandsModifier>0</FriendlyLandsModifier> 
-			<FriendlyLandsAttackModifier>0</FriendlyLandsAttackModifier> 
-			<OutsideFriendlyLandsModifier>0</OutsideFriendlyLandsModifier> 
-			<HPHealedIfDestroyEnemy>0</HPHealedIfDestroyEnemy> 
-			<ExtraWithdrawal>0</ExtraWithdrawal> 
-			<EmbarkExtraVisibility>0</EmbarkExtraVisibility> 
-			<EmbarkDefenseModifier>0</EmbarkDefenseModifier> 
-			<CapitalDefenseModifier>0</CapitalDefenseModifier> 
-			<CapitalDefenseFalloff>0</CapitalDefenseFalloff> 
-			<CityAttackPlunderModifier>0</CityAttackPlunderModifier> 
-			<ReligiousStrengthLossRivalTerritory>0</ReligiousStrengthLossRivalTerritory> 
-			<TradeMissionInfluenceModifier>0</TradeMissionInfluenceModifier> 
-			<TradeMissionGoldModifier>0</TradeMissionGoldModifier> 
-			<GoldenAgeValueFromKills>0</GoldenAgeValueFromKills> 
-			<Sapper>false</Sapper> 
-			<HeavyCharge>false</HeavyCharge> 
-			<PediaType>PEDIA_RANGED</PediaType> 
-			<PediaEntry>TXT_KEY_ANTINAVAL_PROMO_1</PediaEntry> 
-			<GreatGeneralOnOrAdjacentConfersMovement>0</GreatGeneralOnOrAdjacentConfersMovement> 
-			<EmbarkedUnitReceivesMovement>false</EmbarkedUnitReceivesMovement> 
-			<HeavyChargeDownhill>0</HeavyChargeDownhill> 
-		</Row>
-		<Row> 
-			<ID>272</ID> 
-			<Type>PROMOTION_ANTI_NAVAL_2</Type> 
-			<Description>TXT_KEY_ANTINAVAL_PROMO_2</Description> 
-			<Help>TXT_KEY_ANTINAVAL_PROMO_HELP</Help> 
-			<PortraitIndex>53</PortraitIndex> 
-			<IconAtlas>PROMOTION_ATLAS</IconAtlas> 
-			<HotKeyPriority>0</HotKeyPriority> 
-			<HotKeyPriorityAlt>0</HotKeyPriorityAlt> 
-			<OrderPriority>3</OrderPriority> 
-			<AltDown>false</AltDown> 
-			<AltDownAlt>false</AltDownAlt> 
-			<ShiftDown>false</ShiftDown> 
-			<ShiftDownAlt>false</ShiftDownAlt> 
-			<CtrlDown>false</CtrlDown> 
-			<CtrlDownAlt>false</CtrlDownAlt> 
-			<Sound>AS2D_IF_LEVELUP</Sound> 
-			<CannotBeChosen>false</CannotBeChosen> 
-			<LostWithUpgrade>false</LostWithUpgrade> 
-			<NotWithUpgrade>false</NotWithUpgrade> 
-			<InstaHeal>false</InstaHeal> 
-			<Leader>false</Leader> 
-			<Blitz>false</Blitz> 
-			<Amphib>false</Amphib> 
-			<River>false</River> 
-			<EnemyRoute>false</EnemyRoute> 
-			<RivalTerritory>false</RivalTerritory> 
-			<MustSetUpToRangedAttack>false</MustSetUpToRangedAttack> 
-			<RangedSupportFire>false</RangedSupportFire> 
-			<CanMoveAfterAttacking>false</CanMoveAfterAttacking> 
-			<AlwaysHeal>false</AlwaysHeal> 
-			<HealOutsideFriendly>false</HealOutsideFriendly> 
-			<HillsDoubleMove>false</HillsDoubleMove> 
-			<RoughTerrainEndsTurn>false</RoughTerrainEndsTurn> 
-			<IgnoreTerrainCost>false</IgnoreTerrainCost> 
-			<HoveringUnit>false</HoveringUnit> 
-			<FlatMovementCost>false</FlatMovementCost> 
-			<CanMoveImpassable>false</CanMoveImpassable> 
-			<NoCapture>false</NoCapture> 
-			<OnlyDefensive>false</OnlyDefensive> 
-			<NoDefensiveBonus>false</NoDefensiveBonus> 
-			<NukeImmune>false</NukeImmune> 
-			<HiddenNationality>false</HiddenNationality> 
-			<AlwaysHostile>false</AlwaysHostile> 
-			<NoRevealMap>false</NoRevealMap> 
-			<Recon>false</Recon> 
-			<CanMoveAllTerrain>false</CanMoveAllTerrain> 
-			<FreePillageMoves>false</FreePillageMoves> 
-			<AirSweepCapable>false</AirSweepCapable> 
-			<AllowsEmbarkation>false</AllowsEmbarkation> 
-			<EmbarkedAllWater>false</EmbarkedAllWater> 
-			<HealIfDestroyExcludesBarbarians>false</HealIfDestroyExcludesBarbarians> 
-			<RangeAttackIgnoreLOS>false</RangeAttackIgnoreLOS> 
-			<CityAttackOnly>false</CityAttackOnly> 
-			<CaptureDefeatedEnemy>false</CaptureDefeatedEnemy> 
-			<HealOnPillage>false</HealOnPillage> 
-			<IgnoreGreatGeneralBenefit>false</IgnoreGreatGeneralBenefit> 
-			<IgnoreZOC>false</IgnoreZOC> 
-			<HasPostCombatPromotions>false</HasPostCombatPromotions> 
-			<PostCombatPromotionsExclusive>false</PostCombatPromotionsExclusive> 
-			<RangedAttackModifier>0</RangedAttackModifier> 
-			<InterceptionCombatModifier>0</InterceptionCombatModifier> 
-			<InterceptionDefenseDamageModifier>0</InterceptionDefenseDamageModifier> 
-			<AirSweepCombatModifier>0</AirSweepCombatModifier> 
-			<ExtraAttacks>0</ExtraAttacks> 
-			<ExtraNavalMovement>0</ExtraNavalMovement> 
-			<VisibilityChange>0</VisibilityChange> 
-			<MovesChange>0</MovesChange> 
-			<MoveDiscountChange>0</MoveDiscountChange> 
-			<RangeChange>0</RangeChange> 
-			<InterceptChanceChange>0</InterceptChanceChange> 
-			<NumInterceptionChange>0</NumInterceptionChange> 
-			<EvasionChange>0</EvasionChange> 
-			<CargoChange>0</CargoChange> 
-			<EnemyHealChange>0</EnemyHealChange> 
-			<NeutralHealChange>0</NeutralHealChange> 
-			<FriendlyHealChange>0</FriendlyHealChange> 
-			<SameTileHealChange>0</SameTileHealChange> 
-			<AdjacentTileHealChange>0</AdjacentTileHealChange> 
-			<EnemyDamageChance>0</EnemyDamageChance> 
-			<NeutralDamageChance>0</NeutralDamageChance> 
-			<EnemyDamage>0</EnemyDamage> 
-			<NeutralDamage>0</NeutralDamage> 
-			<CombatPercent>0</CombatPercent> 
-			<CityAttack>0</CityAttack> 
-			<CityDefense>0</CityDefense> 
-			<RangedDefenseMod>0</RangedDefenseMod> 
-			<HillsAttack>0</HillsAttack> 
-			<HillsDefense>0</HillsDefense> 
-			<OpenAttack>0</OpenAttack> 
-			<OpenRangedAttackMod>0</OpenRangedAttackMod> 
-			<OpenDefense>0</OpenDefense> 
-			<RoughAttack>0</RoughAttack> 
-			<RoughRangedAttackMod>0</RoughRangedAttackMod> 
-			<RoughDefense>0</RoughDefense> 
-			<AttackFortifiedMod>0</AttackFortifiedMod> 
-			<AttackWoundedMod>0</AttackWoundedMod> 
-			<FlankAttackModifier>0</FlankAttackModifier> 
-			<NearbyEnemyCombatMod>0</NearbyEnemyCombatMod> 
-			<NearbyEnemyCombatRange>0</NearbyEnemyCombatRange> 
-			<UpgradeDiscount>0</UpgradeDiscount> 
-			<ExperiencePercent>0</ExperiencePercent> 
-			<AdjacentMod>0</AdjacentMod> 
-			<AttackMod>0</AttackMod> 
-			<DefenseMod>0</DefenseMod> 
-			<DropRange>0</DropRange> 
-			<GreatGeneral>false</GreatGeneral> 
-			<GreatAdmiral>false</GreatAdmiral> 
-			<GreatGeneralModifier>0</GreatGeneralModifier> 
-			<GreatGeneralReceivesMovement>false</GreatGeneralReceivesMovement> 
-			<GreatGeneralCombatModifier>0</GreatGeneralCombatModifier> 
-			<FriendlyLandsModifier>0</FriendlyLandsModifier> 
-			<FriendlyLandsAttackModifier>0</FriendlyLandsAttackModifier> 
-			<OutsideFriendlyLandsModifier>0</OutsideFriendlyLandsModifier> 
-			<HPHealedIfDestroyEnemy>0</HPHealedIfDestroyEnemy> 
-			<ExtraWithdrawal>0</ExtraWithdrawal> 
-			<EmbarkExtraVisibility>0</EmbarkExtraVisibility> 
-			<EmbarkDefenseModifier>0</EmbarkDefenseModifier> 
-			<CapitalDefenseModifier>0</CapitalDefenseModifier> 
-			<CapitalDefenseFalloff>0</CapitalDefenseFalloff> 
-			<CityAttackPlunderModifier>0</CityAttackPlunderModifier> 
-			<ReligiousStrengthLossRivalTerritory>0</ReligiousStrengthLossRivalTerritory> 
-			<TradeMissionInfluenceModifier>0</TradeMissionInfluenceModifier> 
-			<TradeMissionGoldModifier>0</TradeMissionGoldModifier> 
-			<GoldenAgeValueFromKills>0</GoldenAgeValueFromKills> 
-			<Sapper>false</Sapper> 
-			<HeavyCharge>false</HeavyCharge> 
-			<PediaType>PEDIA_RANGED</PediaType> 
-			<PediaEntry>TXT_KEY_ANTINAVAL_PROMO_2</PediaEntry> 
-			<GreatGeneralOnOrAdjacentConfersMovement>0</GreatGeneralOnOrAdjacentConfersMovement> 
-			<EmbarkedUnitReceivesMovement>false</EmbarkedUnitReceivesMovement> 
-			<HeavyChargeDownhill>0</HeavyChargeDownhill> 
-		</Row>
-		<Row> 
-			<ID>273</ID> 
-			<Type>PROMOTION_ANTI_NAVAL_3</Type> 
-			<Description>TXT_KEY_ANTINAVAL_PROMO_3</Description> 
-			<Help>TXT_KEY_ANTINAVAL_PROMO_3_HELP</Help> 
-			<PortraitIndex>54</PortraitIndex> 
-			<IconAtlas>PROMOTION_ATLAS</IconAtlas> 
-			<HotKeyPriority>0</HotKeyPriority> 
-			<HotKeyPriorityAlt>0</HotKeyPriorityAlt> 
-			<OrderPriority>3</OrderPriority> 
-			<AltDown>false</AltDown> 
-			<AltDownAlt>false</AltDownAlt> 
-			<ShiftDown>false</ShiftDown> 
-			<ShiftDownAlt>false</ShiftDownAlt> 
-			<CtrlDown>false</CtrlDown> 
-			<CtrlDownAlt>false</CtrlDownAlt> 
-			<Sound>AS2D_IF_LEVELUP</Sound> 
-			<CannotBeChosen>false</CannotBeChosen> 
-			<LostWithUpgrade>false</LostWithUpgrade> 
-			<NotWithUpgrade>false</NotWithUpgrade> 
-			<InstaHeal>false</InstaHeal> 
-			<Leader>false</Leader> 
-			<Blitz>false</Blitz> 
-			<Amphib>false</Amphib> 
-			<River>false</River> 
-			<EnemyRoute>false</EnemyRoute> 
-			<RivalTerritory>false</RivalTerritory> 
-			<MustSetUpToRangedAttack>false</MustSetUpToRangedAttack> 
-			<RangedSupportFire>false</RangedSupportFire> 
-			<CanMoveAfterAttacking>false</CanMoveAfterAttacking> 
-			<AlwaysHeal>false</AlwaysHeal> 
-			<HealOutsideFriendly>false</HealOutsideFriendly> 
-			<HillsDoubleMove>false</HillsDoubleMove> 
-			<RoughTerrainEndsTurn>false</RoughTerrainEndsTurn> 
-			<IgnoreTerrainCost>false</IgnoreTerrainCost> 
-			<HoveringUnit>false</HoveringUnit> 
-			<FlatMovementCost>false</FlatMovementCost> 
-			<CanMoveImpassable>false</CanMoveImpassable> 
-			<NoCapture>false</NoCapture> 
-			<OnlyDefensive>false</OnlyDefensive> 
-			<NoDefensiveBonus>false</NoDefensiveBonus> 
-			<NukeImmune>false</NukeImmune> 
-			<HiddenNationality>false</HiddenNationality> 
-			<AlwaysHostile>false</AlwaysHostile> 
-			<NoRevealMap>false</NoRevealMap> 
-			<Recon>false</Recon> 
-			<CanMoveAllTerrain>false</CanMoveAllTerrain> 
-			<FreePillageMoves>false</FreePillageMoves> 
-			<AirSweepCapable>false</AirSweepCapable> 
-			<AllowsEmbarkation>false</AllowsEmbarkation> 
-			<EmbarkedAllWater>false</EmbarkedAllWater> 
-			<HealIfDestroyExcludesBarbarians>false</HealIfDestroyExcludesBarbarians> 
-			<RangeAttackIgnoreLOS>false</RangeAttackIgnoreLOS> 
-			<CityAttackOnly>false</CityAttackOnly> 
-			<CaptureDefeatedEnemy>false</CaptureDefeatedEnemy> 
-			<HealOnPillage>false</HealOnPillage> 
-			<IgnoreGreatGeneralBenefit>false</IgnoreGreatGeneralBenefit> 
-			<IgnoreZOC>false</IgnoreZOC> 
-			<HasPostCombatPromotions>false</HasPostCombatPromotions> 
-			<PostCombatPromotionsExclusive>false</PostCombatPromotionsExclusive> 
-			<RangedAttackModifier>0</RangedAttackModifier> 
-			<InterceptionCombatModifier>0</InterceptionCombatModifier> 
-			<InterceptionDefenseDamageModifier>0</InterceptionDefenseDamageModifier> 
-			<AirSweepCombatModifier>0</AirSweepCombatModifier> 
-			<ExtraAttacks>0</ExtraAttacks> 
-			<ExtraNavalMovement>0</ExtraNavalMovement> 
-			<VisibilityChange>0</VisibilityChange> 
-			<MovesChange>0</MovesChange> 
-			<MoveDiscountChange>0</MoveDiscountChange> 
-			<RangeChange>0</RangeChange> 
-			<InterceptChanceChange>0</InterceptChanceChange> 
-			<NumInterceptionChange>0</NumInterceptionChange> 
-			<EvasionChange>0</EvasionChange> 
-			<CargoChange>0</CargoChange> 
-			<EnemyHealChange>0</EnemyHealChange> 
-			<NeutralHealChange>0</NeutralHealChange> 
-			<FriendlyHealChange>0</FriendlyHealChange> 
-			<SameTileHealChange>0</SameTileHealChange> 
-			<AdjacentTileHealChange>0</AdjacentTileHealChange> 
-			<EnemyDamageChance>0</EnemyDamageChance> 
-			<NeutralDamageChance>0</NeutralDamageChance> 
-			<EnemyDamage>0</EnemyDamage> 
-			<NeutralDamage>0</NeutralDamage> 
-			<CombatPercent>0</CombatPercent> 
-			<CityAttack>0</CityAttack> 
-			<CityDefense>0</CityDefense> 
-			<RangedDefenseMod>0</RangedDefenseMod> 
-			<HillsAttack>0</HillsAttack> 
-			<HillsDefense>0</HillsDefense> 
-			<OpenAttack>0</OpenAttack> 
-			<OpenRangedAttackMod>0</OpenRangedAttackMod> 
-			<OpenDefense>0</OpenDefense> 
-			<RoughAttack>0</RoughAttack> 
-			<RoughRangedAttackMod>0</RoughRangedAttackMod> 
-			<RoughDefense>0</RoughDefense> 
-			<AttackFortifiedMod>0</AttackFortifiedMod> 
-			<AttackWoundedMod>0</AttackWoundedMod> 
-			<FlankAttackModifier>0</FlankAttackModifier> 
-			<NearbyEnemyCombatMod>0</NearbyEnemyCombatMod> 
-			<NearbyEnemyCombatRange>0</NearbyEnemyCombatRange> 
-			<UpgradeDiscount>0</UpgradeDiscount> 
-			<ExperiencePercent>0</ExperiencePercent> 
-			<AdjacentMod>0</AdjacentMod> 
-			<AttackMod>0</AttackMod> 
-			<DefenseMod>0</DefenseMod> 
-			<DropRange>0</DropRange> 
-			<GreatGeneral>false</GreatGeneral> 
-			<GreatAdmiral>false</GreatAdmiral> 
-			<GreatGeneralModifier>0</GreatGeneralModifier> 
-			<GreatGeneralReceivesMovement>false</GreatGeneralReceivesMovement> 
-			<GreatGeneralCombatModifier>0</GreatGeneralCombatModifier> 
-			<FriendlyLandsModifier>0</FriendlyLandsModifier> 
-			<FriendlyLandsAttackModifier>0</FriendlyLandsAttackModifier> 
-			<OutsideFriendlyLandsModifier>0</OutsideFriendlyLandsModifier> 
-			<HPHealedIfDestroyEnemy>0</HPHealedIfDestroyEnemy> 
-			<ExtraWithdrawal>0</ExtraWithdrawal> 
-			<EmbarkExtraVisibility>0</EmbarkExtraVisibility> 
-			<EmbarkDefenseModifier>0</EmbarkDefenseModifier> 
-			<CapitalDefenseModifier>0</CapitalDefenseModifier> 
-			<CapitalDefenseFalloff>0</CapitalDefenseFalloff> 
-			<CityAttackPlunderModifier>0</CityAttackPlunderModifier> 
-			<ReligiousStrengthLossRivalTerritory>0</ReligiousStrengthLossRivalTerritory> 
-			<TradeMissionInfluenceModifier>0</TradeMissionInfluenceModifier> 
-			<TradeMissionGoldModifier>0</TradeMissionGoldModifier> 
-			<GoldenAgeValueFromKills>0</GoldenAgeValueFromKills> 
-			<Sapper>false</Sapper> 
-			<HeavyCharge>false</HeavyCharge> 
-			<PediaType>PEDIA_RANGED</PediaType> 
-			<PediaEntry>TXT_KEY_ANTINAVAL_PROMO_3</PediaEntry> 
-			<GreatGeneralOnOrAdjacentConfersMovement>0</GreatGeneralOnOrAdjacentConfersMovement> 
-			<EmbarkedUnitReceivesMovement>false</EmbarkedUnitReceivesMovement> 
-			<HeavyChargeDownhill>0</HeavyChargeDownhill> 
-		</Row>
 		<!-- Finland Sauna Promotion -->
 		<Row> 
 			<ID>274</ID> 
@@ -250946,10 +250541,6 @@
 			<PromotionType>PROMOTION_SIEGE</PromotionType>
 			<PrerequisitePromotion>PROMOTION_BARRAGE_1</PrerequisitePromotion>
 		</Row>
-		<Row>
-			<PromotionType>PROMOTION_SIEGE</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_1</PrerequisitePromotion>
-		</Row>
 		<!-- Volley -->
 		<Row>
 			<PromotionType>PROMOTION_VOLLEY</PromotionType>
@@ -250958,10 +250549,6 @@
 		<Row>
 			<PromotionType>PROMOTION_VOLLEY</PromotionType>
 			<PrerequisitePromotion>PROMOTION_BARRAGE_1</PrerequisitePromotion>
-		</Row>
-		<Row>
-			<PromotionType>PROMOTION_VOLLEY</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_1</PrerequisitePromotion>
 		</Row>
 		<!-- Medic -->
 		<Row>
@@ -251009,10 +250596,6 @@
 		<Row>
 			<PromotionType>PROMOTION_COVER_1</PromotionType>
 			<PrerequisitePromotion>PROMOTION_BARRAGE_1</PrerequisitePromotion>
-		</Row>
-		<Row>
-			<PromotionType>PROMOTION_COVER_1</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_1</PrerequisitePromotion>
 		</Row>
 		<Row>
 			<PromotionType>PROMOTION_COVER_2</PromotionType>
@@ -251077,10 +250660,6 @@
 			<PromotionType>PROMOTION_MARCH</PromotionType>
 			<PrerequisitePromotion>PROMOTION_BARRAGE_2</PrerequisitePromotion>
 		</Row>
-		<Row>
-			<PromotionType>PROMOTION_MARCH</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_2</PrerequisitePromotion>
-		</Row>
 		<!-- Blitz -->
 		<Row>
 			<PromotionType>PROMOTION_BLITZ</PromotionType>
@@ -251107,10 +250686,6 @@
 		<Row>
 			<PromotionType>PROMOTION_LOGISTICS</PromotionType>
 			<PrerequisitePromotion>PROMOTION_BARRAGE_3</PrerequisitePromotion>
-		</Row>
-		<Row>
-			<PromotionType>PROMOTION_LOGISTICS</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_3</PrerequisitePromotion>
 		</Row>
 		<Row>
 			<PromotionType>PROMOTION_LOGISTICS</PromotionType>
@@ -251147,10 +250722,6 @@
 		</Row>
 		<Row>
 			<PromotionType>PROMOTION_RANGE</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_3</PrerequisitePromotion>
-		</Row>
-		<Row>
-			<PromotionType>PROMOTION_RANGE</PromotionType>
 			<PrerequisitePromotion>PROMOTION_TARGETING_2</PrerequisitePromotion>
 		</Row>
 		<Row>
@@ -251177,10 +250748,6 @@
 		<Row>
 			<PromotionType>PROMOTION_MOBILITY</PromotionType>
 			<PrerequisitePromotion>PROMOTION_BARRAGE_2</PrerequisitePromotion>
-		</Row>
-		<Row>
-			<PromotionType>PROMOTION_MOBILITY</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_2</PrerequisitePromotion>
 		</Row>
 		<Row>
 			<PromotionType>PROMOTION_MOBILITY</PromotionType>
@@ -251543,15 +251110,6 @@
 			<PromotionType>PROMOTION_PFLICH</PromotionType>
 			<PrerequisitePromotion>PROMOTION_PUNKT</PrerequisitePromotion>
 		</Row>
-		<!-- Anti-Naval -->
-		<Row>
-			<PromotionType>PROMOTION_ANTI_NAVAL_2</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_1</PrerequisitePromotion>
-		</Row>
-		<Row>
-			<PromotionType>PROMOTION_ANTI_NAVAL_3</PromotionType>
-			<PrerequisitePromotion>PROMOTION_ANTI_NAVAL_2</PrerequisitePromotion>
-		</Row>
 		<!-- Bombardment Naval -->
 		<Row>
 			<PromotionType>PROMOTION_BOMBARDMENT_NAVAL_2</PromotionType>
@@ -251779,8 +251337,10 @@
 	<Table name="UnitPromotions_Domains">
 		<Column name="PromotionType" type="text" reference="UnitPromotions(Type)" />
 		<Column name="DomainType" type="text" reference="Domains(Type)" />
-		<Column name="Modifier" type="integer"  />
-		<Column name="PediaType" type="text"  />
+		<Column name="Modifier" type="integer" />
+		<Column name="Attack" type="integer" default="0"/>
+		<Column name="Defense" type="integer" default="0"/>
+		<Column name="PediaType" type="text" />
 	</Table> 
 	<UnitPromotions_Domains>
 		<Delete />
@@ -251798,21 +251358,6 @@
 			<PromotionType>PROMOTION_ANTI_NAVAL_HELI_3</PromotionType> 
 			<DomainType>DOMAIN_SEA</DomainType> 
 			<Modifier>25</Modifier> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_1</PromotionType> 
-			<DomainType>DOMAIN_SEA</DomainType> 
-			<Modifier>33</Modifier> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_2</PromotionType> 
-			<DomainType>DOMAIN_SEA</DomainType> 
-			<Modifier>33</Modifier> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_3</PromotionType> 
-			<DomainType>DOMAIN_SEA</DomainType> 
-			<Modifier>34</Modifier> 
 		</Row>
 		<Row> 
 			<PromotionType>PROMOTION_TARGETING_1</PromotionType> 
@@ -251872,17 +251417,17 @@
 		<Row> 
 			<PromotionType>PROMOTION_BOMBARDMENT_NAVAL_1</PromotionType> 
 			<DomainType>DOMAIN_LAND</DomainType> 
-			<Modifier>25</Modifier> 
+			<Attack>25</Attack>
 		</Row>
 		<Row> 
 			<PromotionType>PROMOTION_BOMBARDMENT_NAVAL_2</PromotionType> 
 			<DomainType>DOMAIN_LAND</DomainType> 
-			<Modifier>25</Modifier> 
+			<Attack>25</Attack> 
 		</Row>
 		<Row> 
 			<PromotionType>PROMOTION_BOMBARDMENT_NAVAL_3</PromotionType> 
 			<DomainType>DOMAIN_LAND</DomainType> 
-			<Modifier>25</Modifier> 
+			<Attack>25</Attack> 
 		</Row>
 		<Row> 
 			<PromotionType>PROMOTION_ARMOR_VS_LAND</PromotionType> 
@@ -252746,46 +252291,6 @@
 		<Row> 
 			<PromotionType>PROMOTION_ANTI_NAVAL_HELI_3</PromotionType> 
 			<UnitCombatType>UNITCOMBAT_HELICOPTER</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_1</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_ARCHER</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_1</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_MOUNTED_RANGED</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_1</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_SIEGE</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_2</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_ARCHER</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_2</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_MOUNTED_RANGED</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_2</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_SIEGE</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_3</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_ARCHER</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_3</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_MOUNTED_RANGED</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_3</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_SIEGE</UnitCombatType> 
-		</Row>
-		<Row> 
-			<PromotionType>PROMOTION_ANTI_NAVAL_1</PromotionType> 
-			<UnitCombatType>UNITCOMBAT_ARCHER</UnitCombatType> 
 		</Row>
 		<Row> 
 			<PromotionType>PROMOTION_ACCURACY_1</PromotionType> 

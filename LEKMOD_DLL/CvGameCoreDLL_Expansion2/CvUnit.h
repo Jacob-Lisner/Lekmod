@@ -702,6 +702,10 @@ public:
 	int unitClassDefenseModifier(UnitClassTypes eUnitClass) const;
 	int unitCombatModifier(UnitCombatTypes eUnitCombat) const;
 	int domainModifier(DomainTypes eDomain) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int domainAttackModifier(DomainTypes eDomain) const;
+	int domainDefenseModifier(DomainTypes eDomain) const;
+#endif
 
 	bool IsHasNoValidMove() const;
 
