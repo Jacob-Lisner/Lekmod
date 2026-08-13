@@ -12657,7 +12657,7 @@ int CvUnit::GetBaseCombatStrength(bool bIgnoreEmbarked) const
 void CvUnit::ChangeBaseCombatStrength(int iChange)
 {
 	VALIDATE_OBJECT
-	SetBaseCombatStrength(GetBaseCombatStrength() + iChange);
+	SetBaseCombatStrength(GetBaseCombatStrength(true) + iChange);
 }
 //	--------------------------------------------------------------------------------
 int CvUnit::GetBaseCombatStrengthConsideringDamage() const
@@ -13511,7 +13511,7 @@ int CvUnit::GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* p
 
 			// Open Ground
 			if (pTargetPlot->isOpenGround())
-				iModifier += openRangedAttackModifier();
+				iModifier += openRangedAttackModifier();f
 
 			// Rough Ground
 			if (pTargetPlot->isRoughGround())

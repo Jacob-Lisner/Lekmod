@@ -272374,7 +272374,7 @@
 			<MilitarySupport>true</MilitarySupport>
 			<MilitaryProduction>true</MilitaryProduction>
 			<Pillage>true</Pillage>
-			<PrereqTech>TECH_BIOLOGY</PrereqTech>
+			<PrereqTech>TECH_MILITARY_SCIENCE</PrereqTech>
 			<ObsoleteTech>TECH_PENICILIN</ObsoleteTech>
 			<GoodyHutUpgradeUnitClass>UNITCLASS_MARINE</GoodyHutUpgradeUnitClass>
 			<AdvancedStartCost>40</AdvancedStartCost>

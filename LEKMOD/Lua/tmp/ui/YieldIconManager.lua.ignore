@@ -151,6 +151,7 @@ function BuildYield( x, y, index )
     SetYieldIcon( 4, yieldInfo.m_Culture,    anchor.CultureContainer, record );
     SetYieldIcon( 5, yieldInfo.m_Faith,      anchor.Stack, record );
     SetYieldIcon( 6, yieldInfo.m_GoldenAge,  anchor.Stack, record ); -- v34
+    SetYieldIcon( 7, yieldInfo.m_Tourism,    anchor.Stack, record );
 
     anchor.Stack:CalculateSize();
     anchor.Stack:ReprocessAnchoring();
@@ -235,7 +236,7 @@ function SetYieldIcon( yieldType, amount, parent, record )
 				record.ImageInstances = {};
 			end
 			table.insert( record.ImageInstances, imageInstance );
-        elseif (yieldtype == 7) then
+        elseif (yieldType == 7) then
             imageInstance.Image:SetTexture(tourismTexture);
             if( amount >= 5 ) then
                 imageInstance.Image:SetTextureOffsetVal( 0 * 128, 512 );
@@ -249,6 +250,7 @@ function SetYieldIcon( yieldType, amount, parent, record )
 				record.ImageInstances = {};
 			end
 			table.insert( record.ImageInstances, imageInstance );
+        end
     end
 end
 
@@ -309,6 +311,7 @@ function RecordYieldInfo( x, y, index, plot )
     local iCulture    = plot:CalculateYield( 4, true );
     local iFaith      = plot:CalculateYield( 5, true );
     local iGoldenAge  = plot:CalculateYield( 6, true ); -- v34
+    local iTourism    = plot:CalculateYield( 7, true );
 	    
 
     -- early out of allocations if there is no yield for this tile
@@ -328,6 +331,7 @@ function RecordYieldInfo( x, y, index, plot )
     info.m_Culture    = iCulture;
     info.m_Faith      = iFaith;
     info.m_GoldenAge  = iGoldenAge;
+    info.m_Tourism    = iTourism;
     
     return info;
 end

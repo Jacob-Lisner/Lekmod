@@ -16789,11 +16789,6 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GURUSHIP"> 
 			<Text>
-				+2 [ICON_PRODUCTION] Production if city has a Specialist
-			</Text>
-		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_GURUSHIPP"> 
-			<Text>
 				+2 [ICON_FOOD] Food, +1 [ICON_PRODUCTION] Production and +1 [ICON_GOLD] Gold in Cities working any [ICON_CITIZEN] Specialist
 			</Text>
 		</Replace>

@@ -1052,7 +1052,7 @@ local function UpdateTopPanelNow()
 		-- Update gold stats
 		-----------------------------
 
-		Controls.GoldPerTurn:LocalizeAndSetText( "TXT_KEY_TOP_PANEL_GOLD", g_activePlayer:GetGold(), g_activePlayer:GetYield(YieldTypes.YIELD_GOLD) )
+		Controls.GoldPerTurn:LocalizeAndSetText( "TXT_KEY_TOP_PANEL_GOLD", g_activePlayer:GetGold(), g_activePlayer:CalculateGoldRate() )
 
 		-----------------------------
 		-- Update Happy & Golden Age

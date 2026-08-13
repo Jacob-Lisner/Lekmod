@@ -40,7 +40,7 @@ function UpdateData()
 				else
 					strScienceText = string.format("+%i", sciencePerTurn);
 
-					local iGoldPerTurn = pPlayer:GetYield(YieldTypes.YIELD_GOLD);
+					local iGoldPerTurn = pPlayer:CalculateGoldRate();
 					
 					-- Gold being deducted from our Science
 					if (pPlayer:GetGold() + iGoldPerTurn < 0) then
@@ -60,7 +60,7 @@ function UpdateData()
 			-- Update gold stats
 			-----------------------------
 			local iTotalGold = pPlayer:GetGold();
-			local iGoldPerTurn = pPlayer:GetYield(YieldTypes.YIELD_GOLD);
+			local iGoldPerTurn = pPlayer:CalculateGoldRate();
 			
 			-- Accounting for positive or negative GPT - there's obviously a better way to do this.  If you see this comment and know how, it's up to you ;)
 			-- Text is White when you can buy a Plot
