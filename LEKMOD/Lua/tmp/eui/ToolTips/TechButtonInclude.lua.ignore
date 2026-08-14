@@ -235,6 +235,10 @@ function GatherInfoAboutUniqueStuff( civType )
 	end
 end
 
+local function setUnlockIconCircularHover( thisTechButtonInstance, buttonNum, isCircular )
+	-- hover chrome removed
+end
+
 local function adjustArtOnButton( toolTipCallBack, button, row, textureSize, portraitOffset, portraitAtlas )
 	if button then
 		g_buttonItemInfo[tostring(button)] = row
@@ -371,6 +375,8 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 			g_buttonItemInfo[tostring(button)] = pedia
 			button:RegisterCallback( Mouse.eRClick, GetTechPedia )
 			button:ClearCallback( Mouse.eMouseEnter )
+			-- Generic / concept icons are treated as circular portrait-style frames
+			setUnlockIconCircularHover( thisTechButtonInstance, buttonNum, true )
 			buttonNum = buttonNum + 1
 			return button
 		end
@@ -387,13 +393,14 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 			return addSmallButtonAndPedia( tech, 0, "GENERIC_FUNC_ATLAS", ... )
 		end
 	end
-	local function addSmallArtButton( adjustArtFunc, row, ... ) -- ... is used only for AdjustArtOnGrantedItem
+	local function addSmallArtButton( adjustArtFunc, row, isCircular, ... ) -- ... is used only for AdjustArtOnGrantedItem
 		if row then
 			local button = thisTechButtonInstance["B"..buttonNum]
 			if button then
 				table_insert( g_recentlyAddedUnlocks, row.Description )
 				button:SetText("")
 				adjustArtFunc( button, row, textureSize, ... )
+				setUnlockIconCircularHover( thisTechButtonInstance, buttonNum, isCircular ~= false )
 				buttonNum = buttonNum + 1
 				return button
 			end
@@ -405,7 +412,8 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 	local function addSmallActionButton( build, icons, ... )
 		local button
 		if build then
-			button = addSmallArtButton( AdjustArtOnGrantedItem, build, L(...) )
+			-- Improvement / build overlays with font icons are non-circular
+			button = addSmallArtButton( AdjustArtOnGrantedItem, build, false, L(...) )
 		else
 			button = addSmallGenericButton( ... )
 		end
@@ -479,7 +487,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		local improvementType = row.ImprovementType
 		if ( not civ5_bnw_mode or row.ShowInTechTree )
 			and (not improvementType or validImprovementBuilds[improvementType] == improvementType )
-			and not addSmallArtButton( AdjustArtOnGrantedActionButton, row, actionToolTip )
+			and not addSmallArtButton( AdjustArtOnGrantedActionButton, row, false )
 		then
 			break
 		end
@@ -661,7 +669,11 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 	for i = 1, maxSmallButtons do
 		local button = thisTechButtonInstance["B"..i]
 		if button then
-			button:SetHide(i>=buttonNum)
+			local hide = i>=buttonNum
+			button:SetHide(hide)
+			if hide then
+				setUnlockIconCircularHover( thisTechButtonInstance, i, false )
+			end
 		else
 			break
 		end

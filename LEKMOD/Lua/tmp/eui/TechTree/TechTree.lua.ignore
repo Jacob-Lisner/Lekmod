@@ -69,7 +69,9 @@ local g_techButtons = {}
 local g_eraBlocks = {}
 local g_eraColumns = {}
 
-local g_maxSmallButtons = 5
+local g_maxSmallButtons = 10
+local g_smallIconSize = 45
+local g_unlockVisibleSlots = 5
 
 local g_activePlayerID, g_activePlayer, g_activeCivType, g_activeTeamID, g_activeTeam, g_activeTeamTechs
 
@@ -95,6 +97,131 @@ local g_coloredPipe = { x=1.0, y=1.0, z=0.0, w=0.5 }
 local g_maxTechNameLength = 22 - Locale.Length(L"TXT_KEY_TURNS")
 
 local CloseTechTree
+local LayoutUnlockIcons
+local NudgeUnlockScroll
+
+-------------------------------------------------
+-- Unlock icon scroll (corner arrows; only if more icons than visible slots)
+-------------------------------------------------
+local function CountUnlockIcons( thisTechButton )
+	-- Contiguous visible B1..Bn after AddSmallButtons (already player/civ filtered)
+	local n = 0
+	for i = 1, g_maxSmallButtons do
+		local b = thisTechButton["B"..i]
+		if b and not b:IsHidden() then
+			n = n + 1
+		else
+			break
+		end
+	end
+	return n
+end
+
+LayoutUnlockIcons = function( thisTechButton, usedCount )
+	usedCount = usedCount or 0
+	thisTechButton._unlockUsed = usedCount
+	local leftBtn = thisTechButton.UnlockScrollLeft
+	local rightBtn = thisTechButton.UnlockScrollRight
+	local vis = g_unlockVisibleSlots
+	-- Top row between tech name (Offset 64,4) and turns (R,T Offset 8,4)
+	local arrowY = 6
+	local arrowRightX = 178
+	local arrowLeftX = 158
+
+	local function hideArrows()
+		if leftBtn then leftBtn:SetHide( true ) end
+		if rightBtn then rightBtn:SetHide( true ) end
+	end
+
+	if leftBtn then leftBtn:SetSizeVal( 18, 18 ) end
+	if rightBtn then rightBtn:SetSizeVal( 18, 18 ) end
+
+	-- Vanilla stack packs visible children; hide unused / off-window icons
+	for i = 1, g_maxSmallButtons do
+		local button = thisTechButton["B"..i]
+		if button then
+			button:SetHide( true )
+		end
+	end
+
+	if usedCount <= 0 then
+		hideArrows()
+		if thisTechButton.UnlockIconStack then
+			thisTechButton.UnlockIconStack:CalculateSize()
+			thisTechButton.UnlockIconStack:ReprocessAnchoring()
+		end
+		return
+	end
+
+	local scroll = 0
+	local showLeft, showRight = false, false
+	if usedCount > vis then
+		scroll = thisTechButton._unlockScroll or 0
+		if scroll < 0 then scroll = 0 end
+		local maxScroll = math_max( 0, usedCount - vis )
+		if scroll > maxScroll then scroll = maxScroll end
+		thisTechButton._unlockScroll = scroll
+		showLeft = scroll > 0
+		showRight = scroll < maxScroll
+	else
+		thisTechButton._unlockScroll = 0
+		hideArrows()
+	end
+
+	local first = scroll + 1
+	local last = math_min( usedCount, scroll + vis )
+	for i = first, last do
+		local button = thisTechButton["B"..i]
+		if button then
+			button:SetHide( false )
+		end
+	end
+
+	if thisTechButton.UnlockIconStack then
+		thisTechButton.UnlockIconStack:CalculateSize()
+		thisTechButton.UnlockIconStack:ReprocessAnchoring()
+	end
+
+	if usedCount > vis then
+		if rightBtn then
+			rightBtn:SetHide( not showRight )
+			if showRight then
+				rightBtn:SetOffsetVal( arrowRightX, arrowY )
+			end
+		end
+		if leftBtn then
+			leftBtn:SetHide( not showLeft )
+			if showLeft then
+				-- Sit just left of the right arrow when both are shown
+				leftBtn:SetOffsetVal( showRight and arrowLeftX or arrowRightX, arrowY )
+			end
+		end
+	end
+end
+
+NudgeUnlockScroll = function( techID, delta )
+	local thisTechButton = g_techButtons[ techID ]
+	if not thisTechButton then
+		return
+	end
+	thisTechButton._unlockScroll = (thisTechButton._unlockScroll or 0) + delta
+	LayoutUnlockIcons( thisTechButton, thisTechButton._unlockUsed or 0 )
+end
+
+local function WireUnlockScrollButtons( thisTechButton, techID )
+	if thisTechButton.UnlockScrollLeft then
+		thisTechButton.UnlockScrollLeft:SetVoid1( techID )
+		thisTechButton.UnlockScrollLeft:RegisterCallback( Mouse.eLClick, function( id )
+			NudgeUnlockScroll( id, -1 )
+		end )
+	end
+	if thisTechButton.UnlockScrollRight then
+		thisTechButton.UnlockScrollRight:SetVoid1( techID )
+		thisTechButton.UnlockScrollRight:RegisterCallback( Mouse.eLClick, function( id )
+			NudgeUnlockScroll( id, 1 )
+		end )
+	end
+end
 
 -------------------------------------------------
 -- Tech Pipe Management
@@ -161,15 +288,15 @@ local function AddTechPipes( AddNewPipeIcon, techPairs )
 			local y1 = prereq.GridY*g_blockSpacingY
 			local y2 = tech.GridY*g_blockSpacingY
 
-			if y1 < y2 then -- elbow case ¯¯¯¯¯¯|__
+			if y1 < y2 then -- elbow case |__
 
-				AddElbowPipe( x + g_branchOffsetX2, y1 + g_branchOffsetY1, 72, 0 )	--topRightTexture  ¯|
+				AddElbowPipe( x + g_branchOffsetX2, y1 + g_branchOffsetY1, 72, 0 )	--topRightTexture  |
 				AddElbowPipe( x + g_branchOffsetX1, y2 + g_branchOffsetY2 , 0, 72 )	--bottomLeftTexture |_
 
-			elseif y1 > y2 then -- elbow case ______|¯¯
+			elseif y1 > y2 then -- elbow case ______|
 
 				AddElbowPipe( x + g_branchOffsetX2, y1 + g_branchOffsetY2, 72, 72 )	--bottomRightTexture _|
-				AddElbowPipe( x + g_branchOffsetX1, y2 + g_branchOffsetY1, 0, 0 )	--topLeftTexture |¯
+				AddElbowPipe( x + g_branchOffsetX1, y2 + g_branchOffsetY1, 0, 0 )	--topLeftTexture |
 			end
 		end
 	end
@@ -185,8 +312,7 @@ local function TechSelected( techID )
 		if g_stealingTechTargetPlayer then
 			if g_activePlayer:CanResearch( techID )
 				and g_activePlayer:GetNumTechsToSteal( g_stealingTechTargetPlayerID ) > 0
-				and g_activePlayer:canStealTech ( g_stealingTechTargetPlayerID, techID )
-				-- and Teams[ g_stealingTechTargetPlayer:GetTeam() ]:IsHasTech( techID )
+				and Teams[ g_stealingTechTargetPlayer:GetTeam() ]:IsHasTech( techID )
 			then
 				Network_SendResearch( techID, 0, g_stealingTechTargetPlayerID, shift )
 				CloseTechTree()
@@ -222,7 +348,9 @@ local function RefreshDisplayOfSpecificTech( tech )
 
 	-- Rebuild the small buttons if needed
 	if g_NeedsFullRefresh then
-		AddSmallButtonsToTechButton( thisTechButton, tech, g_maxSmallButtons, 45 )
+		AddSmallButtonsToTechButton( thisTechButton, tech, g_maxSmallButtons, g_smallIconSize )
+		-- Count only icons actually shown for this player (uniques already filtered in AddSmallButtons)
+		LayoutUnlockIcons( thisTechButton, CountUnlockIcons( thisTechButton ) )
 	end
 	thisTechButton.TechButton:RegisterCallback( Mouse.eMouseEnter, setTechToolTip )
 
@@ -237,17 +365,12 @@ local function RefreshDisplayOfSpecificTech( tech )
 	elseif g_stealingTechTargetPlayer or g_activePlayer:GetNumFreeTechs() > 0 then
 	-- Stealing a tech or Choosing a free tech
 		if canResearchThisTech and ( 
-			( g_stealingTechTargetPlayer and g_activePlayer:canStealTech ( g_stealingTechTargetPlayerID , techID ) )
+			( g_stealingTechTargetPlayer and Teams[ g_stealingTechTargetPlayer:GetTeam() ]:IsHasTech( techID ) )
 			or (not g_stealingTechTargetPlayer and (not gk_mode or g_activePlayer:CanResearchForFree( techID ))) )
 		then
 			showFreeTech = true
 			turnLabel = thisTechButton.FreeTurns
-			if g_stealingTechTargetPlayer and g_activePlayer:canStealTech ( g_stealingTechTargetPlayerID , techID ) then
-				queueText = string.format("    [COLOR_MENU_BLUE]%i[ENDCOLOR][ICON_RESEARCH]", g_activePlayer:ScienceToStealAmount( g_stealingTechTargetPlayerID, techID ))
-			else
-				queueText = freeString	-- update queue number to say "FREE"
-			end
-
+			queueText = freeString	-- update queue number to say "FREE"
 			isClickable = true
 		else
 			showLocked = true
@@ -453,8 +576,14 @@ for tech in GameInfo.Technologies() do
 	-- picture
 	thisTechButton.TechPortrait:SetHide( not IconHookup( tech.PortraitIndex, 64, tech.IconAtlas, thisTechButton.TechPortrait ) )
 
+	thisTechButton._unlockScroll = 0
+	WireUnlockScrollButtons( thisTechButton, techID )
+
 	for buttonNum = 1, g_maxSmallButtons do
-		thisTechButton["B"..buttonNum]:SetVoid1( techID )
+		local b = thisTechButton["B"..buttonNum]
+		if b then
+			b:SetVoid1( techID )
+		end
 	end
 end
 

@@ -148,10 +148,12 @@ REM ----------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\TechTree\TechTree.lua" (
   copy /y "%patchfolder%\Lua\tmp\ui\TechTree\TechPopup.lua.ignore" "%patchfolder%\Lua\UI\TechPopup.lua" > nul
   copy /y "%patchfolder%\Lua\tmp\ui\TechTree\TechTree.lua.ignore" "%patchfolder%\Lua\UI\TechTree.lua" > nul
+  copy /y "%patchfolder%\Lua\tmp\ui\TechTree\TechTree.xml.ignore" "%patchfolder%\Lua\UI\TechTree.xml" > nul
 ) ELSE (
   copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechPopup.lua.ignore" "%patchfolder%\Lua\UI\TechPopup.lua" > nul
   copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechPopup.xml.ignore" "%patchfolder%\Lua\UI\TechPopup.xml" > nul
   copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechTree.lua.ignore" "%patchfolder%\Lua\UI\TechTree.lua" > nul
+  copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechTree.xml.ignore" "%patchfolder%\Lua\UI\TechTree.xml" > nul
 )
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\ToolTips\TechButtonInclude.lua" (

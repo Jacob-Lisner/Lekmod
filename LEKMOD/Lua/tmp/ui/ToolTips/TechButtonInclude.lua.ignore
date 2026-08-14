@@ -106,14 +106,22 @@ end
 function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButtons, textureSize )
 	-- This has a few assumptions, the main one being that the small buttons are named "B1", "B2", "B3"... and that GatherInfoAboutUniqueStuff() has been called before this
 
+	local function setCircularHover( buttonNum, isCircular )
+		-- hover chrome removed
+	end
+
 	-- first, hide the ones we aren't using
 	for buttonNum = 1, maxSmallButtons, 1 do
 		local buttonName = "B"..tostring(buttonNum);
-		thisTechButtonInstance[buttonName]:SetHide(true);
+		local thisButton = thisTechButtonInstance[buttonName];
+		if thisButton then
+			thisButton:SetHide(true);
+		end
+		setCircularHover( buttonNum, false );
 	end
 	
 	if tech == nil then
-		return;
+		return 0;
 	end
 
 	local buttonNum = 1;
@@ -128,6 +136,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 			local thisButton = thisTechButtonInstance[buttonName];
 			if thisButton then
 				AdjustArtOnGrantedUnitButton( thisButton, thisUnitInfo, textureSize );
+				setCircularHover( buttonNum, true );
 				buttonNum = buttonNum + 1;
 			end
 		end
@@ -140,6 +149,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 			local thisButton = thisTechButtonInstance[buttonName];
 			if thisButton then
 				AdjustArtOnGrantedBuildingButton( thisButton, thisBuildingInfo, textureSize );
+				setCircularHover( buttonNum, true );
 				buttonNum = buttonNum + 1;
 			end
 		end
@@ -151,6 +161,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		local thisButton = thisTechButtonInstance[buttonName];
 		if thisButton then
 			AdjustArtOnGrantedResourceButton( thisButton, thisResourceInfo, textureSize );
+			setCircularHover( buttonNum, true );
 			buttonNum = buttonNum + 1;
 		end
  	end
@@ -161,6 +172,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		local thisButton = thisTechButtonInstance[buttonName];
  		if thisButton then
 			AdjustArtOnGrantedProjectButton( thisButton, thisProjectInfo, textureSize );
+			setCircularHover( buttonNum, true );
  			buttonNum = buttonNum + 1;
  		end
 	end
@@ -173,6 +185,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 				local thisButton = thisTechButtonInstance[buttonName];
 				if thisButton then
 					AdjustArtOnGrantedActionButton( thisButton, thisBuildInfo, textureSize );
+					setCircularHover( buttonNum, false );
  					buttonNum = buttonNum + 1;
  				end
  			end
@@ -181,6 +194,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 			local thisButton = thisTechButtonInstance[buttonName];
 			if thisButton then
 				AdjustArtOnGrantedActionButton( thisButton, thisBuildInfo, textureSize );
+				setCircularHover( buttonNum, false );
  				buttonNum = buttonNum + 1;
  			end
 		end
@@ -194,6 +208,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( row.PortraitIndex, textureSize, row.IconAtlas, thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			local strPText = Locale.ConvertTextKey( row.Description );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ENABLE_PRODUCITON_CONVERSION", strPText) );
 		end
@@ -209,6 +224,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey("TXT_KEY_FASTER_MOVEMENT", GameInfo.Routes[row.RouteType].Description ) );
 			buttonNum = buttonNum + 1;
 		else
@@ -251,6 +267,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, false );
 			thisButton:SetToolTipString(table.concat(v[2], "[NEWLINE]"));
 			buttonNum = buttonNum + 1;
 		else
@@ -266,6 +283,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		elseif thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey("TXT_KEY_NO_FRESH_WATER", GameInfo.Improvements[row.ImprovementType].Description , GameInfo.Yields[row.YieldType].Description, row.Yield));
 			buttonNum = buttonNum + 1;
 		else
@@ -282,6 +300,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		elseif thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey("TXT_KEY_FRESH_WATER", GameInfo.Improvements[row.ImprovementType].Description , GameInfo.Yields[row.YieldType].Description, row.Yield));
 			buttonNum = buttonNum + 1;
 		else
@@ -295,6 +314,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_FASTER_EMBARKED_MOVEMENT" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -306,6 +326,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_EMBARKING" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -317,6 +338,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ABLTY_DEFENSIVE_EMBARK_STRING" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -328,6 +350,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_CROSSING_OCEANS" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -339,6 +362,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_UNIT_FORTIFICATION_MOD", tech.UnitFortificationModifier ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -350,6 +374,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_UNIT_BASE_HEAL_MOD", tech.UnitBaseHealModifier ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -361,6 +386,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_EMBASSY" ) );
 			buttonNum = buttonNum + 1;
 		end	
@@ -372,6 +398,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_OPEN_BORDERS" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -383,6 +410,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_DEFENSIVE_PACTS" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -394,6 +422,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_RESEARCH_AGREEMENTS" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -405,6 +434,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_TRADE_AGREEMENTS" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -416,6 +446,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_BRIDGES" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -427,6 +458,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_REVEALS_ENTIRE_MAP" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -438,6 +470,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ADDITIONAL_INTERNATIONAL_TRADE_ROUTE" ) );
 			buttonNum = buttonNum + 1;
 		end	
@@ -450,6 +483,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_SCENARIO_TECH_BUTTON_1" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -461,6 +495,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_SCENARIO_TECH_BUTTON_2" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -473,6 +508,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_SCENARIO_TECH_BUTTON_3" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -484,6 +520,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_SCENARIO_TECH_BUTTON_4" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -495,6 +532,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "Allows infantry to pillage" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -506,6 +544,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "Allows infantry to pillage" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -518,6 +557,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 			if thisButton then
 				IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 				thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 				if (GameInfo.Domains[row.DomainType].ID == DomainTypes.DOMAIN_LAND) then
 					thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_EXTENDS_LAND_TRADE_ROUTE_RANGE" ) );
 				elseif (GameInfo.Domains[row.DomainType].ID == DomainTypes.DOMAIN_SEA) then
@@ -534,6 +574,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_DOUBLE_TOURISM" ) );
 			buttonNum = buttonNum + 1;
 		end	
@@ -545,6 +586,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_ALLOWS_WORLD_CONGRESS" ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -556,6 +598,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey( "TXT_KEY_EXTRA_VOTES_FROM_DIPLOMATS", tech.ExtraVotesPerDiplomat ) );
 			buttonNum = buttonNum + 1;
 		end
@@ -568,6 +611,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton then
 			IconHookup( 0, textureSize, "GENERIC_FUNC_ATLAS", thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey("TXT_KEY_TECH_GLOBALIZATION_EXTRA_VOTES", tech.AdditionalDelegates) );
 			buttonNum = buttonNum + 1;
 		end
@@ -580,6 +624,7 @@ function AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButt
 		if thisButton and promotion ~= nil then
 			IconHookup( promotion.PortraitIndex, textureSize, promotion.IconAtlas, thisButton );
 			thisButton:SetHide( false );
+			setCircularHover( buttonNum, true );
 			thisButton:SetToolTipString( Locale.ConvertTextKey("TXT_KEY_FREE_PROMOTION_FROM_TECH", promotion.Description, promotion.Help) );
 			buttonNum = buttonNum + 1;
 		else

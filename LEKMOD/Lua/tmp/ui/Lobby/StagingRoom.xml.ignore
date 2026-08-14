@@ -973,7 +973,7 @@
     <GridButton Anchor="R,B" ID="LaunchButton"   ColorSet="Beige_Black" Font="TwCenMT22" FontStyle="Shadow"  Offset="38,54"     Size="260,45"    Style="BaseButton" String="TXT_KEY_MULTIPLAYER_LAUNCH_GAME" >
     </GridButton>
 
-    <GridButton Anchor="R,B" ID="CountdownButton"   ColorSet="Beige_Black" Font="TwCenMT22" FontStyle="Shadow"  Offset="38,54"     Size="260,45"    Style="BaseButton" String="Unknown Time: " Hidden="1">
+    <GridButton Anchor="R,B" ID="CountdownButton"   ColorSet="Beige_Black" Font="TwCenMT22" FontStyle="Shadow"  Offset="38,128"     Size="260,45"    Style="BaseButton" String="Unknown Time: " Hidden="1">
     </GridButton>
 
     <!-- Game Options Summary (right column) -->

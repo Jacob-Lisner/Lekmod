@@ -18,7 +18,13 @@ local g_TechInstanceManager = InstanceManager:new( "TechButtonInstance", "TechBu
 local g_NeedsFullRefreshOnOpen = false;
 local g_NeedsFullRefresh = false;
 
-local maxSmallButtons = 5;
+local maxSmallButtons = 10;
+local smallIconSize = 45;
+local unlockVisibleSlots = 5;
+
+local techButtons = {};
+local eraBlocks = {};
+local eraColumns = {};
 
 -- I'll need these before I'm done
 local playerID = Game.GetActivePlayer();	
@@ -26,6 +32,119 @@ local player = Players[playerID];
 local civType = GameInfo.Civilizations[player:GetCivilizationType()].Type;
 local activeTeamID = Game.GetActiveTeam();
 local activeTeam = Teams[activeTeamID];
+
+local function CountUnlockIcons( thisTechButton )
+	local n = 0;
+	for i = 1, maxSmallButtons do
+		local b = thisTechButton["B"..i];
+		if b and not b:IsHidden() then
+			n = n + 1;
+		else
+			break;
+		end
+	end
+	return n;
+end
+
+local function LayoutUnlockIcons( thisTechButton, usedCount )
+	usedCount = usedCount or 0;
+	thisTechButton._unlockUsed = usedCount;
+	local leftBtn = thisTechButton.UnlockScrollLeft;
+	local rightBtn = thisTechButton.UnlockScrollRight;
+	local vis = unlockVisibleSlots;
+	local arrowY = 6;
+	local arrowRightX = 178;
+	local arrowLeftX = 158;
+
+	local function hideArrows()
+		if leftBtn then leftBtn:SetHide(true); end
+		if rightBtn then rightBtn:SetHide(true); end
+	end
+
+	if leftBtn then leftBtn:SetSizeVal( 18, 18 ); end
+	if rightBtn then rightBtn:SetSizeVal( 18, 18 ); end
+
+	for i = 1, maxSmallButtons do
+		local button = thisTechButton["B"..i];
+		if button then button:SetHide(true); end
+	end
+
+	if usedCount <= 0 then
+		hideArrows();
+		if thisTechButton.UnlockIconStack then
+			thisTechButton.UnlockIconStack:CalculateSize();
+			thisTechButton.UnlockIconStack:ReprocessAnchoring();
+		end
+		return;
+	end
+
+	local scroll = 0;
+	local showLeft, showRight = false, false;
+	if usedCount > vis then
+		scroll = thisTechButton._unlockScroll or 0;
+		if scroll < 0 then scroll = 0; end
+		local maxScroll = math.max( 0, usedCount - vis );
+		if scroll > maxScroll then scroll = maxScroll; end
+		thisTechButton._unlockScroll = scroll;
+		showLeft = scroll > 0;
+		showRight = scroll < maxScroll;
+	else
+		thisTechButton._unlockScroll = 0;
+		hideArrows();
+	end
+
+	local first = scroll + 1;
+	local last = math.min( usedCount, scroll + vis );
+	for i = first, last do
+		local button = thisTechButton["B"..i];
+		if button then button:SetHide(false); end
+	end
+
+	if thisTechButton.UnlockIconStack then
+		thisTechButton.UnlockIconStack:CalculateSize();
+		thisTechButton.UnlockIconStack:ReprocessAnchoring();
+	end
+
+	if usedCount > vis then
+		if rightBtn then
+			rightBtn:SetHide( not showRight );
+			if showRight then rightBtn:SetOffsetVal( arrowRightX, arrowY ); end
+		end
+		if leftBtn then
+			leftBtn:SetHide( not showLeft );
+			if showLeft then
+				leftBtn:SetOffsetVal( showRight and arrowLeftX or arrowRightX, arrowY );
+			end
+		end
+	end
+end
+
+local function NudgeUnlockScroll( techID, delta )
+	local thisTechButton = techButtons[ techID ];
+	if not thisTechButton then return; end
+	thisTechButton._unlockScroll = (thisTechButton._unlockScroll or 0) + delta;
+	LayoutUnlockIcons( thisTechButton, thisTechButton._unlockUsed or 0 );
+end
+
+local function WireUnlockScrollButtons( thisTechButton, techID )
+	if thisTechButton.UnlockScrollLeft then
+		thisTechButton.UnlockScrollLeft:SetVoid1( techID );
+		thisTechButton.UnlockScrollLeft:RegisterCallback( Mouse.eLClick, function( id )
+			NudgeUnlockScroll( id, -1 );
+		end );
+	end
+	if thisTechButton.UnlockScrollRight then
+		thisTechButton.UnlockScrollRight:SetVoid1( techID );
+		thisTechButton.UnlockScrollRight:RegisterCallback( Mouse.eLClick, function( id )
+			NudgeUnlockScroll( id, 1 );
+		end );
+	end
+end
+
+local function ApplyUnlockIcons( thisTechButton, tech )
+	AddSmallButtonsToTechButton( thisTechButton, tech, maxSmallButtons, smallIconSize );
+	LayoutUnlockIcons( thisTechButton, CountUnlockIcons( thisTechButton ) );
+end
 
 -- textures I'll be using
 local right1Texture = "TechBranchH.dds"
@@ -62,10 +181,6 @@ local maxTechNameLength = 22 - Locale.Length(Locale.Lookup("TXT_KEY_TURNS"));
 -------------------------------------------------
 -- Do initial setup stuff here
 -------------------------------------------------
-
-local techButtons = {};
-local eraBlocks = {};
-local eraColumns = {};
 
 function InitialSetup()
 
@@ -486,7 +601,7 @@ function AddTechButton( tech )
 		end
 		
 		-- add the small pictures and their tooltips
-		AddSmallButtonsToTechButton( thisTechButtonInstance, tech, maxSmallButtons, 45 );
+		ApplyUnlockIcons( thisTechButtonInstance, tech ); WireUnlockScrollButtons( thisTechButtonInstance, tech.ID ); thisTechButtonInstance._unlockScroll = 0;
 		
 	end
 end
@@ -587,8 +702,7 @@ function RefreshDisplayOfSpecificTech( tech )
  		if player:CanResearch( techID ) then
 			opponentPlayer = Players[stealingTechTargetPlayerID];
 			local opponentTeam = Teams[opponentPlayer:GetTeam()];
-			-- if (opponentTeam:IsHasTech(techID)) then
-			if (player:canStealTech(stealingTechTargetPlayerID, techID)) then
+			if (opponentTeam:IsHasTech(techID)) then
 				isAllowedToStealTech = true;
 			end
 		end
@@ -605,7 +719,7 @@ function RefreshDisplayOfSpecificTech( tech )
  	
  	-- Rebuild the small buttons if needed
  	if (g_NeedsFullRefresh) then
-		AddSmallButtonsToTechButton( thisTechButton, tech, maxSmallButtons, 45 );
+		ApplyUnlockIcons( thisTechButton, tech );
  	end
  	
  	thisTechButton.TechButton:SetToolTipString( GetHelpTextForTech(techID) );
@@ -664,11 +778,7 @@ function RefreshDisplayOfSpecificTech( tech )
   			else
   				thisTechButton.FreeTurns:SetHide( true );
   			end
-  			if stealingTechTargetPlayerID ~= -1 and isAllowedToStealTech then
-				thisTechButton.TechQueueLabel:SetText( "    [COLOR_MENU_BLUE]" .. tostring(player:ScienceToStealAmount( stealingTechTargetPlayerID, techID ) ) .. "[END_COLOR][ICON_RESEARCH]" );
-			else
-				thisTechButton.TechQueueLabel:SetText( freeString );
-			end
+			thisTechButton.TechQueueLabel:SetText( freeString );
 			thisTechButton.TechQueue:SetHide( false );
 		else
   			thisTechButton.FreeTech:SetHide( true );
@@ -715,11 +825,7 @@ function RefreshDisplayOfSpecificTech( tech )
   				thisTechButton.FreeTurns:SetHide( true );
   			end
 			-- update queue number to say "FREE"
-  			if stealingTechTargetPlayerID ~= -1 and isAllowedToStealTech then
-				thisTechButton.TechQueueLabel:SetText( "    [COLOR_MENU_BLUE]" .. tostring(player:ScienceToStealAmount( stealingTechTargetPlayerID, techID ) ) .. "[END_COLOR][ICON_RESEARCH]" );
-			else
-				thisTechButton.TechQueueLabel:SetText( freeString );
-			end
+			thisTechButton.TechQueueLabel:SetText( freeString );
 			thisTechButton.TechQueue:SetHide( false );
 		else
  			thisTechButton.FreeTech:SetHide( true );

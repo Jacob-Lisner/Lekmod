@@ -1639,7 +1639,14 @@ Controls.PinchSpeedValue:SetText( Locale.ConvertTextKey( "TXT_KEY_PINCH_SPEED", 
 ----------------------------------------------------------------
 -- NEW: HOTKEY MANAGER START
 ----------------------------------------------------------------
-HotkeyManagerData = Modding.OpenUserData( "IngameHotkeyManager", 1);
+-- v1 = legacy ID-keyed store (kept untouched so downgrades still work)
+-- v3 = Type-keyed store (survives Builds ID reshuffles)
+local HOTKEY_STORE_VERSION = 3;
+local HOTKEY_LEGACY_VERSION = 1;
+local HOTKEY_MIGRATE_FLAG = "bTypeStoreMigrated";
+
+HotkeyManagerData = Modding.OpenUserData( "IngameHotkeyManager", HOTKEY_STORE_VERSION );
+local HotkeyManagerDataLegacy = Modding.OpenUserData( "IngameHotkeyManager", HOTKEY_LEGACY_VERSION );
 
 
 g_StackChildren = {};
@@ -1647,7 +1654,10 @@ g_StackStacks = {};
 g_CurrentEditable = {};
 g_ListenInput = false;
 g_InputSeqStr = {'', '', '', ''};
-g_bShowInvalidActions = HotkeyManagerData.GetValue('bShowInvalidActions') or 0;
+g_bShowInvalidActions = HotkeyManagerData.GetValue('bShowInvalidActions');
+if g_bShowInvalidActions == nil then
+    g_bShowInvalidActions = HotkeyManagerDataLegacy.GetValue('bShowInvalidActions') or 0;
+end
 
 local Categories = {[0] = 'InterfaceModes', 'Commands', 'Builds', 'UnitPromotions', 'Specialists', 'Controls', 'Automates', 'Missions', };
 
@@ -1883,7 +1893,212 @@ end
 
 -------------------------------------------------
 -------------------------------------------------
--- returns a table { HotKey, HotKeyPriority, CtrlDown, AltDown, ShiftDown, HotKeyAlt, HotKeyPriorityAlt, CtrlDownAlt, AltDownAlt, ShiftDownAlt }
+-- returns a table { HotKey, HotKeyPriority, CtrlDown, AltDown, ShiftDown, ActionType, ... }
+local function ParseHotkeyValue(val)
+    if type(val) ~= 'string' then
+        return nil;
+    end
+    -- HK|cat|id|key|ctrl|alt|shift|prio[|ActionType]
+    local cat, id, key, ctrl, alt, shift, prio, actionType = string.match(val, "^HK|(%d+)|(%d+)|([^|]*)|(%d)|(%d)|(%d)|(%d)|([^|]*)$");
+    if key == nil then
+        cat, id, key, ctrl, alt, shift, prio = string.match(val, "^HK|(%d+)|(%d+)|([^|]*)|(%d)|(%d)|(%d)|(%d+)$");
+    end
+    if key == nil then
+        return nil;
+    end
+    return {
+        ActionSubType = tonumber(cat),
+        ActionIndex = tonumber(id),
+        HotKey = key,
+        CtrlDown = tonumber(ctrl) == 1,
+        AltDown = tonumber(alt) == 1,
+        ShiftDown = tonumber(shift) == 1,
+        HotKeyPriority = tonumber(prio) or 0,
+        ActionType = (actionType ~= nil and actionType ~= '') and actionType or nil,
+    };
+end
+
+local function GetActionType(Cat, Id)
+    local category = Categories[Cat];
+    if category == nil or GameInfo[category] == nil or GameInfo[category][Id] == nil then
+        return nil;
+    end
+    return GameInfo[category][Id].Type;
+end
+
+local function ResolveActionId(Cat, Id, ActionType)
+    if ActionType ~= nil and ActionType ~= '' then
+        local category = Categories[Cat];
+        if category ~= nil and GameInfo[category] ~= nil and GameInfo[category][ActionType] ~= nil then
+            return GameInfo[category][ActionType].ID;
+        end
+    end
+    return Id;
+end
+
+local function EncodeHotkeyValue(Cat, Id, HotKey, CtrlDown, AltDown, ShiftDown, HotKeyPriority, ActionType)
+    ActionType = ActionType or GetActionType(Cat, Id) or '';
+    return string.format("HK|%d|%d|%s|%d|%d|%d|%d|%s",
+        tonumber(Cat) or 0, tonumber(Id) or 0, tostring(HotKey or ""),
+        (CtrlDown and 1 or 0), (AltDown and 1 or 0), (ShiftDown and 1 or 0),
+        tonumber(HotKeyPriority) or 0, tostring(ActionType));
+end
+
+-- Stable store key: type_<Category>_<ActionType>  (not numeric IDs)
+local function HotkeyStoreName(Cat, ActionType)
+    if Categories[Cat] == nil or ActionType == nil or ActionType == '' then
+        return nil;
+    end
+    return string.format("type_%s_%s", Categories[Cat], ActionType);
+end
+
+local function ParseHotkeyStoreName(name)
+    if type(name) ~= 'string' then
+        return nil;
+    end
+    for cat, category in pairs(Categories) do
+        local prefix = 'type_' .. category .. '_';
+        if string.sub(name, 1, #prefix) == prefix then
+            return tonumber(cat), string.sub(name, #prefix + 1), nil;
+        end
+    end
+    local cat, id = string.match(name, "^action_(%d+)_(%d+)$");
+    if cat ~= nil then
+        return tonumber(cat), nil, tonumber(id);
+    end
+    return nil;
+end
+
+local function ToBool01(v)
+    if v == true or v == 1 or v == '1' then
+        return true;
+    end
+    return false;
+end
+
+local function WriteHotkeyRow(storeName, Cat, Id, HotKey, CtrlDown, AltDown, ShiftDown, HotKeyPriority, ActionType)
+    local encoded = EncodeHotkeyValue(Cat, Id, HotKey, CtrlDown, AltDown, ShiftDown, HotKeyPriority, ActionType);
+    local q = string.format(
+        "REPLACE INTO SimpleValues (Name, Value, ActionSubType, ActionIndex, HotKey, CtrlDown, AltDown, ShiftDown, HotKeyPriority, ActionType) VALUES ('%s', '%s', %d, %d, '%s', %d, %d, %d, %d, '%s')",
+        storeName:gsub("'", "''"),
+        encoded:gsub("'", "''"),
+        Cat, Id,
+        tostring(HotKey or ""):gsub("'", "''"),
+        CtrlDown and 1 or 0, AltDown and 1 or 0, ShiftDown and 1 or 0,
+        tonumber(HotKeyPriority) or 0,
+        tostring(ActionType or ""):gsub("'", "''")
+    );
+    for row in HotkeyManagerData.Query(q) do
+    end
+    HotkeyManagerData.SetValue(storeName, encoded);
+end
+
+local function DeleteHotkeyRow(storeName)
+    if storeName == nil or storeName == '' then
+        return;
+    end
+    for row in HotkeyManagerData.Query(string.format("DELETE FROM SimpleValues WHERE Name = '%s'", storeName:gsub("'", "''"))) do
+    end
+    -- Clear Value slot if the API keeps one
+    HotkeyManagerData.SetValue(storeName, '');
+end
+
+-- One-time copy from legacy ID-keyed DB into Type-keyed v3. Legacy file is never written.
+function MigrateLegacyHotkeysOnce()
+    if HotkeyManagerData.GetValue(HOTKEY_MIGRATE_FLAG) == 1 then
+        return;
+    end
+
+    local migrated = 0;
+
+    local function ingestRow(row, getValueFn)
+        local name = row.Name;
+        if name == nil or name == HOTKEY_MIGRATE_FLAG or name == 'bShowInvalidActions' then
+            return;
+        end
+
+        local cat = row.ActionSubType;
+        local id = row.ActionIndex;
+        local hotKey = row.HotKey;
+        local ctrl, alt, shift, prio = ToBool01(row.CtrlDown), ToBool01(row.AltDown), ToBool01(row.ShiftDown), row.HotKeyPriority;
+        local actionType = row.ActionType;
+
+        local parsed = ParseHotkeyValue(row.Value);
+        if parsed == nil and getValueFn ~= nil then
+            parsed = ParseHotkeyValue(getValueFn(name));
+        end
+        if parsed ~= nil then
+            cat = parsed.ActionSubType;
+            id = parsed.ActionIndex;
+            hotKey = parsed.HotKey;
+            ctrl = parsed.CtrlDown;
+            alt = parsed.AltDown;
+            shift = parsed.ShiftDown;
+            prio = parsed.HotKeyPriority;
+            if parsed.ActionType ~= nil then
+                actionType = parsed.ActionType;
+            end
+        end
+
+        local nameCat, nameType, nameId = ParseHotkeyStoreName(name);
+        if nameType ~= nil and nameType ~= '' then
+            cat = nameCat;
+            actionType = nameType;
+        elseif nameId ~= nil then
+            cat = nameCat or cat;
+            id = nameId;
+        end
+
+        if (actionType == nil or actionType == '') and cat ~= nil and id ~= nil then
+            actionType = GetActionType(cat, id);
+        end
+
+        if cat ~= nil and actionType ~= nil and actionType ~= '' and hotKey ~= nil and hotKey ~= '' then
+            id = ResolveActionId(cat, id, actionType);
+            local storeName = HotkeyStoreName(cat, actionType);
+            if storeName ~= nil then
+                WriteHotkeyRow(storeName, cat, id, hotKey, ctrl, alt, shift, prio or 0, actionType);
+                migrated = migrated + 1;
+            end
+        end
+    end
+
+    -- Prefer legacy v1 (left untouched so downgrades still see old ID-keyed data).
+    for row in HotkeyManagerDataLegacy.Query("SELECT * FROM SimpleValues WHERE Name != 'bShowInvalidActions'") do
+        ingestRow(row, function(n) return HotkeyManagerDataLegacy.GetValue(n); end);
+    end
+
+    -- Optional intermediate v2 store from earlier experiments.
+    local okV2, HotkeyManagerDataV2 = pcall(function()
+        return Modding.OpenUserData("IngameHotkeyManager", 2);
+    end);
+    if okV2 and HotkeyManagerDataV2 ~= nil then
+        for row in HotkeyManagerDataV2.Query("SELECT * FROM SimpleValues WHERE Name != 'bShowInvalidActions'") do
+            ingestRow(row, function(n) return HotkeyManagerDataV2.GetValue(n); end);
+        end
+    end
+
+    -- Convert any leftover action_* rows already inside v3, then remove them.
+    local legacyStyle = {};
+    for row in HotkeyManagerData.Query("SELECT * FROM SimpleValues WHERE Name LIKE 'action_%'") do
+        table.insert(legacyStyle, row);
+    end
+    for _, row in ipairs(legacyStyle) do
+        ingestRow(row, function(n) return HotkeyManagerData.GetValue(n); end);
+        DeleteHotkeyRow(row.Name);
+    end
+
+    local showInvalid = HotkeyManagerData.GetValue('bShowInvalidActions');
+    if showInvalid == nil then
+        showInvalid = HotkeyManagerDataLegacy.GetValue('bShowInvalidActions') or 0;
+        HotkeyManagerData.SetValue('bShowInvalidActions', showInvalid);
+        g_bShowInvalidActions = showInvalid;
+    end
+
+    HotkeyManagerData.SetValue(HOTKEY_MIGRATE_FLAG, 1);
+    print(string.format("HotkeyManager: Type-store migration complete (%d binding writes)", migrated));
+end
+
 function GetHotkey( Cat, Id, bBackup )
     local res = {}
     local name = string.format("'action_%d_%d'", Cat, Id);
@@ -1900,17 +2115,36 @@ function GetHotkey( Cat, Id, bBackup )
         res.ShiftDownAlt = query.ShiftDownAlt;
     end
     if bBackup ~= true then
-        for query in HotkeyManagerData.Query(string.format('SELECT * FROM SimpleValues WHERE Name = %s', name)) do
-            res.HotKey = query.HotKey;
-            res.HotKeyPriority = query.HotKeyPriority;
-            res.CtrlDown = query.CtrlDown;
-            res.AltDown = query.AltDown;
-            res.ShiftDown = query.ShiftDown;
-            res.HotKeyAlt = query.HotKeyAlt;
-            res.HotKeyPriorityAlt = query.HotKeyPriorityAlt;
-            res.CtrlDownAlt = query.CtrlDownAlt;
-            res.AltDownAlt = query.AltDownAlt;
-            res.ShiftDownAlt = query.ShiftDownAlt;
+        local actionType = GetActionType(Cat, Id);
+        local storeName = HotkeyStoreName(Cat, actionType);
+        if storeName ~= nil then
+            local quoted = string.format("'%s'", storeName:gsub("'", "''"));
+            for query in HotkeyManagerData.Query(string.format('SELECT * FROM SimpleValues WHERE Name = %s', quoted)) do
+                local parsed = ParseHotkeyValue(query.Value) or ParseHotkeyValue(HotkeyManagerData.GetValue(storeName));
+                if parsed ~= nil then
+                    res.HotKey = parsed.HotKey;
+                    res.HotKeyPriority = parsed.HotKeyPriority;
+                    res.CtrlDown = parsed.CtrlDown;
+                    res.AltDown = parsed.AltDown;
+                    res.ShiftDown = parsed.ShiftDown;
+                elseif query.HotKey ~= nil and query.HotKey ~= '' then
+                    res.HotKey = query.HotKey;
+                    res.HotKeyPriority = query.HotKeyPriority;
+                    res.CtrlDown = ToBool01(query.CtrlDown);
+                    res.AltDown = ToBool01(query.AltDown);
+                    res.ShiftDown = ToBool01(query.ShiftDown);
+                end
+            end
+            if res.HotKey == nil then
+                local parsed = ParseHotkeyValue(HotkeyManagerData.GetValue(storeName));
+                if parsed ~= nil then
+                    res.HotKey = parsed.HotKey;
+                    res.HotKeyPriority = parsed.HotKeyPriority;
+                    res.CtrlDown = parsed.CtrlDown;
+                    res.AltDown = parsed.AltDown;
+                    res.ShiftDown = parsed.ShiftDown;
+                end
+            end
         end
     end
     return res;
@@ -1919,6 +2153,9 @@ end
 -------------------------------------------------
 -------------------------------------------------
 function SendUpdateHotkey( Cat, Id, HotKey, CtrlDown, AltDown, ShiftDown, HotKeyPriority )
+    Cat = tonumber(Cat) or -1;
+    Id = tonumber(Id) or -1;
+    HotKeyPriority = tonumber(HotKeyPriority) or 0;
     -- here we 'pack' arguments into single 32-bit integer (kind of binary serialization)
     if (Cat < 0 or Cat > 15 or
         Id < 0 or Id > 65535 or
@@ -1973,13 +2210,15 @@ function OnConfirmEditClick( Cat, Id )
         g_CurrentEditable.HotkeyOuterBox:SetColorVal(255/255, 255/255, 200/255, 255/255);  -- COLOR_BEIGE
 
         SendUpdateHotkey(Cat, Id, key, bCtrl, bAlt, bShift, 0);
-        local DBstr = 'action_' .. Cat .. '_' .. Id;
-        local q = string.format("REPLACE INTO SimpleValues (Name, ActionSubType, ActionIndex, HotKey, CtrlDown, AltDown, ShiftDown) VALUES ('%s', %d, %d, '%s', %d, %d, %d)", DBstr, Cat, Id, g_InputSeqStr[4], bCtrl and 1 or 0, bAlt and 1 or 0, bShift and 1 or 0)
-        for row in HotkeyManagerData.Query(q) do
-        end;
+        local actionType = GetActionType(Cat, Id);
+        local storeName = HotkeyStoreName(Cat, actionType);
+        if storeName ~= nil then
+            WriteHotkeyRow(storeName, Cat, Id, key, bCtrl, bAlt, bShift, 0, actionType);
+        end
     end
 
 end
+
 
 -------------------------------------------------
 -------------------------------------------------
@@ -2000,8 +2239,10 @@ function OnResetHotkeyClick( Cat, Id )
     g_ListenInput = false;
     if next(g_CurrentEditable) ~= nil then
         -- delete userdata entry and fallback to original hotkey
-        for row in HotkeyManagerData.Query(string.format("DELETE FROM SimpleValues WHERE Name = 'action_%d_%d'", Cat, Id)) do
-        end
+        local actionType = GetActionType(Cat, Id);
+        DeleteHotkeyRow(HotkeyStoreName(Cat, actionType));
+        -- Also clear any legacy ID key if present (should not be written anymore)
+        DeleteHotkeyRow(string.format('action_%d_%d', Cat, Id));
         local HK = GetHotkey(Cat, Id, true);
         SendUpdateHotkey(Cat, Id, HK.HotKey, HK.CtrlDown, HK.AltDown, HK.ShiftDown, 0);
 
@@ -2020,14 +2261,32 @@ function OnResetAllHotkeysClick()
     end
     -- delete userdata entry and fallback to original hotkey
     local actions = {};
-    for row in HotkeyManagerData.Query("SELECT Name, ActionSubType, ActionIndex FROM SimpleValues WHERE Name != 'bShowInvalidActions'") do
-        actions[row.Name] = {row.ActionSubType, row.ActionIndex};
+    for row in HotkeyManagerData.Query("SELECT Name, ActionSubType, ActionIndex, ActionType, Value FROM SimpleValues WHERE Name != 'bShowInvalidActions' AND Name != '" .. HOTKEY_MIGRATE_FLAG .. "'") do
+        local cat = row.ActionSubType;
+        local id = row.ActionIndex;
+        local actionType = row.ActionType;
+        local parsed = ParseHotkeyValue(row.Value);
+        if parsed ~= nil then
+            cat = parsed.ActionSubType;
+            id = parsed.ActionIndex;
+            actionType = parsed.ActionType or actionType;
+        end
+        local nameCat, nameType = ParseHotkeyStoreName(row.Name);
+        if nameType ~= nil then
+            cat = nameCat;
+            actionType = nameType;
+        end
+        if cat ~= nil then
+            id = ResolveActionId(cat, id, actionType);
+            actions[row.Name] = {cat, id};
+        end
     end
     for name, action in next, actions do
-        for row in HotkeyManagerData.Query(string.format("DELETE FROM SimpleValues WHERE Name = '%s'", name)) do
-        end
+        DeleteHotkeyRow(name);
         local HK = GetHotkey(action[1], action[2], true);
-        g_StackChildren[action[1]][action[2]].HotkeyEditFrontLabel:SetText(KeySequenceToString(g_KeyMap[HK.HotKey] and g_KeyMap[HK.HotKey][3] or '--', HK.CtrlDown, HK.AltDown, HK.ShiftDown));
+        if g_StackChildren[action[1]] ~= nil and g_StackChildren[action[1]][action[2]] ~= nil then
+            g_StackChildren[action[1]][action[2]].HotkeyEditFrontLabel:SetText(KeySequenceToString(g_KeyMap[HK.HotKey] and g_KeyMap[HK.HotKey][3] or '--', HK.CtrlDown, HK.AltDown, HK.ShiftDown));
+        end
         SendUpdateHotkey(action[1], action[2], HK.HotKey, HK.CtrlDown, HK.AltDown, HK.ShiftDown, 0);
     end
     Controls.ConfirmResetAllHotkeysPopup:SetHide(true);
@@ -2149,6 +2408,7 @@ function VerifyUserDataIntegrity()
         CtrlDownAlt = { 'boolean', 0 },
         AltDownAlt = { 'boolean', 0 },
         ShiftDownAlt = { 'boolean', 0 },
+        ActionType = { 'text', '' },
     }
     for row in HotkeyManagerData.Query([[PRAGMA table_info(SimpleValues)]]) do
         columns[row.name] = true;
@@ -2169,9 +2429,48 @@ end
 -------------------------------------------------
 -- on script load, send all user's previously saved hotkeys 
 function InitHotkeys()
-    for row in HotkeyManagerData.Query("SELECT * FROM SimpleValues WHERE Name != 'bShowInvalidActions'") do
-        SendUpdateHotkey(row.ActionSubType, row.ActionIndex, row.HotKey, row.CtrlDown, row.AltDown, row.ShiftDown, row.HotKeyPriority);
+    local applied = 0;
+    for row in HotkeyManagerData.Query("SELECT Name, Value, ActionSubType, ActionIndex, HotKey, CtrlDown, AltDown, ShiftDown, HotKeyPriority, ActionType FROM SimpleValues WHERE Name != 'bShowInvalidActions' AND Name != '" .. HOTKEY_MIGRATE_FLAG .. "'") do
+        local name = row.Name;
+        local cat = row.ActionSubType;
+        local id = row.ActionIndex;
+        local hotKey = row.HotKey;
+        local ctrl, alt, shift, prio = ToBool01(row.CtrlDown), ToBool01(row.AltDown), ToBool01(row.ShiftDown), row.HotKeyPriority;
+        local actionType = row.ActionType;
+
+        local parsed = ParseHotkeyValue(row.Value);
+        if parsed == nil and name ~= nil then
+            parsed = ParseHotkeyValue(HotkeyManagerData.GetValue(name));
+        end
+        if parsed ~= nil then
+            cat = parsed.ActionSubType;
+            id = parsed.ActionIndex;
+            hotKey = parsed.HotKey;
+            ctrl = parsed.CtrlDown;
+            alt = parsed.AltDown;
+            shift = parsed.ShiftDown;
+            prio = parsed.HotKeyPriority;
+            if parsed.ActionType ~= nil then
+                actionType = parsed.ActionType;
+            end
+        end
+
+        local nameCat, nameType = ParseHotkeyStoreName(name);
+        if nameType ~= nil and nameType ~= '' then
+            cat = nameCat;
+            actionType = nameType;
+        end
+
+        -- Always resolve Type -> current ID so Builds reshuffles keep working.
+        if cat ~= nil then
+            id = ResolveActionId(cat, id, actionType);
+        end
+        if cat ~= nil and id ~= nil and hotKey ~= nil and hotKey ~= '' then
+            SendUpdateHotkey(cat, id, hotKey, ctrl, alt, shift, prio);
+            applied = applied + 1;
+        end
     end
+    print(string.format("HotkeyManager: InitHotkeys applied %d binding(s)", applied));
 end
 
 -------------------------------------------------
@@ -2337,6 +2636,7 @@ if not UI:HasShownLegal() then
     BackupActions()
 end
 VerifyUserDataIntegrity();
+MigrateLegacyHotkeysOnce();
 InitHotkeys();
 BuildHotkeyManagerControls();
 

@@ -91,18 +91,23 @@ local function IsGameReady(playerID)
 	return PreGame.IsReady(playerID) == true;
 end
 
--- True when any taken human slot is ready-to-start (locks draft create/clear/bans).
+-- True only when every taken human is ready-to-start (countdown about to run / running).
+-- A single player greening up must NOT freeze draft edits for everyone else.
 local function IsDraftLockedByGameReady()
 	if PreGame == nil or PreGame.IsReady == nil then
 		return false;
 	end
+	local foundHuman = false;
 	local max = GameDefines.MAX_MAJOR_CIVS;
 	for i = 0, max - 1 do
-		if PreGame.GetSlotStatus(i) == SlotStatus.SS_TAKEN and PreGame.IsReady(i) then
-			return true;
+		if PreGame.GetSlotStatus(i) == SlotStatus.SS_TAKEN then
+			foundHuman = true;
+			if not PreGame.IsReady(i) then
+				return false;
+			end
 		end
 	end
-	return false;
+	return foundHuman;
 end
 
 -- Host may edit AI bans the same way they pick AI civs — until ban-ready or game-ready.
@@ -114,7 +119,7 @@ local function CanEditBansForPlayer(playerID)
 	if Draft_IsHistoryOnly ~= nil and Draft_IsHistoryOnly() then
 		return false;
 	end
-	-- Any human ready-to-start freezes ban edits (own + AI).
+	-- All humans ready-to-start (countdown) freezes ban edits (own + AI).
 	if IsDraftLockedByGameReady() then
 		return false;
 	end
@@ -1626,9 +1631,10 @@ end
 function Draft_RefreshDraftIconsAll()
 	local show = g_DraftLocked == true;
 
-	-- Host (own box): Name ? Draft ? Civ in one stack (already correct).
-	-- Other slots: CivSelectBox is fixed at SlotType Y; LeftInfoStack (Name+Draft) moves up
-	-- when draft shows so draft icons sit where the name was and Random Leader does not move.
+	-- Host (own box): Name → Draft → Civ in one stack (already correct).
+	-- Other slots: CivSelectBox stays fixed; LeftInfoStack (Name+Draft) is placed so
+	-- when draft shows, Name+Draft bottom aligns with Difficulty (Handicap) for humans,
+	-- or with Team/SlotType rows for AI (no handicap).
 	local function ApplyDraftRow(row, scroll, stack, leftBtn, rightBtn, playerID, leftStack)
 		if stack ~= nil and playerID ~= nil then
 			RefreshDraftIcons(playerID, stack);
@@ -1673,11 +1679,16 @@ function Draft_RefreshDraftIconsAll()
 				if slot.RightInfoStack ~= nil then
 					slot.RightInfoStack:SetOffsetVal(400, topY);
 				end
-				-- No draft: name at Team row. Draft: stack rises so draft sits on Team row.
 				if slot.LeftInfoStack ~= nil then
 					local leftY = topY;
 					if show then
-						leftY = humanLayout and -11 or 5; -- draft row lands on Team Y
+						if humanLayout then
+							-- Name(27)+pad(4)+Draft(27)=58; Handicap bottom = topY+62+27 = topY+89
+							-- → leftY = topY + 89 - 58 = topY + 31 (draft bottom = difficulty bottom)
+							leftY = topY + 31;
+						else
+							leftY = 5; -- draft row lands near Team for AI
+						end
 					end
 					slot.LeftInfoStack:SetOffsetVal(128, leftY);
 				end

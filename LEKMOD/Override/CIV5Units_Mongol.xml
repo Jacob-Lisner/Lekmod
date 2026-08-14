@@ -12,21 +12,21 @@
 	<Language_en_US>
 		<!-- Version Number, Leave at top -->
 		<Row Tag="TXT_KEY_LEKMOD_VERSION">
-			<Text>LEKMOD v35.002</Text>
+			<Text>LEKMOD v35.003</Text>
 		</Row>
 		<Replace Tag="TXT_KEY_MULTIPLAYER_STAGING_ROOM"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v35.0 Beta Test 2[ENDCOLOR]
+				[COLOR_POSITIVE_TEXT]LEKMOD v35 Beta Test 3[ENDCOLOR]
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_AD_SETUP_ADVANCED_OPTIONS"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v35.0 Beta Test 2[ENDCOLOR]  
+				[COLOR_POSITIVE_TEXT]LEKMOD v35 Beta Test 3[ENDCOLOR]  
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_GAME_SELECTION_SCREEN"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v35.0 Beta Test 2[ENDCOLOR] 
+				[COLOR_POSITIVE_TEXT]LEKMOD v35 Beta Test 3[ENDCOLOR] 
 			</Text>
 		</Replace>
 		<!-- END VERSION -->
