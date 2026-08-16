@@ -10613,7 +10613,7 @@ function GenerateMap()
 	else
 		if beta_errors ~= 1 then
 			for id, player in pairs(Players) do
-				player:AddNotification(NotificationTypes.NOTIFICATION_SPY_RIG_ELECTION_SUCCESS, "The map completed generation. You are good to play. Thank you for playing Lekmap v5.3 BETA!", "The Map Script Completed Successfully")
+				player:AddNotification(NotificationTypes.NOTIFICATION_SPY_RIG_ELECTION_SUCCESS, "The map completed generation. You are good to play. Thank you for playing Lekmap v6.0 BETA!", "The Map Script Completed Successfully")
 			end
 		end
 	end
