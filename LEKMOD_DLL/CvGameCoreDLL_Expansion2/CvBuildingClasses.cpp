@@ -142,9 +142,6 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_iXBuiltTriggersIdeologyChoice(0),
 	m_iGreatScientistBeakerModifier(0),
 	m_iExtraLeagueVotes(0),
-#if defined(MISC_CHANGES) // CvBuildingClasses member variables
-	m_iTourismPerMountain(0),
-#endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iGarrisonStrengthBonus(0),
 	m_bGarrisonMaintenanceFree(false),
@@ -537,9 +534,6 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iXBuiltTriggersIdeologyChoice = kResults.GetInt("XBuiltTriggersIdeologyChoice");
 	m_iGreatScientistBeakerModifier = kResults.GetInt("GreatScientistBeakerModifier");
 	m_iExtraLeagueVotes = kResults.GetInt("ExtraLeagueVotes");
-#if defined(MISC_CHANGES) // CvBuildingClasses read XML
-	m_iTourismPerMountain = kResults.GetInt("TourismPerMountain");
-#endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iGarrisonStrengthBonus = kResults.GetInt("GarrisonStrengthBonus");
 	m_bGarrisonMaintenanceFree = kResults.GetBool("GarrisonMaintenanceFree");
@@ -650,6 +644,10 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	kUtility.SetYields(m_piAreaYieldModifier, "Building_AreaYieldModifiers", "BuildingType", szBuildingType);
 	kUtility.SetYields(m_piGlobalYieldModifier, "Building_GlobalYieldModifiers", "BuildingType", szBuildingType);
 	kUtility.SetYields(m_piTechEnhancedYieldChange, "Building_TechEnhancedYieldChanges", "BuildingType", szBuildingType);
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	kUtility.SetYields(m_piSameLandMassYieldChange, "Building_SameLandMassYieldChanges", "BuildingType", szBuildingType);
+	kUtility.SetYields(m_piDifferentLandMassYieldChange, "Building_DifferentLandMassYieldChanges", "BuildingType", szBuildingType);
+#endif
 #if defined(LEKMOD_ERA_ENHANCED_YIELDS)
 	{
 		kUtility.Initialize2DArray(m_ppiEraEnhancedYieldChange, "Eras", "Yields");
@@ -1045,6 +1043,39 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 #endif
 		}
 	}
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	//NearbyTerrainFreeYields
+	{
+		m_aFreeTerrainYields.clear();
+
+		std::string strKey("Building_NearbyTerrainFreeYields");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if(pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey, 
+				"select Terrains.ID as TerrainID, Yields.ID as YieldID, Radius, MinTerrainRequired, RequiresOwner, Yield "
+				"from Building_NearbyTerrainFreeYields "
+				"inner join Terrains on Terrains.Type = TerrainType "
+				"inner join Yields on Yields.Type = YieldType "
+				"where BuildingType = ?");
+		}
+
+		pResults->Bind(1, szBuildingType);
+
+		while(pResults->Step())
+		{
+			BuildingFreeTerrainYields kFreeTerrainYield;
+			kFreeTerrainYield.m_eTerrain = static_cast<TerrainTypes>(pResults->GetInt(0));
+			kFreeTerrainYield.m_eYield = static_cast<YieldTypes>(pResults->GetInt(1));
+			kFreeTerrainYield.m_iRadius = pResults->GetInt(2);
+			kFreeTerrainYield.m_iMinTerrainRequired = pResults->GetInt(3);
+			kFreeTerrainYield.m_bRequiresOwner = pResults->GetBool(4);
+			kFreeTerrainYield.m_iYieldChange = pResults->GetInt(5);
+
+			m_aFreeTerrainYields.push_back(kFreeTerrainYield);
+		}
+	}
+#endif
 	//SpecialistYieldChanges
 	{
 #ifdef AUI_DATABASE_UTILITY_PROPER_2D_ALLOCATION_AND_DESTRUCTION
@@ -1987,13 +2018,6 @@ int CvBuildingEntry::GetExtraLeagueVotes() const
 {
 	return m_iExtraLeagueVotes;
 }
-#if defined(MISC_CHANGES) // Tourism from Mountains
-/// Amount of tourism from mountaints near this city
-int CvBuildingEntry::GetMountainTourism() const
-{
-	return m_iTourismPerMountain;
-}
-#endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 /// Amount of Extra strenght a city gets for having a Garrisoned unit
 int CvBuildingEntry::GetGarrisonStrengthBonus() const
@@ -2923,6 +2947,13 @@ int CvBuildingEntry::GetDifferentLandMassYieldChange(int i) const
 	return m_piDifferentLandMassYieldChange ? m_piDifferentLandMassYieldChange[i] : 0;
 }
 #endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+/// Free yields granted by nearby terrain, either per matching tile or once past a count threshold
+const std::vector<BuildingFreeTerrainYields>& CvBuildingEntry::GetFreeTerrainYields() const
+{
+	return m_aFreeTerrainYields;
+}
+#endif
 #ifdef LEKMOD_BUILDING_GP_EXPEND_YIELD
 ///Yield for expending a Great Person
 int CvBuildingEntry::GetGreatPersonExpendYield(int i) const
@@ -3046,6 +3077,9 @@ CvCityBuildings::CvCityBuildings():
 	m_paiSameLandMassYieldChange(NULL),
 	m_paiDifferentLandMassYieldChange(NULL),
 #endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	m_paiFreeTerrainYieldChange(NULL),
+#endif
 	m_iBuildingDefense(0),
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	m_iBuildingGarrisonStrengthBonus(0),
@@ -3124,6 +3158,10 @@ void CvCityBuildings::Init(CvBuildingXMLEntries* pBuildings, CvCity* pCity)
 	CvAssertMsg(m_paiDifferentLandMassYieldChange == NULL, "about to leak memory, CvCityBuildings::m_paiDifferentLandMassYieldChange");
 	m_paiDifferentLandMassYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
 #endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	CvAssertMsg(m_paiFreeTerrainYieldChange == NULL, "about to leak memory, CvCityBuildings::m_paiFreeTerrainYieldChange");
+	m_paiFreeTerrainYieldChange = FNEW(int[NUM_YIELD_TYPES], c_eCiv5GameplayDLL, 0);
+#endif
 
 	m_aBuildingYieldChange.clear();
 	m_aBuildingGreatWork.clear();
@@ -3144,6 +3182,9 @@ void CvCityBuildings::Uninit()
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	SAFE_DELETE_ARRAY(m_paiSameLandMassYieldChange);
 	SAFE_DELETE_ARRAY(m_paiDifferentLandMassYieldChange);
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	SAFE_DELETE_ARRAY(m_paiFreeTerrainYieldChange);
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	m_aaiCityGreatWorkClassYieldChange.clear();
@@ -3168,6 +3209,9 @@ void CvCityBuildings::Reset()
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 		m_paiSameLandMassYieldChange[i] = 0;
 		m_paiDifferentLandMassYieldChange[i] = 0;
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+		m_paiFreeTerrainYieldChange[i] = 0;
 #endif
 	}
 	m_iBuildingDefense = 0;
@@ -3255,6 +3299,10 @@ void CvCityBuildings::Read(FDataStream& kStream)
 	ArrayWrapper<int> kDifferentLandMassYieldChangeWrapper(NUM_YIELD_TYPES, m_paiDifferentLandMassYieldChange);
 	kStream >> kDifferentLandMassYieldChangeWrapper;
 #endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	ArrayWrapper<int> kFreeTerrainYieldChangeWrapper(NUM_YIELD_TYPES, m_paiFreeTerrainYieldChange);
+	kStream >> kFreeTerrainYieldChangeWrapper;
+#endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	kStream >> m_aaiCityGreatWorkClassYieldChange;
 #endif
@@ -3309,6 +3357,9 @@ void CvCityBuildings::Write(FDataStream& kStream)
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_paiSameLandMassYieldChange);
 	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_paiDifferentLandMassYieldChange);
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	kStream << ArrayWrapper<int>(NUM_YIELD_TYPES, m_paiFreeTerrainYieldChange);
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	kStream << m_aaiCityGreatWorkClassYieldChange;
@@ -4895,6 +4946,23 @@ void CvCityBuildings::ChangeDifferentLandMassYieldChange(YieldTypes eYield, int 
 		m_paiDifferentLandMassYieldChange[eYield] = (m_paiDifferentLandMassYieldChange[eYield] + iChange);
 		CvAssert(GetDifferentLandMassYieldChange(eYield) >= 0);
 		m_pCity->updateYield();
+	}
+}
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+int CvCityBuildings::GetFreeTerrainYieldChange(YieldTypes eYield) const
+{
+	CvAssertMsg(eYield >= 0, "eYield expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield expected to be < NUM_YIELD_TYPES");
+	return m_paiFreeTerrainYieldChange[eYield];
+}
+void CvCityBuildings::ChangeFreeTerrainYieldChange(YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eYield expected to be >= 0");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield expected to be < NUM_YIELD_TYPES");
+	if(iChange != 0)
+	{
+		m_paiFreeTerrainYieldChange[eYield] = (m_paiFreeTerrainYieldChange[eYield] + iChange);
 	}
 }
 #endif

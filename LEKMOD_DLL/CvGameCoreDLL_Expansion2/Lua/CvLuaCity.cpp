@@ -506,7 +506,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetReligionCityRangeStrikeModifier);
 #if defined(MISC_CHANGES)
-	Method(GetNumMountainsNearCity);
+	Method(GetNumTerrainNearby);
 #endif
 #if defined(LEKMOD_v34)
 	Method(GetPlotValue);
@@ -4243,12 +4243,13 @@ int CvLuaCity::lGetReligionCityRangeStrikeModifier(lua_State* L)
 #if defined(MISC_CHANGES)
 //------------------------------------------------------------------------------
 // int GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const
-int CvLuaCity::lGetNumMountainsNearCity(lua_State* L)
+int CvLuaCity::lGetNumTerrainNearby(lua_State* L)
 {
 	CvCity* pkCity = GetInstance(L);
-	const int iRange = lua_tointeger(L, 2);
-	const bool bRequireOwnership = lua_toboolean(L, 3);
-	const int iResult = pkCity->GetNumMountainsNearCity(iRange, bRequireOwnership);
+	const TerrainTypes eTerrain = (TerrainTypes)lua_tointeger(L, 2);
+	const int iRange = lua_tointeger(L, 3);
+	const bool bRequireOwnership = lua_toboolean(L, 4);
+	const int iResult = pkCity->GetNumTerrainNearCity(eTerrain, iRange, bRequireOwnership);
 	lua_pushinteger(L, iResult);
 	return 1;
 }

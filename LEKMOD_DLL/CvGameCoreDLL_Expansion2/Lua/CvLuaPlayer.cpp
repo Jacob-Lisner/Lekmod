@@ -1093,6 +1093,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetYieldFromTraitsTimes100);
 	Method(GetYieldFromReligionTimes100);
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	Method(GetWorldWonderYieldChanges);
+#endif
 	Method(GetNumCitiesPolicyCostDiscount);
 #if defined(v35_TRAITIFY)
 	Method(IsEmbarkedUnitsFullStrength);
@@ -12052,6 +12055,15 @@ int CvLuaPlayer::lGetYieldFromTraitsTimes100(lua_State* L)
 	lua_pushinteger(L, pkPlayer->getYieldFromTraitsTimes100(eYield));
 	return 1;
 }
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvLuaPlayer::lGetWorldWonderYieldChanges(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const YieldTypes eYield = (YieldTypes)lua_tointeger(L, 2);
+	lua_pushinteger(L, pkPlayer->GetWorldWonderYieldChanges(eYield));
+	return 1;
+}
+#endif
 int CvLuaPlayer::lGetYieldFromReligionTimes100(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);

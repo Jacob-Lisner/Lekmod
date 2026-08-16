@@ -8505,6 +8505,16 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			m_pCityBuildings->ChangeSameLandMassYieldChange(eYield, pBuildingInfo->GetSameLandMassYieldChange(eYield) * iChange);
 			m_pCityBuildings->ChangeDifferentLandMassYieldChange(eYield, pBuildingInfo->GetDifferentLandMassYieldChange(eYield) * iChange);
 #endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+			{
+				const int iFreeTerrainYieldChange = GetFreeTerrainYieldChangeFromBuilding(pBuildingInfo, eYield);
+				if (iFreeTerrainYieldChange != 0)
+				{
+					m_pCityBuildings->ChangeFreeTerrainYieldChange(eYield, iFreeTerrainYieldChange * iChange);
+					ChangeBaseYieldRateFromBuildings(eYield, iFreeTerrainYieldChange * iChange);
+				}
+			}
+#endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 			m_pCityBuildings->ChangeCityGreatWorkYieldChange(eYield, pBuildingInfo->GetCityGreatWorkYieldChange(eYield) * iChange);
 			for (int i = 0; i < GC.getNumGreatWorkClassInfos(); i++)
@@ -10629,11 +10639,12 @@ void CvCity::changeNumWorldWonders(int iChange)
 		m_iNumWorldWonders = (m_iNumWorldWonders + iChange);
 		CvAssert(getNumWorldWonders() >= 0);
 
-		// Extra culture for Wonders (Policies, etc.)
-#if !defined(STANDARDIZE_YIELDS) // Call to new function
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
+#if !defined(STANDARDIZE_YIELDS) // Call to new function // doing it again here double-counted GetCulturePerWonder().
 		ChangeJONSCulturePerTurnFromPolicies(GET_PLAYER(getOwner()).GetCulturePerWonder() * iChange);
 #else
 		ChangeBaseYieldRateFromPolicies(YIELD_CULTURE, GET_PLAYER(getOwner()).GetCulturePerWonder() * iChange);
+#endif
 #endif
 	}
 }
@@ -13915,14 +13926,17 @@ void CvCity::changeSpecialistFreeExperience(int iChange)
 	m_iSpecialistFreeExperience += iChange;
 	CvAssert(m_iSpecialistFreeExperience >= 0);
 }
-#if defined(MISC_CHANGES) // Function to return the number of mountains in a given range around the city
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
 //	--------------------------------------------------------------------------------
-int CvCity::GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const
+int CvCity::GetNumTerrainNearCity(TerrainTypes eTerrain, int iRange, bool bRequiresOwner) const
 {
 	VALIDATE_OBJECT
-	CvAssertMsg(iRange >= 0, "Search Range is expected to be positive");
-
-	int iMountainCount = 0;
+	int range = iRange;
+	if (range == 0)
+	{
+		range = 3; // this is max working range for a city default to that if not specified
+	}
+	int iTerrainCount = 0;
 
 	// Get the city's plot
 	CvPlot* pCityPlot = plot();
@@ -13930,28 +13944,162 @@ int CvCity::GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const
 		return 0;
 
 	const PlayerTypes eOwner = getOwner();
-
-	// Loop through hexagonal area around the city
-	for (int iDX = -iRange; iDX <= iRange; ++iDX)
+	int iMaxDX, iDX, iDY;
+	CvPlot* pLoopPlot;
+	switch (eTerrain)
 	{
-		for (int iDY = -iRange; iDY <= iRange; ++iDY)
+	// Combine Coast and Ocean together
+	case TERRAIN_COAST:
+	case TERRAIN_OCEAN:
+		for (iDY = -range; iDY <= range; iDY++)
 		{
-			CvPlot* pLoopPlot = plotXYWithRangeCheck(pCityPlot->getX(), pCityPlot->getY(), iDX, iDY, iRange);
-			if (pLoopPlot != NULL)
+			iMaxDX = range - MAX(0, iDY);
+			for (iDX = -range - MIN(0, iDY); iDX <= iMaxDX; iDX++) // MIN() and MAX() stuff is to reduce loops (hexspace!)
 			{
-				if (pLoopPlot->isMountain())
+				// No need for range check because loops are set up properly
+				pLoopPlot = plotXY(pCityPlot->getX(), pCityPlot->getY(), iDX, iDY);
+				if (pLoopPlot != NULL)
 				{
-					// Ownership check, only count if owner matches or ownership doesn't matter
-					if (!bReqireOwnership || pLoopPlot->getOwner() == eOwner)
+					TerrainTypes eLoopTerrain = pLoopPlot->getTerrainType();
+					if (eLoopTerrain == TERRAIN_COAST || eLoopTerrain == TERRAIN_OCEAN)
 					{
-						++iMountainCount;
+						// Ownership check, only count if owner matches or ownership doesn't matter
+						if (!bRequiresOwner || pLoopPlot->getOwner() == eOwner)
+						{
+							++iTerrainCount;
+						}
 					}
 				}
 			}
 		}
+		break;
+	case TERRAIN_MOUNTAIN:
+		for (iDY = -range; iDY <= range; iDY++)
+		{
+			iMaxDX = range - MAX(0, iDY);
+			for (iDX = -range - MIN(0, iDY); iDX <= iMaxDX; iDX++) // MIN() and MAX() stuff is to reduce loops (hexspace!)
+			{
+				// No need for range check because loops are set up properly
+				pLoopPlot = plotXY(pCityPlot->getX(), pCityPlot->getY(), iDX, iDY);
+				if (pLoopPlot != NULL)
+				{
+					if (pLoopPlot->isMountain())
+					{
+						// Ownership check, only count if owner matches or ownership doesn't matter
+						if (!bRequiresOwner || pLoopPlot->getOwner() == eOwner)
+						{
+							++iTerrainCount;
+						}
+					}
+				}
+			}
+		}
+		break;
+	case TERRAIN_HILL:
+		for (iDY = -range; iDY <= range; iDY++)
+		{
+			iMaxDX = range - MAX(0, iDY);
+			for (iDX = -range - MIN(0, iDY); iDX <= iMaxDX; iDX++) // MIN() and MAX() stuff is to reduce loops (hexspace!)
+			{
+				// No need for range check because loops are set up properly
+				pLoopPlot = plotXY(pCityPlot->getX(), pCityPlot->getY(), iDX, iDY);
+				if (pLoopPlot != NULL)
+				{
+					if (pLoopPlot->isHills())
+					{
+						// Ownership check, only count if owner matches or ownership doesn't matter
+						if (!bRequiresOwner || pLoopPlot->getOwner() == eOwner)
+						{
+							++iTerrainCount;
+						}
+					}
+				}
+			}
+		}
+		break;
+	default:
+		for (iDY = -range; iDY <= range; iDY++)
+		{
+			iMaxDX = range - MAX(0, iDY);
+			for (iDX = -range - MIN(0, iDY); iDX <= iMaxDX; iDX++) // MIN() and MAX() stuff is to reduce loops (hexspace!)
+			{
+				// No need for range check because loops are set up properly
+				pLoopPlot = plotXY(pCityPlot->getX(), pCityPlot->getY(), iDX, iDY);
+				if (pLoopPlot != NULL)
+				{
+					if (pLoopPlot->getTerrainType() == eTerrain)
+					{
+						// Ownership check, only count if owner matches or ownership doesn't matter
+						if (!bRequiresOwner || pLoopPlot->getOwner() == eOwner)
+						{
+							++iTerrainCount;
+						}
+					}
+				}
+			}
+		}
+		break;
 	}
-	CvAssertMsg(iMountainCount >= 0, "Mountain count somehow became negative!");
-	return iMountainCount;
+
+	CvAssertMsg(iTerrainCount >= 0, "Terrain count somehow became negative!");
+	return iTerrainCount;
+}
+
+/// Total free-terrain yield change a single building contributes to this city for eYield, based on current nearby terrain
+int CvCity::GetFreeTerrainYieldChangeFromBuilding(CvBuildingEntry* pBuildingInfo, YieldTypes eYield) const
+{
+	if (pBuildingInfo == NULL)
+		return 0;
+
+	int iYieldChange = 0;
+	const std::vector<BuildingFreeTerrainYields>& aFreeTerrainYields = pBuildingInfo->GetFreeTerrainYields();
+	for (size_t iFTY = 0; iFTY < aFreeTerrainYields.size(); iFTY++)
+	{
+		const BuildingFreeTerrainYields& kFreeTerrainYield = aFreeTerrainYields[iFTY];
+		if (kFreeTerrainYield.m_eYield != eYield)
+			continue;
+
+		const int iMatchingTerrainCount = GetNumTerrainNearCity(kFreeTerrainYield.m_eTerrain, kFreeTerrainYield.m_iRadius, kFreeTerrainYield.m_bRequiresOwner);
+
+		if (kFreeTerrainYield.m_iMinTerrainRequired > 0)
+		{
+			// Threshold mode: flat bonus once, only if enough matching tiles are found
+			if (iMatchingTerrainCount >= kFreeTerrainYield.m_iMinTerrainRequired)
+				iYieldChange += kFreeTerrainYield.m_iYieldChange;
+		}
+		else
+		{
+			// Per-tile mode: bonus stacks for every matching tile found
+			iYieldChange += kFreeTerrainYield.m_iYieldChange * iMatchingTerrainCount;
+		}
+	}
+	return iYieldChange;
+}
+
+/// Recompute the free-terrain yields from every building currently in this city (e.g. after the worked/owned tile set changes) and apply only the delta
+void CvCity::RecomputeFreeTerrainYieldChanges()
+{
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+	{
+		YieldTypes eYield = (YieldTypes)iYield;
+		int iNewTotal = 0;
+
+		for (int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
+		{
+			BuildingTypes eBuilding = (BuildingTypes)iBuildingLoop;
+			if (GetCityBuildings()->GetNumBuilding(eBuilding) <= 0)
+				continue;
+
+			iNewTotal += GetFreeTerrainYieldChangeFromBuilding(GC.getBuildingInfo(eBuilding), eYield);
+		}
+
+		const int iDelta = iNewTotal - m_pCityBuildings->GetFreeTerrainYieldChange(eYield);
+		if (iDelta != 0)
+		{
+			m_pCityBuildings->ChangeFreeTerrainYieldChange(eYield, iDelta);
+			ChangeBaseYieldRateFromBuildings(eYield, iDelta);
+		}
+	}
 }
 #endif
 //	--------------------------------------------------------------------------------
@@ -15353,7 +15501,9 @@ void CvCity::DoAcquirePlot(int iPlotX, int iPlotY)
 
 	GET_PLAYER(getOwner()).AddAPlot(pPlot);
 	pPlot->setOwner(getOwner(), GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
-
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	RecomputeFreeTerrainYieldChanges();
+#endif
 	DoUpdateCheapestPlotInfluence();
 
 #ifdef LEKMOD_NEW_LUA_EVENTS

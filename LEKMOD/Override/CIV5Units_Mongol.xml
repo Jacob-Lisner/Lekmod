@@ -974,7 +974,7 @@
 		</Row>
 		<Row Tag="TXT_KEY_TP_YIELD_FROM_GOLDEN_AGE"> 
 			<Text>
-				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_GOLDEN_AGE]
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_GOLDEN_AGE] Golden Age!
 			</Text>
 		</Row>
 		<!-- End v35 -->

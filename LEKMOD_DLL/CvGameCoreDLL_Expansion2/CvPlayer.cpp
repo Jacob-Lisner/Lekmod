@@ -11997,7 +11997,7 @@ void CvPlayer::ChangeWorldWonderYieldChanges(YieldTypes eYield, int iChange)
 	if(iChange != 0)
 	{
 		m_aiWorldWonderYieldChanges.setAt(eYield, m_aiWorldWonderYieldChanges[eYield] + iChange);
-		// Loop through all Cities and change how much Culture they produce based on how many Wonders they have
+		// Loop through all Cities and change how much eYield they produce based on how many Wonders they have
 		CvCity* pLoopCity;
 		int iLoop;
 		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))

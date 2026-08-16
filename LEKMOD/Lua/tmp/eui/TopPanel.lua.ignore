@@ -2767,9 +2767,6 @@ g_toolTipHandler.CultureString = function()-- control )
 		local baseCulture = cities + otherPlayers + happiness + traits + religion;
 		local isWorldsFair = g_activePlayer:GetCultureBonusTurns() > 0;
 		local isGoldenAge = g_activePlayer:GetGoldenAgeTurns() > 0;
-		-- Culture from bonus turns (League Project) -- this establishes a new base value that Golden Age
-		-- below then multiplies on top of, matching CvPlayer::getYieldTimes100 (the two are multiplicative
-		-- with each other, not both a flat % of the original base).
 		local cultureAfterBonusTurns = baseCulture;
 		if isWorldsFair then
 			cultureAfterBonusTurns = (baseCulture * (100 + GameDefines.TEMPORARY_CULTURE_BOOST_MOD)) / 100;
@@ -2777,7 +2774,7 @@ g_toolTipHandler.CultureString = function()-- control )
 		end
 		-- Culture from Golden Age
 		if isGoldenAge then
-			tips:insertLocalizedIfNonZero( "TXT_KEY_TP_YIELD_FROM_GOLDEN_AGE", (cultureAfterBonusTurns * cultureInfo.PlayerGoldenAgeYieldMod) / 100 );
+			tips:insertLocalizedIfNonZero( "TXT_KEY_TP_YIELD_FROM_GOLDEN_AGE", (cultureAfterBonusTurns * cultureInfo.PlayerGoldenAgeYieldMod) / 10000 ); -- from Times100 and Modifier
 		end
 		
 		-- Culture from Penalties

@@ -810,8 +810,10 @@ public:
 
 	int getSpecialistFreeExperience() const;
 	void changeSpecialistFreeExperience(int iChange);
-#if defined(MISC_CHANGES)
-	int GetNumMountainsNearCity(int iRange, bool bReqireOwnership) const;
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	int GetNumTerrainNearCity(TerrainTypes eTerrain, int iRange, bool bRequiresOwner) const;
+	int GetFreeTerrainYieldChangeFromBuilding(CvBuildingEntry* pBuildingInfo, YieldTypes eYield) const;
+	void RecomputeFreeTerrainYieldChanges();
 #endif
 	void updateStrengthValue();
 	int getStrengthValue(bool bForRangeStrike = false, CvCombatModifierList* kModifierList = NULL) const;

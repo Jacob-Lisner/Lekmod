@@ -9,6 +9,50 @@
 
 
 <GameData>
+	<Table name="Building_NearbyTerrainFreeYields">
+		<Column name="BuildingType" type="text" reference="Buildings(Type)" />
+		<Column name="TerrainType" type="text" reference="Terrains(Type)" />
+		<Column name="YieldType" type="text" reference="Yields(Type)" />
+		<Column name="Radius" type="integer" default="0" /> <!-- if 0, uses max city radius -->
+		<Column name="MinTerrainRequired" type="integer" default="0" /> <!-- If 0, gives the yield per Terrain in Radius -->
+		<Column name="RequiresOwner" type="boolean" default="false" />
+		<Column name="Yield" type="integer" notnull="true" />
+	</Table>
+	<Building_NearbyTerrainFreeYields>
+		<Delete />
+		<Row>
+			<BuildingType>BUILDING_SWISS_SKI_RESORT</BuildingType>
+			<TerrainType>TERRAIN_MOUNTAIN</TerrainType>
+			<YieldType>YIELD_TOURISM</YieldType>
+			<RequiresOwner>true</RequiresOwner>
+			<Yield>5</Yield>
+		</Row>
+		<Row>
+			<BuildingType>BUILDING_SWISS_SKI_RESORT</BuildingType>
+			<TerrainType>TERRAIN_MOUNTAIN</TerrainType>
+			<YieldType>YIELD_GOLD</YieldType>
+			<RequiresOwner>true</RequiresOwner>
+			<Yield>2</Yield>
+		</Row>
+		<Row>
+			<BuildingType>BUILDING_MC_TONGAN_MALAE</BuildingType>
+			<TerrainType>TERRAIN_COAST</TerrainType>
+			<YieldType>YIELD_FOOD</YieldType>
+			<Radius>1</Radius>
+			<MinTerrainRequired>3</MinTerrainRequired>
+			<RequiresOwner>true</RequiresOwner>
+			<Yield>2</Yield>
+		</Row>
+		<Row>
+			<BuildingType>BUILDING_MC_TONGAN_MALAE</BuildingType>
+			<TerrainType>TERRAIN_COAST</TerrainType>
+			<YieldType>YIELD_CULTURE</YieldType>
+			<Radius>1</Radius>
+			<MinTerrainRequired>3</MinTerrainRequired>
+			<RequiresOwner>true</RequiresOwner>
+			<Yield>2</Yield>
+		</Row>
+	</Building_NearbyTerrainFreeYields>
 	<!-- Personalities New Tables  -->
 	<Table name="Minor_Civ_Personalities">
 		<Column name="ID" type="integer" primarykey="true" autoincrement="true"/>
@@ -2300,7 +2344,7 @@
 		</Row>
 		<!-- Mughals - Trait -->
 		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
+			<TraitType>TRAIT_MUGHALS</TraitType>
 			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
 			<Yield>2</Yield>
 		</Row>
@@ -34196,17 +34240,6 @@
 			<NoLimit>false</NoLimit> 
 			<Monument>false</Monument> 
 		</Row>
-		<Row> 
-			<ID>176</ID> 
-			<Type>BUILDINGCLASS_SWISS_SKI_GOLD</Type> 
-			<DefaultBuilding>BUILDING_SKI_GOLD</DefaultBuilding> 
-			<MaxGlobalInstances>-1</MaxGlobalInstances> 
-			<MaxTeamInstances>-1</MaxTeamInstances> 
-			<MaxPlayerInstances>-1</MaxPlayerInstances> 
-			<ExtraPlayerInstances>0</ExtraPlayerInstances> 
-			<NoLimit>false</NoLimit> 
-			<Monument>false</Monument> 
-		</Row>
 	</BuildingClasses> 
 
 	<Table name="Building_AreaYieldModifiers">
@@ -39276,6 +39309,22 @@
 	</Table> 
 	<Building_TechEnhancedYieldChanges>
 		<Delete />
+		<!-- Tourism -->
+		<Row> 
+			<BuildingType>BUILDING_RED_FORT</BuildingType> 
+			<YieldType>YIELD_TOURISM</YieldType> 
+			<Yield>4</Yield> 
+		</Row>
+		<Row> 
+			<BuildingType>BUILDING_FALU_GRUVA</BuildingType> 
+			<YieldType>YIELD_TOURISM</YieldType> 
+			<Yield>6</Yield> 
+		</Row>
+		<Row> 
+			<BuildingType>BUILDING_MUGHAL_FORT</BuildingType> 
+			<YieldType>YIELD_TOURISM</YieldType> 
+			<Yield>2</Yield> 
+		</Row>
 
 		<Row> 
 			<BuildingType>BUILDING_PETRA</BuildingType> 
@@ -40018,6 +40067,27 @@
 	</Table> 
 	<Building_YieldChanges>
 		<Delete />
+		<!-- Tourism Stuff -->
+		<Row>
+			<BuildingType>BUILDING_SWISS_SKI_RESORT</BuildingType>
+			<YieldType>YIELD_TOURISM</YieldType>
+			<Yield>5</Yield>
+		</Row>
+		<Row>
+			<BuildingType>BUILDING_ARTIST_HOUSE</BuildingType>
+			<YieldType>YIELD_TOURISM</YieldType>
+			<Yield>3</Yield>
+		</Row>
+		<Row>
+			<BuildingType>BUILDING_EIFFEL_TOWER</BuildingType>
+			<YieldType>YIELD_TOURISM</YieldType>
+			<Yield>12</Yield>
+		</Row>
+		<Row>
+			<BuildingType>BUILDING_CONSERVATORY</BuildingType>
+			<YieldType>YIELD_TOURISM</YieldType>
+			<Yield>1</Yield>
+		</Row>
 		<!-- Arabia Dummy -->
 		<Row>
 			<BuildingType>BUILDING_DUMMY_ARABIA</BuildingType>
@@ -40028,12 +40098,6 @@
 			<BuildingType>BUILDING_DUMMY_ARABIA</BuildingType>
 			<YieldType>YIELD_GOLD</YieldType>
 			<Yield>1</Yield>
-		</Row>
-		<!-- Swiss Ski Resort -->
-		<Row>
-			<BuildingType>BUILDING_SKI_GOLD</BuildingType>
-			<YieldType>YIELD_GOLD</YieldType>
-			<Yield>2</Yield>
 		</Row>
 		<!-- Romania Buildings -->
 		<Row>
@@ -43408,8 +43472,7 @@
 			<AllowsRangeStrike>true</AllowsRangeStrike> 
 			<Defense>700</Defense> 
 			<ExtraCityHitPoints>25</ExtraCityHitPoints> 
-			<EnhancedYieldTech>TECH_FLIGHT</EnhancedYieldTech> 
-			<TechEnhancedTourism>2</TechEnhancedTourism> 
+			<EnhancedYieldTech>TECH_FLIGHT</EnhancedYieldTech>
 			<PrereqTech>TECH_CHIVALRY</PrereqTech> 
 			<DisplayPosition>1</DisplayPosition> 
 			<ArtDefineTag>ART_DEF_BUILDING_CASTLE</ArtDefineTag> 
@@ -44321,12 +44384,9 @@
 			<Help>TXT_KEY_BUILDING_SWISS_SKI_RESORT_HELP</Help> 
 			<Cost>250</Cost>
 			<ConquestProb>66</ConquestProb> 
-			<Happiness>3</Happiness> 
+			<Happiness>3</Happiness>
 			<PrereqTech>TECH_ELECTRICITY</PrereqTech>
-			<EnhancedYieldTech>TECH_ELECTRICITY</EnhancedYieldTech> 
-			<TechEnhancedTourism>5</TechEnhancedTourism>	
-			<TourismPerMountain>5</TourismPerMountain>		
-			<ArtDefineTag>STADIUM</ArtDefineTag> 
+			<ArtDefineTag>STADIUM</ArtDefineTag>
 			<DisplayPosition>2</DisplayPosition> 
 			<PortraitIndex>2</PortraitIndex> 
 			<IconAtlas>SWISS_ICON_ATLAS</IconAtlas>
@@ -44697,8 +44757,6 @@
 			<FaithCost>150</FaithCost> 
 			<UnlockedByBelief>true</UnlockedByBelief>
 			<ConquestProb>100</ConquestProb> 
-			<EnhancedYieldTech>TECH_AGRICULTURE</EnhancedYieldTech>			
-			<TechEnhancedTourism>3</TechEnhancedTourism>
 			<ArtDefineTag>TEMPLE</ArtDefineTag> 
 			<PortraitIndex>2</PortraitIndex> 
 			<IconAtlas>LEKMOD_AESTHETICS_BUILDINGS</IconAtlas> 
@@ -45083,7 +45141,6 @@
 			<NumCityCostMod>30</NumCityCostMod> 
 			<HurryCostModifier>-1</HurryCostModifier>
 			<EnhancedYieldTech>TECH_FLIGHT</EnhancedYieldTech> 
-			<TechEnhancedTourism>6</TechEnhancedTourism> 
 			<PrereqTech>TECH_METAL_CASTING</PrereqTech> 
 			<ArtDefineTag>ART_DEF_BUILDING_IRONWORKS</ArtDefineTag> 
 			<PortraitIndex>10</PortraitIndex> 
@@ -46046,8 +46103,7 @@
 			<Defense>1200</Defense> 
 			<GlobalDefenseMod>25</GlobalDefenseMod> 
 			<MaxStartEra>ERA_RENAISSANCE</MaxStartEra> 
-			<EnhancedYieldTech>TECH_FLIGHT</EnhancedYieldTech> 
-			<TechEnhancedTourism>4</TechEnhancedTourism> 
+			<EnhancedYieldTech>TECH_FLIGHT</EnhancedYieldTech>  
 			<PrereqTech>TECH_METALLURGY</PrereqTech> 
 			<SpecialistType>SPECIALIST_SCIENTIST</SpecialistType> 
 			<GreatPeopleRateChange>1</GreatPeopleRateChange>  
@@ -46167,8 +46223,6 @@
 			<HurryCostModifier>-1</HurryCostModifier>
 			<ConquestProb>100</ConquestProb> 
 			<UnmoddedHappiness>5</UnmoddedHappiness>
-			<EnhancedYieldTech>TECH_RADIO</EnhancedYieldTech> 
-			<TechEnhancedTourism>12</TechEnhancedTourism> 
 			<FreeBuildingThisCity>BUILDINGCLASS_BROADCAST_TOWER</FreeBuildingThisCity> 
 			<PrereqTech>TECH_RADIO</PrereqTech> 
 			<SpecialistType>SPECIALIST_MERCHANT</SpecialistType> 
@@ -46479,41 +46533,6 @@
 			<PortraitIndex>7</PortraitIndex> 
 			<IconAtlas>BW_ATLAS_2</IconAtlas> 
 		</Row>
-		<!-- Tonga Granary -->
-		<Row> 
-			<ID>230</ID> 
-			<Type>BUILDING_MC_MALAE_FOOD</Type> 
-			<BuildingClass>BUILDINGCLASS_MC_MALAE_FOOD</BuildingClass>  
-			<Description>TXT_KEY_BUILDING_MC_MALAE_FOOD</Description>
-			<Strategy>TXT_KEY_BUILDING_MC_TONGAN_MALAE_STRATEGY</Strategy>
-			<NeverCapture>true</NeverCapture>
-			<Cost>-1</Cost> 
-			<FaithCost>-1</FaithCost> 
-			<HurryCostModifier>25</HurryCostModifier>
-			<AllowsFoodTradeRoutes>true</AllowsFoodTradeRoutes> 
-			<FreeStartEra>ERA_RENAISSANCE</FreeStartEra> 
-			<GreatWorkCount>-1</GreatWorkCount> 
-			<PortraitIndex>12</PortraitIndex> 
-			<IconAtlas>MC_POLYNESIA_ATLAS</IconAtlas> 
-		</Row>
-		<!-- Swiss Ski Resort -->
-		<Row> 
-			<ID>234</ID> 
-			<Type>BUILDING_SKI_GOLD</Type> 
-			<BuildingClass>BUILDINGCLASS_SWISS_SKI_GOLD</BuildingClass> 
-			<Description>Trait Ski Gold</Description> 
-			<Civilopedia>Trait</Civilopedia> 
-			<Strategy>Trait</Strategy> 
-			<Help>Trait</Help> 
-			<NeverCapture>true</NeverCapture> 
-			<NukeImmune>true</NukeImmune> 
-			<Cost>-1</Cost> 
-			<HurryCostModifier>-1</HurryCostModifier>
-			<ArtDefineTag>MONUMENT</ArtDefineTag> 
-			<GreatWorkCount>-1</GreatWorkCount> 
-			<PortraitIndex>2</PortraitIndex> 
-			<IconAtlas>LEKMOD_AKKAD_ATLAS</IconAtlas> 
-		</Row>
 		<!-- [Policy Dummies] -->
 		<!-- Fine Arts -->
 		<Row> 
@@ -46562,8 +46581,6 @@
 			<Cost>-1</Cost> 
 			<HurryCostModifier>-1</HurryCostModifier>
 			<ConquestProb>100</ConquestProb> 
-			<EnhancedYieldTech>TECH_AGRICULTURE</EnhancedYieldTech> 
-			<TechEnhancedTourism>1</TechEnhancedTourism> 
 			<SpecialistType>SPECIALIST_MUSICIAN</SpecialistType> 
 			<SpecialistCount>1</SpecialistCount> 
 			<ArtDefineTag>ART_DEF_BUILDING_MUSICIANS_GUILD</ArtDefineTag> 
@@ -182985,13 +183002,10 @@
 			<GridX>2</GridX>
 			<GridY>3</GridY>
 			<Level>0</Level>
-			<CulturePerWonder>1</CulturePerWonder>
 			<GoldenAgeTurns>10</GoldenAgeTurns>
 			<PortraitIndex>5</PortraitIndex>
 			<IconAtlas>POLICY_ATLAS_EXP2</IconAtlas>
 			<IconAtlasAchieved>POLICY_A_ATLAS_EXP2</IconAtlasAchieved>
-			<ExtraTourismPerGreatWork>1</ExtraTourismPerGreatWork>
-			<TourismPerWonder>1</TourismPerWonder>
 		</Row>
 		<Row>
 			<ID>53</ID>
@@ -204639,632 +204653,6 @@
 			<YieldType>YIELD_CULTURE</YieldType> 
 			<Yield>3</Yield> 
 		</Row>
-		<!-- Mughals -->
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TEMPLE_ARTEMIS</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_STONEHENGE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_LIBRARY</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PYRAMID</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_MAUSOLEUM_HALICARNASSUS</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_STATUE_ZEUS</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_LIGHTHOUSE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HANGING_GARDEN</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TERRACOTTA_ARMY</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ORACLE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_MOSQUE_OF_DJENNE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PARTHENON</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PETRA</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_WALL</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_COLOSSUS</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HAGIA_SOPHIA</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BOROBUDUR</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_CHICHEN_ITZA</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_LAKE_WONDER</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_MACHU_PICHU</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ALTHING</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TOWER_OF_BELEM</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ANGKOR_WAT</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ALHAMBRA</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_NOTRE_DAME</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_SISTINE_CHAPEL</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_FORBIDDEN_PALACE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_LEANING_TOWER</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GLOBE_THEATER</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HIMEJI_CASTLE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ARSENAL_OF_VENICE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PORCELAIN_TOWER</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TAJ_MAHAL</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_UFFIZI</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_RED_FORT</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_LOUVRE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BIG_BEN</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_NEUSCHWANSTEIN</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BRANDENBURG_GATE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_EIFFEL_TOWER</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BROADWAY</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_STATUE_OF_LIBERTY</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PRORA_RESORT</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_KREMLIN</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PANAMA</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_CRISTO_REDENTOR</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_CN_TOWER</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PENTAGON</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_SYDNEY_OPERA_HOUSE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_FIREWALL</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HUBBLE</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_MUGHALS</TraitType>
-			<BuildingClassType>BUILDINGCLASS_INTERNATIONAL_SPACE_STATION</BuildingClassType>
-			<YieldType>YIELD_GOLDEN_AGE_POINTS</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<!-- France -->
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TEMPLE_ARTEMIS</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_STONEHENGE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_LIBRARY</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PYRAMID</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_MAUSOLEUM_HALICARNASSUS</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_STATUE_ZEUS</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_LIGHTHOUSE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HANGING_GARDEN</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TERRACOTTA_ARMY</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ORACLE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_MOSQUE_OF_DJENNE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PARTHENON</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PETRA</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_WALL</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_COLOSSUS</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HAGIA_SOPHIA</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BOROBUDUR</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_CHICHEN_ITZA</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_LAKE_WONDER</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_MACHU_PICHU</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ALTHING</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TOWER_OF_BELEM</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ANGKOR_WAT</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ALHAMBRA</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_NOTRE_DAME</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_SISTINE_CHAPEL</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_FORBIDDEN_PALACE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_LEANING_TOWER</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GLOBE_THEATER</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HIMEJI_CASTLE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_ARSENAL_OF_VENICE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PORCELAIN_TOWER</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_TAJ_MAHAL</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_UFFIZI</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_RED_FORT</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_LOUVRE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BIG_BEN</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_NEUSCHWANSTEIN</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BRANDENBURG_GATE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_EIFFEL_TOWER</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_BROADWAY</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_STATUE_OF_LIBERTY</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PRORA_RESORT</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_KREMLIN</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PANAMA</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_CRISTO_REDENTOR</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_CN_TOWER</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_PENTAGON</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_SYDNEY_OPERA_HOUSE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_GREAT_FIREWALL</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_HUBBLE</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row>
-		<Row>
-			<TraitType>TRAIT_ENHANCED_CULTURE</TraitType>
-			<BuildingClassType>BUILDINGCLASS_INTERNATIONAL_SPACE_STATION</BuildingClassType>
-			<YieldType>YIELD_CULTURE</YieldType>
-			<Yield>2</Yield>
-		</Row> 
 		<!-- Hungary -->
 		<Row>
 			<TraitType>TRAIT_VERSZ</TraitType>
@@ -271760,7 +271148,6 @@
 			<PortraitIndex>2</PortraitIndex>
 			<IconAtlas>CL_UC_CUBA_COLOR_ATLAS</IconAtlas>
 			<UnitFlagAtlas>CL_UC_GUERRILLERO_FLAG_ATLAS</UnitFlagAtlas>
-			<PolicyType>POLICY_DUMMY_CUBA</PolicyType>
 		</Row>
 		<Row>
 			<ID>241</ID>
