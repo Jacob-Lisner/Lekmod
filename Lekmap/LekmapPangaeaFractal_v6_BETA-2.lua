@@ -718,7 +718,8 @@ function GetMapScriptInfo()
 		},
 	};
 end
-
+------------------------------------------------------------------------------
+--map helper functions
 function i_to_xy(i, iW, iH)
 	local x = (i - 1) % iW
 	return x, (i - x - 1) / iW
@@ -839,9 +840,6 @@ end
 -- START OF FRACTAL PANGAEA CREATION CODE
 ------------------------------------------------------------------------------
 PangaeaFractalWorld = {};
-
-
-
 
 ------------------------------------------------------------------------------
 function PangaeaFractalWorld.Create(fracXExp, fracYExp)
@@ -1207,6 +1205,7 @@ function GenerateNextToCoastalLandDataTables()
 end
 
 
+-- designed to work the the tectonic rework
 ------------------------------------------------------------------------------
 function PangaeaFractalWorld:GeneratePlotTypes(args)
 
@@ -2906,6 +2905,8 @@ function PlaceImpactAndRipples2(x, y, betaDistanceData, regionNumber)
 	end
 end
 
+-- a way of applying ripples to an arbitrary graph
+
 function PlaceImpactAndRipplesGeneric(x, y, rippleData, radius, impact_value)
 	-- local iW, iH = Map.GetGridSize();
 	local wrapX = Map:IsWrapX();
@@ -2983,6 +2984,8 @@ function PlaceImpactAndRipplesGeneric(x, y, rippleData, radius, impact_value)
 		end
 	end
 end
+
+-- bug fixes
 
 function AssignStartingPlots:PlaceImpactAndRipples(x, y)
 	-- This function operates upon the "impact and ripple" data overlays. This
@@ -3126,7 +3129,7 @@ function AssignStartingPlots:PlaceImpactAndRipples(x, y)
 	end
 end
 
-
+-- completely reworked spawn calculation to use a formulaic system
 
 function AssignStartingPlots:ChooseLocations(args)
 
@@ -4200,6 +4203,8 @@ function AssignStartingPlots:ChooseLocations(args)
 	end
 end
 
+-- removed region dependencies from land quality measure
+
 function AssignStartingPlots:MeasureSinglePlot(x, y, region_type, distance_from_city)
 
 	-- local beta_start_rework = Map.GetCustomOption(26);
@@ -4340,6 +4345,8 @@ function AssignStartingPlots:MeasureSinglePlot(x, y, region_type, distance_from_
 end
 
 ------------------------------------------------------------------------------
+
+-- actually performs the pinch
 function PinchTectonics()
 	for y = 0, iH - 1 do
 		for x = 0, iW - 1 do
@@ -4522,39 +4529,6 @@ function CacheCoast()
 	has_cached_coast = true
 end
 
--- function WithinCoast(x, y, rad)
--- 	local iW, iH = Map.GetGridSize();
--- 	i = xy_to_i(x, y, iW, iH);
--- 	if coast_cache[i] ~= nil then
--- 		if coast_cache[i] <= rad then
--- 			return coast_cache
--- 		else
--- 			return 50
--- 		end
--- 	end
--- 	if rad < 1 then
--- 		local plot = Map.GetPlot(x,y);
--- 		local temp_coast = plot:IsCoastalLand(50);
--- 		if temp_coast then
--- 			coast_cache[i] = 0;
--- 		else
--- 			coast_cache[i] = 20;
--- 		end
--- 		return temp_coast;
--- 	else
--- 		local adj_is1 = GetAdjacent(x,y);
--- 		for loop, adj_i1 in ipairs(adj_is1) do
--- 			local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
--- 			if WithinCoast(adjx1, adjy1, rad-1) then
--- 				coast_cache[i] = rad
--- 				return true
--- 			end
--- 		end
--- 	end
--- 	coast_cache[i] = 20;
--- 	return false
--- end
-
 function AssignStartingPlots:CanPlaceCityStateAt(x, y, area_ID, force_it, ignore_collisions)
 	-- local beta_cliffs = Map.GetCustomOption(28);
 	-- local beta_coast_zone = Map.GetCustomOption(38);
@@ -4649,8 +4623,6 @@ function FixCoastLine()
 	local biggest_area = Map.FindBiggestArea(false);
 	local iAreaID = biggest_area:GetID();
 
-	local beta_cliffs = Map.GetCustomOption(27);
-
 	for y = 0, iH - 1 do
 		for x = 0, iW - 1 do
 			local i = iW * y + x + 1;
@@ -4670,80 +4642,11 @@ function FixCoastLine()
 							end
 						end
 					end
-					-- if beta_cliffs == 2 then
-					-- 	if not plot:IsRiverSide() then
-					-- 		local toMt = Map.Rand(100, "Plains Spawn Chance");
-					-- 		if toMt > 95 then
-					-- 			-- print("SET A COASTAL MOUNTAIN")
-								
-					-- 			local lakeCheck1 = LakeCheck(x, y);
-
-					-- 			if lakeCheck1 == false then
-
-					-- 				plot:SetTerrainType(TerrainTypes.TERRAIN_MOUNTAIN);
-					-- 				plot:SetPlotType(PlotTypes.PLOT_MOUNTAIN, false, true);
-
-					-- 				local adj_is1 = GetAdjacent(x,y);
-					-- 				local extra = 0;
-					-- 				for loop, adj_i1 in ipairs(adj_is1) do
-					-- 					local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
-					-- 					local lakeCheck2 = LakeCheck(adjx1, adjy1);
-					-- 					if lakeCheck2 == false then
-					-- 						local adj_plot1 = Map.GetPlot(adjx1, adjy1);
-					-- 						if adj_plot1:GetPlotType() ~= PlotTypes.PLOT_OCEAN then
-					-- 							-- print("SET A COASTAL MOUNTAIN")
-					-- 							if adj_plot1:GetPlotType() ~= PlotTypes.PLOT_MOUNTAIN then
-					-- 								if extra < 1 and adj_plot1:IsCoastalLand(50) and (adj_plot1:IsFreshWater() == false) then 
-					-- 									adj_plot1:SetPlotType(PlotTypes.PLOT_MOUNTAIN, false, true);
-					-- 									extra = extra + 1;
-					-- 								end
-					-- 							else
-					-- 								adj_plot1:SetPlotType(PlotTypes.PLOT_HILLS, false, true);
-					-- 							end
-												
-					-- 							-- adj_plot1:SetTerrainType(TerrainTypes.TERRAIN_MOUNTAIN);
-					-- 						end
-					-- 					end
-					-- 				end
-					-- 			end
-					-- 		end
-					-- 	end
-					-- end
+					
 				end
 			end
 		end
 	end
-	-- if beta_cliffs == 2 then
-	-- 	for y = 0, iH - 1 do
-	-- 		for x = 0, iW - 1 do
-	-- 			local i = iW * y + x + 1;
-	-- 			local plot = Map.GetPlotByIndex(i-1);
-	-- 			plotAreaID = plot:GetArea();
-	-- 			-- only the mainland please
-	-- 			-- if plotAreaID == iAreaID then
-
-	-- 			local plotType = plot:GetPlotType();
-	-- 			if plot:IsCoastalLand(50) and plotType == PlotTypes.PLOT_MOUNTAIN then
-	-- 				local adj_is1 = adj_is_cache[i]
-	-- 				for loop, adj_i1 in ipairs(adj_is1) do
-	-- 					local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
-	-- 					local adj_plot1 = Map.GetPlot(adjx1, adjy1);
-	-- 					if adj_plot1 ~= nil then
-	-- 						if adj_plot1:GetPlotType() == PlotTypes.PLOT_OCEAN then
-	-- 							local rocks = Map.Rand(100, "Rocky Cliffs")
-	-- 							if rocks > 67 then
-	-- 								-- print("SET A STONE");
-	-- 								adj_plot1:SetResourceType(GameInfo.Resources.RESOURCE_STONE.ID, 1);
-	-- 								adj_plot1:SetFeatureType(FeatureTypes.FEATURE_MARSH);
-	-- 							end
-	-- 						end
-	-- 					end
-	-- 				end
-	-- 			end
-	-- 			-- end
-	-- 		end
-	-- 	end
-	-- end
 end
 
 ------------------------------------------------------------------------------
@@ -4767,6 +4670,9 @@ function AddFeatures()
 	end
 end
 ------------------------------------------------------------------------------
+
+-- full map print functionality
+
 function dump(o)
    if type(o) == 'table' then
       local s = '{ '
@@ -4845,6 +4751,8 @@ function dump_map(graph)
 	print(dump(map_output));
 	print("MAP READOUT OVER");
 end
+
+-- added functionality to remove flat-desert luxes
 
 function AssignStartingPlots:FixResourceGraphics()
 
@@ -5107,6 +5015,8 @@ function AssignStartingPlots:FixResourceGraphics()
 	end
 	--]]
 end
+
+-- added smart lux option to place luxes in "real" player territories
 
 function AssignStartingPlots:GenerateLuxuryPlotListsInRegion(region_number, smart_lux, smart_plots)
 	-- local iW, iH = Map.GetGridSize();
@@ -5473,6 +5383,9 @@ function AssignStartingPlots:GenerateLuxuryPlotListsInRegion(region_number, smar
 	};
 	return results_table
 end
+
+-- added smart lux functionality to place luxes in players "real" territory
+-- added option to increase secondary copies for SP
 
 function AssignStartingPlots:PlaceLuxuries()
 
@@ -6235,6 +6148,9 @@ function AssignStartingPlots:PlaceLuxuries()
 	self.realtotalLuxPlacedSoFar = self.totalLuxPlacedSoFar		-- MOD.Barathor: New -- save the real total of luxuries before it gets corrupted with non-luxury additions which use the luxury placement method
 end
 
+
+-- a bunch of search map search utility functions 
+
 function GraphBFS(current_list, node_list, graph, depth)
 	local next_list = {}
 	-- print("SAMPLE DUMP")
@@ -6310,7 +6226,7 @@ function PlotDFS(i, plot_list, comp_list, comp_val)
 	end
 end
 
--- self if the AssignStartingPlots instance
+-- function used to determine "real" land of players at various point in the script
 function CalculateFlows(test_plots, pulse_depth, use_CS, CS_plots, CS_mult, impass_mult)
 
 	-- local time = os.clock()
@@ -6532,104 +6448,6 @@ function CalculateFlows(test_plots, pulse_depth, use_CS, CS_plots, CS_mult, impa
 		end
 	end
 
-	-- elapsed_time = os.clock()-time
-	-- time = os.clock()
-	
-	-- print(elapsed_time)
-	-- print("TIME FOR FLOW GRAPHS")
-
-	-- local land_graph_best = flow_graph
-	
-	-- local land_graph_best = table.fill(0.0, iW * iH)
-	-- local land_graph_second_best = table.fill(0.0, iW * iH)
-	-- local land_graph_third_best = table.fill(0.0, iW * iH)
-
-
-
-	-- for y = 0, iH - 1 do
-	-- 	for x = 0, iW - 1 do
-	-- 		local i = xy_to_i(x, y, iW, iH);
-	-- 		for l = 1, tablelength(test_plots) do
-	-- 			if player_flow_graphs[l][i] >  land_graph_best[i] then
-
-	-- 				land_graph_third_best[i] = land_graph_second_best[i]
-	-- 				land_graph_second_best[i] = land_graph_best[i]
-
-	-- 				land_graph_best[i] = player_flow_graphs[l][i]
-	-- 				land_graph[i] = l
-
-	-- 			elseif player_flow_graphs[l][i] >  land_graph_second_best[i] then
-
-	-- 				land_graph_third_best[i] = land_graph_second_best[i]
-
-	-- 				land_graph_second_best[i] = player_flow_graphs[l][i]
-	-- 			elseif player_flow_graphs[l][i] >  land_graph_third_best[i] then
-	-- 				land_graph_third_best[i] = player_flow_graphs[l][i]
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
-
-	--blob detection
-
-	-- local blob_to_region = {}
-	-- local blob_count = {}
-	-- local blob_graph = table.fill(0, iW * iH)
-	-- local blob_number = 1
-
-	-- --function PlotDFS(x, y, plot_list, comp_list, comp_val)
-
-	-- for y = 0, iH - 1 do
-	-- 	for x = 0, iW - 1 do
-	-- 		local i = xy_to_i(x, y, iW, iH);
-	-- 		if land_graph[i] ~= 0 then
-	-- 			if blob_graph[i] == 0 then
-	-- 				blob_to_region[blob_number] = land_graph[i]
-	-- 				local blob_fill = {}
-	-- 				PlotDFS(i, blob_fill, land_graph, land_graph[i])
-	-- 				blob_count[blob_number] = tablelength(blob_fill)
-	-- 				for l = 1, table.maxn(blob_fill) do
-	-- 					if blob_fill[l] ~= nil then
-	-- 						blob_graph[l] = blob_number
-	-- 					end
-	-- 				end
-	-- 				blob_number = blob_number+1
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
-
-
-
-	-- -- print("Blob Sample")
-	-- -- print(dump(blob_to_region))
-	-- -- print(dump(blob_count))
-
-	-- for l = 1, tablelength(test_plots) do
-	-- 	local largest_blob = 0
-	-- 	local largest_count = 0
-	-- 	for j = 1, table.maxn(blob_to_region) do
-	-- 		if blob_to_region[j] == l then
-	-- 			if blob_count[j] > largest_count then
-	-- 				largest_count = blob_count[j]
-	-- 				largest_blob = j
-	-- 			end
-	-- 		end
-	-- 	end
-
-	-- 	for y = 0, iH - 1 do
-	-- 		for x = 0, iW - 1 do
-	-- 			local i = xy_to_i(x, y, iW, iH);
-	-- 			if land_graph[i] == l then
-	-- 				if blob_graph[i] ~= largest_blob then
-	-- 					land_graph[i] = 0
-	-- 				end
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
-
-
 	local total_flow_graph = table.fill(-1.0, iW * iH)
 	for y = 0, iH - 1 do
 		for x = 0, iW - 1 do
@@ -6714,192 +6532,7 @@ function CalculateFlows(test_plots, pulse_depth, use_CS, CS_plots, CS_mult, impa
 	return land_graph, total_flow_graph
 end
 
-
--- fix for vanilla
-
--- function AssignStartingPlots:AssignLuxuryToRegion(region_number)
--- 	-- Assigns a luxury type to an individual region.
--- 	local region_type = self.regionTypes[region_number];
--- 	local luxury_candidates;
--- 	local CoastLux = self.CoastLux;
--- 	local BalancedRegionals = Map.GetCustomOption(14)
-
--- 	if region_type > 0 and region_type < 9 then -- Note: if number of Region Types is modified, this line and the table to which it refers need adjustment.
--- 		luxury_candidates = self.luxury_region_weights[region_type];
--- 	else
--- 		luxury_candidates = self.luxury_fallback_weights; -- Undefined Region, enable all possible luxury types.
--- 	end
--- 	--
--- 	-- Build options list.
--- 	local iNumAvailableTypes = 0;
--- 	local resource_IDs, resource_weights, res_threshold = {}, {}, {};
--- 	local split_cap = self:GetLuxuriesSplitCap() -- New for expansion. Cap no longer set to hardcoded value of 3.
-	
--- 	for index, resource_options in ipairs(luxury_candidates) do
--- 		local res_ID = resource_options[1];
--- 		if res_ID ~= nil then
--- 			if self.luxury_assignment_count[res_ID] < split_cap then -- This type still eligible.
--- 				local test = TestMembership(self.resourceIDs_assigned_to_regions, res_ID)
--- 				if self.iNumTypesAssignedToRegions < self.iNumMaxAllowedForRegions or test == true then -- Not a new type that would exceed number of allowed types, so continue.
-
--- 					print("Adding Res ID: " .. res_ID);
--- 					print("Coral ID: " .. tostring(self.coral_ID));
-
--- 					-- Water-based resources need to run a series of permission checks: coastal start in region, not a disallowed regions type, enough water, etc.
--- 					if res_ID == self.whale_ID or res_ID == self.pearls_ID or res_ID == self.crab_ID or self.bModLuxes and res_ID == self.coral_ID then
--- 						if not self._lek_coastal_refish then
--- 							if self.startLocationConditions[region_number][1] == true then -- This region's start is along an ocean, so water-based luxuries are allowed.
--- 								-- MOD.Barathor: Start
--- 								-- MOD.Barathor: Base required coastal water total off of the target number of regional luxuries to place.
--- 								local target_list = self:GetRegionLuxuryTargetNumbers()
--- 								local target = target_list[self.iNumCivs]
--- 								local water_needed = 8
--- 								if self.regionTerrainCounts[region_number][8] >= water_needed then -- Enough water available.
--- 									table.insert(resource_IDs, res_ID);
--- 									local adjusted_weight = resource_options[2] / (0.1 + (self.luxury_assignment_count[res_ID]/2)) -- If selected before, for a different region, reduce weight.
--- 									table.insert(resource_weights, adjusted_weight);
--- 									iNumAvailableTypes = iNumAvailableTypes + 1;
--- 								end
--- 							end
--- 						end
--- 					-- Land-based resources are automatically approved if they were in the region's option table.
--- 					--res_ID == self.salt_ID
--- 					elseif BalancedRegionals == 1 and (res_ID == self.salt_ID or res_ID == self.spices_ID or res_ID == self.gems_ID or res_ID == self.obsidian_ID or res_ID == self.marble_ID or res_ID == self.rubber_ID or res_ID == self.perfume_ID) then
--- 						-- No salt to regions please, sorry
--- 					else
--- 						table.insert(resource_IDs, res_ID);
--- 						local adjusted_weight = resource_options[2] / (1 + self.luxury_assignment_count[res_ID])
--- 						table.insert(resource_weights, adjusted_weight);
--- 						iNumAvailableTypes = iNumAvailableTypes + 1;
--- 					end
--- 				end
--- 			end
--- 		end
--- 	end
-	
--- 	-- If options list is empty, pick from fallback options. First try to respect water-resources not being assigned to regions without coastal starts.
--- 	if iNumAvailableTypes == 0 then
--- 		for index, resource_options in ipairs(self.luxury_fallback_weights) do
--- 			local res_ID = resource_options[1];
--- 			if res_ID ~= nil then
--- 				if self.luxury_assignment_count[res_ID] < 3 then -- This type still eligible.
--- 					local test = TestMembership(self.resourceIDs_assigned_to_regions, res_ID)
--- 					if self.iNumTypesAssignedToRegions < self.iNumMaxAllowedForRegions or test == true then -- Won't exceed allowed types.
--- 						if res_ID == self.whale_ID or res_ID == self.pearls_ID or res_ID == self.crab_ID or self.bModLuxes and res_ID == self.coral_ID then
--- 							-- No coastal luxes if we use this option
--- 							if not self._lek_coastal_refish then
--- 								if self.startLocationConditions[region_number][1] == true then -- This region's start is along an ocean, so water-based luxuries are allowed.
--- 									-- MOD.Barathor: Start
--- 									-- MOD.Barathor: Base required coastal water total off of the target number of regional luxuries to place.
--- 									local target_list = self:GetRegionLuxuryTargetNumbers()
--- 									local target = target_list[self.iNumCivs]
--- 									local water_needed = 8
--- 									if self.regionTerrainCounts[region_number][8] >= water_needed then -- Enough water available.
--- 										table.insert(resource_IDs, res_ID);
--- 										local adjusted_weight = resource_options[2] / (1 + self.luxury_assignment_count[res_ID]) --If selected before, for a different region, reduce weight.
--- 										table.insert(resource_weights, adjusted_weight);
--- 										iNumAvailableTypes = iNumAvailableTypes + 1;
--- 									end
--- 								end
--- 							end
--- 						elseif res_ID == self.salt_ID then
--- 						-- No salt to regions please, sorry
--- 						else
--- 							table.insert(resource_IDs, res_ID);
--- 							local adjusted_weight = resource_options[2] / (1 + self.luxury_assignment_count[res_ID])
--- 							table.insert(resource_weights, adjusted_weight);
--- 							iNumAvailableTypes = iNumAvailableTypes + 1;
--- 						end
--- 					end
--- 				end
--- 			end
--- 		end
--- 	end
-
--- 	-- If we get to here and still need to assign a luxury type, it means we have to force a water-based luxury in to this region, period.
--- 	-- This should be the rarest of the rare emergency assignment cases, unless modifications to the system have tightened things too far.
--- 	if iNumAvailableTypes == 0 then
--- 		print("-"); print("Having to use emergency Luxury assignment process for Region#", region_number);
--- 		print("This likely means a near-maximum number of civs in this game, and problems with not having enough legal Luxury types to spread around.");
--- 		print("If you are modifying luxury types or number of regions allowed to get the same type, check to make sure your changes haven't violated the math so each region can have a legal assignment.");
--- 		for index, resource_options in ipairs(self.luxury_fallback_weights) do
--- 			local res_ID = resource_options[1];
--- 			if res_ID ~= nil then
--- 				if self.luxury_assignment_count[res_ID] < 3 then -- This type still eligible.
--- 					local test = TestMembership(self.resourceIDs_assigned_to_regions, res_ID)
--- 					if self.iNumTypesAssignedToRegions < self.iNumMaxAllowedForRegions or test == true then -- Won't exceed allowed types.
--- 						table.insert(resource_IDs, res_ID);
--- 						local adjusted_weight = resource_options[2] / (1 + self.luxury_assignment_count[res_ID])
--- 						table.insert(resource_weights, adjusted_weight);
--- 						iNumAvailableTypes = iNumAvailableTypes + 1;
--- 					end
--- 				end
--- 			end
--- 		end
--- 	end
--- 	if iNumAvailableTypes == 0 then -- Bad mojo!
--- 		print("-"); print("FAILED to assign a Luxury type to Region#", region_number); print("-");
--- 	end
-
--- 	-- Choose luxury.
--- 	local coast_lux = false;
--- 	local num_coast_lux = 0;
--- 	local totalWeight = 0;
--- 	local coastal_luxes = {};
--- 	for i, this_weight in ipairs(resource_weights) do
--- 		totalWeight = totalWeight + this_weight;
--- 	end
--- 	local accumulatedWeight = 0;
--- 	print("----------------------------------- Regional Luxury Assignment Readout For Region #" .. tostring(region_number) .. "-----------------------------------");
--- 	for index = 1, iNumAvailableTypes do
--- 		local threshold = (resource_weights[index] + accumulatedWeight) * 10000 / totalWeight;
--- 		table.insert(res_threshold, threshold);
--- 		accumulatedWeight = accumulatedWeight + resource_weights[index];
-		
--- 		if resource_IDs[index] == 13 or resource_IDs[index] == 14 or resource_IDs[index] == 32 or resource_IDs[index] == 49 then
--- 			coast_lux = true;
--- 			num_coast_lux = num_coast_lux + 1;
--- 			coastal_luxes[resource_IDs[index]] = true;
--- 			table.insert(coastal_luxes, resource_IDs[index]);
--- 		end
-
--- 		print("Res ID: " .. resource_IDs[index]);
--- 		print("Res Weight: " .. resource_weights[index]);
--- 		print("Threshold: " .. threshold);
--- 	end
--- 	local use_this_ID;
-
--- 	print("");
--- 	print("");
--- 	print("Coast Start: " .. tostring(self.startLocationConditions[region_number][1]));
--- 	print("Coast Lux: " .. tostring(coast_lux));
-
--- 	local sea_lux_cahnce = Map.Rand(100, "Chance for sea lux as coastal");
-
--- 	if sea_lux_cahnce > 0 and CoastLux == false then
--- 		coast_lux = false;
--- 	end
-
--- 	if self.startLocationConditions[region_number][1] == true and coast_lux == true then
--- 		local diceroll = 1 + Map.Rand(num_coast_lux, "Choose resource type - Assign Luxury To Region - Lua");
--- 		print("----------------------- Coastal Lux Chosen -----------------------");
--- 		print("Num Coastal Luxes: " .. tostring(num_coast_lux));
--- 		print("Diceroll: " .. tostring(diceroll));
--- 		use_this_ID = coastal_luxes[diceroll];
--- 		print("Res ID: " .. tostring(use_this_ID));
--- 	else
--- 		local diceroll = Map.Rand(10000, "Choose resource type - Assign Luxury To Region - Lua");
--- 		print("Res Diceroll: " .. diceroll);
--- 		for index, threshold in ipairs(res_threshold) do
--- 			if diceroll <= threshold then -- Choose this resource type.
--- 				use_this_ID = resource_IDs[index];
--- 				break
--- 			end
--- 		end
--- 	end
-
--- 	return use_this_ID;
--- end
+-- all of the rejection sampling stuff is inserted here
 
 function AssignStartingPlots:PlaceResourcesAndCityStates()
 	-- suff before isolation
@@ -7434,19 +7067,41 @@ function AssignStartingPlots:PlaceResourcesAndCityStates()
 			end
 		end
 
-		local main_tile_count = 0
 		local biggest_area = Map.FindBiggestArea(false);
 		local iBiggestAreaID = biggest_area:GetID();
-		for y = 0, iH - 1 do
+
+
+		local final_choke_pass = true
+		for y = math.ceil(iH * 2 / 5), math.ceil((iH - 1) * 3 / 5) do
+			local entry_count = 0
 			for x = 0, iW - 1 do
 				local plot = Map.GetPlot(x, y);
-				if plot:GetArea() == iBiggestAreaID then
-					main_tile_count = main_tile_count+1
+				local i = xy_to_i(x, y, iW, iH)
+				if plot:GetArea() == iBiggestAreaID and BETA_TECTONIC_LANDS[i] < 1 then
+					entry_count = entry_count+1
 				end
+			end
+			if entry_count < 10 then
+				final_choke_pass = false
 			end
 		end
 
-		print("MAINLAND TILES " .. main_tile_count)
+		
+		for x =  math.ceil(iW * 2 / 5), math.ceil((iW - 1) * 3 / 5) do
+			local entry_count = 0
+			for y = 0, iH - 1 do
+				local plot = Map.GetPlot(x, y);
+				local i = xy_to_i(x, y, iW, iH)
+				if plot:GetArea() == iBiggestAreaID and BETA_TECTONIC_LANDS[i] < 1 then
+					entry_count = entry_count+1
+				end
+			end
+			if entry_count < 10 then
+				final_choke_pass = false
+			end
+		end
+
+		-- print("MAINLAND TILES " .. main_tile_count)
 
 	
 		-- local fail_data = table.fill(1, 6)
@@ -7482,7 +7137,7 @@ function AssignStartingPlots:PlaceResourcesAndCityStates()
 		-- print("FAIL READOUT OVER")
 
 
-		if iso_check and min_acceptable and prox_cs and topology_check and worst_ratio > 0.45 and spawn_validity then
+		if iso_check and min_acceptable and prox_cs and topology_check and worst_ratio > 0.45 and spawn_validity and final_choke_pass then
 			accept_map = true
 			if beta_isolation_rejection == 2 then
 				for id, player in pairs(Players) do
@@ -7491,32 +7146,6 @@ function AssignStartingPlots:PlaceResourcesAndCityStates()
 			end
 		end
 	end
-
-	-- if accept_map then
-	-- 	local beta_lake_fish = Map.GetCustomOption(39)
-	-- 	if beta_lake_fish == 2 then
-	-- 		for y = 0, iH - 1 do
-	-- 			for x = 0, iW - 1 do
-					
-	-- 				local plot = Map.GetPlot(x, y)
-	-- 				local res_ID = plot:GetResourceType(-1)
-	-- 				local featureType = plot:GetFeatureType()
-	-- 				local terrainType = plot:GetTerrainType()
-	-- 				local plotType = plot:GetPlotType()
-	-- 				-- local resourceType = plot:GetResourceType();
-					
-	-- 				-- Mined/Quarried Resources
-
-	-- 				if beta_lake_fish == 2 then
-	-- 					if plot:IsLake() and res_ID == GameInfo.Resources.RESOURCE_FISH.ID then
-	-- 						Game.SetPlotExtraYield(x, y, YieldTypes.YIELD_FOOD, -1)
-	-- 						Game.SetPlotExtraYield(x, y, YieldTypes.YIELD_GOLD, 1)
-	-- 					end
-	-- 				end
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
 
 	-- Activate for debug only
 	self:PrintFinalResourceTotalsToLog()
@@ -7527,7 +7156,7 @@ function AssignStartingPlots:PlaceResourcesAndCityStates()
 	--
 end
 
--- beta_flexy_lux = Map.GetCustomOption(25); -- trying this outside for performance
+-- added flexy-lux option
 
 function AssignStartingPlots:PlaceSpecificNumberOfResources(resource_ID, quantity, amount,
 	                         ratio, impact_table_number, min_radius, max_radius, plot_list)
@@ -7649,155 +7278,7 @@ function AssignStartingPlots:PlaceSpecificNumberOfResources(resource_ID, quantit
 end
 
 
--- function AssignStartingPlots:PlaceResourceImpact(x, y, impact_table_number, radius)
--- 	-- This function operates upon one of the "impact and ripple" data overlays for resources.
--- 	-- These data layers are a primary way of preventing assignments from clustering too much.
--- 	-- Impact #s - 1 strategic - 2 luxury - 3 bonus - 4 fish - 5 city states - 6 natural wonders - 7 marble - 8 sheep
--- 	local iW, iH = Map.GetGridSize();
--- 	local wrapX = Map:IsWrapX();
--- 	local wrapY = Map:IsWrapY();
--- 	local impact_value = 99;
--- 	local odd = self.firstRingYIsOdd;
--- 	local even = self.firstRingYIsEven;
--- 	local nextX, nextY, plot_adjustments;
-
-
--- 	local radius = radius
--- 	local beta_flexy_lux = Map.GetCustomOption(25);
-
--- 	-- Place Impact!
--- 	local impactPlotIndex = y * iW + x + 1;
--- 	if impact_table_number == 1 then
--- 		self.strategicData[impactPlotIndex] = impact_value;
--- 	elseif impact_table_number == 2 then
--- 		self.luxuryData[impactPlotIndex] = impact_value;
--- 		if beta_flexy_lux == 2 and radius == 3 then
--- 			radius = 2 + Map.Rand(3, "Flexy Lux Radius")
--- 		end
--- 	elseif impact_table_number == 3 then
--- 		self.bonusData[impactPlotIndex] = impact_value;
--- 	elseif impact_table_number == 4 then
--- 		self.fishData[impactPlotIndex] = 99;
--- 	elseif impact_table_number == 5 then
--- 		self.cityStateData[impactPlotIndex] = impact_value;
--- 	elseif impact_table_number == 6 then
--- 		self.naturalWondersData[impactPlotIndex] = impact_value;
--- 	elseif impact_table_number == 7 then
--- 		self.marbleData[impactPlotIndex] = 1;
--- 	elseif impact_table_number == 8 then
--- 		self.seaOilData[impactPlotIndex] = 99;
--- 	end
--- 	if radius == 0 then
--- 		return
--- 	end
--- 	-- Place Ripples
--- 	if radius > 0 and radius < iH / 2 then
--- 		for ripple_radius = 1, radius do
--- 			local ripple_value = radius - ripple_radius + 1;
--- 			-- Moving clockwise around the ring, the first direction to travel will be Northeast.
--- 			-- This matches the direction-based data in the odd and even tables. Each
--- 			-- subsequent change in direction will correctly match with these tables, too.
--- 			--
--- 			-- Locate the plot within this ripple ring that is due West of the Impact Plot.
--- 			local currentX = x - ripple_radius;
--- 			local currentY = y;
--- 			-- Now loop through the six directions, moving ripple_radius number of times
--- 			-- per direction. At each plot in the ring, add the ripple_value for that ring 
--- 			-- to the plot's entry in the distance data table.
--- 			for direction_index = 1, 6 do
--- 				for plot_to_handle = 1, ripple_radius do
--- 					-- Must account for hex factor.
--- 				 	if currentY / 2 > math.floor(currentY / 2) then -- Current Y is odd. Use odd table.
--- 						plot_adjustments = odd[direction_index];
--- 					else -- Current Y is even. Use plot adjustments from even table.
--- 						plot_adjustments = even[direction_index];
--- 					end
--- 					-- Identify the next plot in the ring.
--- 					nextX = currentX + plot_adjustments[1];
--- 					nextY = currentY + plot_adjustments[2];
--- 					-- Make sure the plot exists
--- 					if wrapX == false and (nextX < 0 or nextX >= iW) then -- X is out of bounds.
--- 						-- Do not add ripple data to this plot.
--- 					elseif wrapY == false and (nextY < 0 or nextY >= iH) then -- Y is out of bounds.
--- 						-- Do not add ripple data to this plot.
--- 					else -- Plot is in bounds, process it.
--- 						-- Handle any world wrap.
--- 						local realX = nextX;
--- 						local realY = nextY;
--- 						if wrapX then
--- 							realX = realX % iW;
--- 						end
--- 						if wrapY then
--- 							realY = realY % iH;
--- 						end
--- 						-- Record ripple data for this plot.
--- 						local ringPlotIndex = realY * iW + realX + 1;
--- 						if impact_table_number == 1 then
--- 							if self.strategicData[ringPlotIndex] > 0 then
--- 								-- First choose the greater of the two, existing value or current ripple.
--- 								local stronger_value = math.max(self.strategicData[ringPlotIndex], ripple_value);
--- 								-- Now increase it by 2 to reflect that multiple civs are in range of this plot.
--- 								local overlap_value = math.min(50, stronger_value + 2);
--- 								self.strategicData[ringPlotIndex] = overlap_value;
--- 							else
--- 								self.strategicData[ringPlotIndex] = ripple_value;
--- 							end
--- 						elseif impact_table_number == 2 then
--- 							if self.luxuryData[ringPlotIndex] > 0 then
--- 								-- First choose the greater of the two, existing value or current ripple.
--- 								local stronger_value = math.max(self.luxuryData[ringPlotIndex], ripple_value);
--- 								-- Now increase it by 2 to reflect that multiple civs are in range of this plot.
--- 								local overlap_value = math.min(50, stronger_value + 2);
--- 								self.luxuryData[ringPlotIndex] = overlap_value;
--- 							else
--- 								self.luxuryData[ringPlotIndex] = ripple_value;
--- 							end
--- 						elseif impact_table_number == 3 then
--- 							if self.bonusData[ringPlotIndex] > 0 then
--- 								-- First choose the greater of the two, existing value or current ripple.
--- 								local stronger_value = math.max(self.bonusData[ringPlotIndex], ripple_value);
--- 								-- Now increase it by 2 to reflect that multiple civs are in range of this plot.
--- 								local overlap_value = math.min(50, stronger_value + 2);
--- 								self.bonusData[ringPlotIndex] = overlap_value;
--- 							else
--- 								self.bonusData[ringPlotIndex] = ripple_value;
--- 							end
--- 						elseif impact_table_number == 4 then
--- 							if self.fishData[ringPlotIndex] > 0 then
--- 								-- First choose the greater of the two, existing value or current ripple.
--- 								local stronger_value = math.max(self.fishData[ringPlotIndex], ripple_value);
--- 								-- Now increase it by 2 to reflect that multiple civs are in range of this plot.
--- 								local overlap_value = math.min(10, stronger_value + 2);
--- 								self.fishData[ringPlotIndex] = overlap_value;
--- 							else
--- 								self.fishData[ringPlotIndex] = ripple_value;
--- 							end
--- 						elseif impact_table_number == 5 then
--- 							self.cityStateData[ringPlotIndex] = 1;
--- 						elseif impact_table_number == 6 then
--- 							if self.naturalWondersData[ringPlotIndex] > 0 then
--- 								-- First choose the greater of the two, existing value or current ripple.
--- 								local stronger_value = math.max(self.naturalWondersData[ringPlotIndex], ripple_value);
--- 								-- Now increase it by 2 to reflect that multiple civs are in range of this plot.
--- 								local overlap_value = math.min(50, stronger_value + 2);
--- 								self.naturalWondersData[ringPlotIndex] = overlap_value;
--- 							else
--- 								self.naturalWondersData[ringPlotIndex] = ripple_value;
--- 							end
--- 						elseif impact_table_number == 7 then
--- 							self.marbleData[ringPlotIndex] = 1;
--- 						elseif impact_table_number == 8 then
--- 							self.seaOilData[ringPlotIndex] = 1;
--- 						end
--- 					end
--- 					currentX, currentY = nextX, nextY;
--- 				end
--- 			end
--- 		end
--- 	else
--- 		print("Unsupported Radius length of ", radius, " passed to PlaceResourceImpact()");
--- 	end
--- end
+-- extended region edge range to add more space for cs
 
 function AssignStartingPlots:ObtainNextSectionInRegion(incoming_west_x, incoming_south_y,
 	                         incoming_width, incoming_height, iAreaID, force_it, ignore_collisions)
@@ -7894,6 +7375,8 @@ function AssignStartingPlots:ObtainNextSectionInRegion(incoming_west_x, incoming
 	return coastal_plots, inland_plots, new_west_x, new_south_y, new_width, new_height, reached_middle;
 end
 
+-- added option to override rejected luxes
+
 function AssignStartingPlots:GetRandomLuxuriesTargetNumber()
 
 	local beta_lux_variety = Map.GetCustomOption(38);
@@ -7931,6 +7414,8 @@ function AssignStartingPlots:GetRandomLuxuriesTargetNumber()
 
 	return maxRandoms
 end
+
+-- tuned fish rates to account for extra islands, surface area, and lake fish
 
 function AssignStartingPlots:PlaceStrategicAndBonusResources()
 
@@ -8285,6 +7770,8 @@ function AssignStartingPlots:PlaceStrategicAndBonusResources()
 	
 end
 
+-- added functionality to make sure fish don't collide with shallows
+
 function AssignStartingPlots:PlaceFishMainland(frequency, plot_list)
 
 	-- local beta_lake_fish = Map.GetCustomOption(37)
@@ -8361,6 +7848,8 @@ function AssignStartingPlots:PlaceFishMainland(frequency, plot_list)
 	end
 end
 
+-- added functionality to make sure fish don't collide with shallows
+
 function AssignStartingPlots:PlaceFish(frequency, plot_list)
 	-- This function places fish at members of plot_list. (Sounds fishy to me!)
 	if plot_list == nil then
@@ -8420,7 +7909,8 @@ function AssignStartingPlots:PlaceFish(frequency, plot_list)
 	end
 end
 
--- edited for lake fish and fords
+-- edited for lake fish and shallows
+
 function AssignStartingPlots:AttemptToPlaceBonusResourceAtPlot(x, y, bAllowOasis, Fish_Count)
 	-- Returns two booleans. First is true if something was placed. Second true if Oasis placed.
 	--print("-"); print("Attempting to place a Bonus at: ", x, y);
@@ -8703,6 +8193,8 @@ function AssignStartingPlots:AttemptToPlaceBonusResourceAtPlot(x, y, bAllowOasis
 	return false, false, false
 end
 
+-- bug fix so lakes don't propegate apply this
+
 function AssignStartingPlots:PlaceResourceImpactCoastalMod(x, y, impact_table_number, radius, radiusCoastal)
 	-- This function operates upon one of the "impact and ripple" data overlays for resources.
 	-- These data layers are a primary way of preventing assignments from clustering too much.
@@ -8939,165 +8431,165 @@ end
 -- 	end
 -- end
 
-function BoostCS(cityState, x, y)
-	-- local iW, iH = Map.GetGridSize();
+-- function BoostCS(cityState, x, y)
+-- 	-- local iW, iH = Map.GetGridSize();
 	
-	local resources = 0;
-	local food_yields = 0;
-	local prod_yields = 0;
+-- 	local resources = 0;
+-- 	local food_yields = 0;
+-- 	local prod_yields = 0;
 
-	local adj_is1 = GetAdjacent(x, y, iW, iH);
-	adj_is1 = GetShuffledCopyOfTable(adj_is1);
-	for loop, adj_i1 in ipairs(adj_is1) do
-		local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
-		local adj_plot1 = Map.GetPlot(adjx1, adjy1);
-		if adj_plot1:GetResourceType() ~= -1 then
-			resources = resources+1
-		end
+-- 	local adj_is1 = GetAdjacent(x, y, iW, iH);
+-- 	adj_is1 = GetShuffledCopyOfTable(adj_is1);
+-- 	for loop, adj_i1 in ipairs(adj_is1) do
+-- 		local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
+-- 		local adj_plot1 = Map.GetPlot(adjx1, adjy1);
+-- 		if adj_plot1:GetResourceType() ~= -1 then
+-- 			resources = resources+1
+-- 		end
 
 		
-		food_yields = food_yields+adj_plot1:CalculateBestNatureYield(YieldTypes.YIELD_FOOD, cityState:GetTeam())
-		prod_yields = prod_yields+adj_plot1:CalculateBestNatureYield(YieldTypes.YIELD_PRODUCTION, cityState:GetTeam())
-	end
+-- 		food_yields = food_yields+adj_plot1:CalculateBestNatureYield(YieldTypes.YIELD_FOOD, cityState:GetTeam())
+-- 		prod_yields = prod_yields+adj_plot1:CalculateBestNatureYield(YieldTypes.YIELD_PRODUCTION, cityState:GetTeam())
+-- 	end
 
-	local boost_needed = 0;
-	if resources < 3 then
-		boost_needed = boost_needed+1;
-	end
-	if (food_yields < 6) or (prod_yields < 5) or (food_yields+prod_yields < 14) then
-		boost_needed = boost_needed+1;
-	end
+-- 	local boost_needed = 0;
+-- 	if resources < 3 then
+-- 		boost_needed = boost_needed+1;
+-- 	end
+-- 	if (food_yields < 6) or (prod_yields < 5) or (food_yields+prod_yields < 14) then
+-- 		boost_needed = boost_needed+1;
+-- 	end
 
-	local cs_trait = cityState:GetMinorCivTrait();
-	for loop, adj_i1 in ipairs(adj_is1) do
-		local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
-		local adj_plot1 = Map.GetPlot(adjx1, adjy1);
-		local adj_ptype = adj_plot1:GetPlotType();
-		local adj_ftype = adj_plot1:GetFeatureType();
-		-- print("Resource Type: " .. tostring(adj_plot1:GetResourceType()));
-		if boost_needed > 0 and (adj_plot1:GetResourceType() == -1) then
-			if cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_CULTURED then
-				local imp_canidates = {};
-				if adj_ftype == FeatureTypes.FEATURE_FOREST or adj_ftype == FeatureTypes.FEATURE_JUNGLE then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_BRAZILWOOD_CAMP.ID);
-				end
+-- 	local cs_trait = cityState:GetMinorCivTrait();
+-- 	for loop, adj_i1 in ipairs(adj_is1) do
+-- 		local adjx1, adjy1 = i_to_xy(adj_i1, iW, iH);
+-- 		local adj_plot1 = Map.GetPlot(adjx1, adjy1);
+-- 		local adj_ptype = adj_plot1:GetPlotType();
+-- 		local adj_ftype = adj_plot1:GetFeatureType();
+-- 		-- print("Resource Type: " .. tostring(adj_plot1:GetResourceType()));
+-- 		if boost_needed > 0 and (adj_plot1:GetResourceType() == -1) then
+-- 			if cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_CULTURED then
+-- 				local imp_canidates = {};
+-- 				if adj_ftype == FeatureTypes.FEATURE_FOREST or adj_ftype == FeatureTypes.FEATURE_JUNGLE then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_BRAZILWOOD_CAMP.ID);
+-- 				end
 				
-				if adj_ptype == PlotTypes.PLOT_HILLS then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
-				elseif adj_ptype == PlotTypes.PLOT_MOUNTAIN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_HILLS then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
+-- 				elseif adj_ptype == PlotTypes.PLOT_MOUNTAIN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_OCEAN or adj_ptype == PlotTypes.PLOT_LAND then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_AYER.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_OCEAN or adj_ptype == PlotTypes.PLOT_LAND then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_AYER.ID);
+-- 				end
 				
-				if adj_ptype ~= PlotTypes.PLOT_OCEAN and  adj_ptype ~= PlotTypes.PLOT_MOUNTAIN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_CHATEAU.ID);
-				end
+-- 				if adj_ptype ~= PlotTypes.PLOT_OCEAN and  adj_ptype ~= PlotTypes.PLOT_MOUNTAIN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_CHATEAU.ID);
+-- 				end
 					
-				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
-				boost_needed = boost_needed-1;
+-- 				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
+-- 				boost_needed = boost_needed-1;
 
-			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_MILITARISTIC then
-				local imp_canidates = {};
+-- 			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_MILITARISTIC then
+-- 				local imp_canidates = {};
 				
-				if adj_ptype == PlotTypes.PLOT_HILLS then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_SCOTTISH_CLAN_CASTLE.ID);
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_GOTH.ID);
-				elseif adj_ptype == PlotTypes.PLOT_LAND then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_GOTH.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_HILLS then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_SCOTTISH_CLAN_CASTLE.ID);
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_GOTH.ID);
+-- 				elseif adj_ptype == PlotTypes.PLOT_LAND then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_GOTH.ID);
+-- 				end
 
 				
 
-				if adj_ptype == PlotTypes.PLOT_OCEAN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_LANDMARK.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_OCEAN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_LANDMARK.ID);
+-- 				end
 				
-				if adj_ptype ~= PlotTypes.PLOT_OCEAN and  adj_ptype ~= PlotTypes.PLOT_MOUNTAIN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_KASBAH.ID);
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MOTTE.ID);
-				end
+-- 				if adj_ptype ~= PlotTypes.PLOT_OCEAN and  adj_ptype ~= PlotTypes.PLOT_MOUNTAIN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_KASBAH.ID);
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MOTTE.ID);
+-- 				end
 					
-				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
-				boost_needed = boost_needed-1;
+-- 				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
+-- 				boost_needed = boost_needed-1;
 
-			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_MARITIME then
-				local imp_canidates = {};
+-- 			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_MARITIME then
+-- 				local imp_canidates = {};
 				
-				if adj_ftype == FeatureTypes.FEATURE_MARSH and adj_ptype == PlotTypes.PLOT_LAND then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_POLDER.ID);
-				end
+-- 				if adj_ftype == FeatureTypes.FEATURE_MARSH and adj_ptype == PlotTypes.PLOT_LAND then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_POLDER.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_LAND then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TEPE.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_LAND then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TEPE.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_OCEAN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_WATER_POLDER.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_OCEAN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_WATER_POLDER.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_HILLS then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_MAORI_PA.ID);
-					-- table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TERRACE_FARM.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_HILLS then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_MAORI_PA.ID);
+-- 					-- table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TERRACE_FARM.ID);
+-- 				end
 
-				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
-				boost_needed = boost_needed-1;
+-- 				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
+-- 				boost_needed = boost_needed-1;
 
-			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_MERCANTILE then
-				local imp_canidates = {};
+-- 			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_MERCANTILE then
+-- 				local imp_canidates = {};
 				
-				if adj_ftype == FeatureTypes.FEATURE_FOREST or adj_ftype == FeatureTypes.FEATURE_JUNGLE then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_BRAZILWOOD_CAMP.ID);
-				end
+-- 				if adj_ftype == FeatureTypes.FEATURE_FOREST or adj_ftype == FeatureTypes.FEATURE_JUNGLE then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_BRAZILWOOD_CAMP.ID);
+-- 				end
 
-				if adj_ptype ~= PlotTypes.PLOT_OCEAN and  adj_ptype ~= PlotTypes.PLOT_MOUNTAIN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_CHATEAU.ID);
-				end
+-- 				if adj_ptype ~= PlotTypes.PLOT_OCEAN and  adj_ptype ~= PlotTypes.PLOT_MOUNTAIN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_CHATEAU.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_HILLS then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_SCOTTISH_CLAN_CASTLE.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_HILLS then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_SCOTTISH_CLAN_CASTLE.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_LAND or adj_ptype == PlotTypes.PLOT_OCEAN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_LANDMARK.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_LAND or adj_ptype == PlotTypes.PLOT_OCEAN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_LANDMARK.ID);
+-- 				end
 
 					
-				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
-				boost_needed = boost_needed-1;
+-- 				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
+-- 				boost_needed = boost_needed-1;
 			
-			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_RELIGIOUS then
-				local imp_canidates = {};
+-- 			elseif cs_trait == MinorCivTraitTypes.MINOR_CIV_TRAIT_RELIGIOUS then
+-- 				local imp_canidates = {};
 
-				if adj_ptype == PlotTypes.PLOT_HILLS then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
-				elseif adj_ptype == PlotTypes.PLOT_MOUNTAIN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_HILLS then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
+-- 				elseif adj_ptype == PlotTypes.PLOT_MOUNTAIN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TIBET.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_HILLS then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_MAORI_PA.ID);
-					-- table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TERRACE_FARM.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_HILLS then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_MC_MAORI_PA.ID);
+-- 					-- table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TERRACE_FARM.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_LAND then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TEPE.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_LAND then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_TEPE.ID);
+-- 				end
 
-				if adj_ptype == PlotTypes.PLOT_OCEAN then
-					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_AKSUM.ID);
-				end
+-- 				if adj_ptype == PlotTypes.PLOT_OCEAN then
+-- 					table.insert(imp_canidates, GameInfo.Improvements.IMPROVEMENT_AKSUM.ID);
+-- 				end
 					
-				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
-				boost_needed = boost_needed-1;
+-- 				adj_plot1:SetImprovementType(GetShuffledCopyOfTable(imp_canidates)[1]);
+-- 				boost_needed = boost_needed-1;
 
-			end
-		end
-	end
-end
+-- 			end
+-- 		end
+-- 	end
+-- end
 
 -- changed to add regional probe 
 
@@ -9806,6 +9298,8 @@ function AssignStartingPlots:MeasureStartPlacementFertilityOfLandmass(iAreaID, i
 	return areaFertilityTable, areaFertilityCount, plotCount
 end
 
+-- incorporates option for increasing coal nodes
+
 function AssignStartingPlots:GetMajorStrategicResourceQuantityValues()
 	-- This function determines quantity per tile for each strategic resource's major deposit size.
 	-- Note: scripts that cannot place Oil in the sea need to increase amounts on land to compensate.
@@ -9822,6 +9316,8 @@ function AssignStartingPlots:GetMajorStrategicResourceQuantityValues()
 	end
 	return uran_amt, horse_amt, oil_amt, iron_amt, coal_amt-1+beta_more_coal, alum_amt
 end
+
+-- function that severs tectonic pensinsulas that are too thin and adds all the shallows
 
 function ZonePinches()
 	local blocking_map = {}
@@ -9875,13 +9371,13 @@ function ZonePinches()
 			local i = xy_to_i(x, y, iW, iH)
 			local plot = Map.GetPlot(x, y)
 			if BETA_TECTONIC_LANDS[i] > 0 and plot:GetPlotType() == PlotTypes.PLOT_OCEAN and beta_using_lekmod and plot:GetTerrainType() == TerrainTypes.TERRAIN_COAST then
-				-- plot:SetImprovementType(GameInfo.Improvements.IMPROVEMENT_PONTOON_BRIDGE.ID)
-				-- plot:SetFeatureType(FeatureTypes.FEATURE_SHALLOWS) ---- THIS PRODUCES ICE
-				plot:SetFeatureType(25)   ---- THIS PRODUCES SHALLOWS
+				plot:SetFeatureType(FeatureTypes.FEATURE_SHALLOWS)
 			end
 		end
 	end
 end
+
+-- places shallow resource impacts
 
 function ZoneSets(asp)
 	for y = 0, iH - 1 do
@@ -10188,6 +9684,8 @@ function AssignStartingPlots:PlaceCityStateInRegion(city_state_number, region_nu
 		self.iNumCityStatesDiscarded = self.iNumCityStatesDiscarded + 1;
 	end
 end
+
+--caches CS locations instead of places them so that they can be placed after rerolls since they can't be unset
 ------------------------------------------------------------------------------
 function AssignStartingPlots:PlaceCityStates()
 	print("Map Generation - Choosing sites for City States");
@@ -10316,6 +9814,8 @@ function AssignStartingPlots:PlaceCityStates()
 		end
 	end
 end
+
+-- nested function to allow in-game error reporting
 
 function GenMap()
 
