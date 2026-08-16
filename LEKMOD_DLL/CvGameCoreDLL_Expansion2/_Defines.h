@@ -1218,6 +1218,8 @@ romania and brazil traits are double counted
 #define LEKMOD_FREE_RESOURCE_CITY_GRANT
 /// Water-walk improvements (pontoon / water polder): pillage/remove embark rules, no roads on them, ActsAsRoute tech gates, stacked land+naval combat restrictions
 #define LEKMOD_WATER_WALK_IMPROVEMENT_RULES
+/// Expose all Features DB rows on Lua FeatureTypes (FEATURE_SHALLOWS, ATOLL, NWs, etc.) instead of the hardcoded vanilla set
+#define LEKMOD_LUA_FEATURETYPES_FROM_DB
 // Change the Yield from Cities depending on thier CvArea. 
 #define LEKMOD_AREA_BASED_CITY_YIELD
 // Fix all the specificity in Beliefs

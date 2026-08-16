@@ -256,6 +256,10 @@ int CvLuaEnums::pRegister(lua_State* L)
 	//FeatureTypes
 	EnumStart(L, "FeatureTypes");
 	RegisterEnum(NO_FEATURE);
+#if defined(LEKMOD_LUA_FEATURETYPES_FROM_DB)
+	// Expose all Features DB rows (FEATURE_SHALLOWS, ATOLL, NWs, etc.)
+	RegisterDynamicEnums(L, "Features", "ID", "Type", "NUM_FEATURE_TYPES");
+#else
 	RegisterEnum(FEATURE_ICE);
 	RegisterEnum(FEATURE_JUNGLE);
 	RegisterEnum(FEATURE_MARSH);
@@ -264,6 +268,7 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(FEATURE_FOREST);
 	RegisterEnum(FEATURE_FALLOUT);
 	RegisterEnum(NUM_FEATURE_TYPES);
+#endif
 	EnumEnd(L);
 
 	//FogOfWarModeTypes
