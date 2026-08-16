@@ -3709,6 +3709,9 @@ CvBuildInfo::CvBuildInfo() :
 	m_bKill(false),
 	m_bRepair(false),
 	m_bRemoveRoute(false),
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	m_bRemoveWaterCrossing(false),
+#endif
 	//EAP Civ req to builds
 	m_bSpecificCivRequired(false),
 	m_eRequiredCivilization(NO_CIVILIZATION),
@@ -3799,6 +3802,12 @@ bool CvBuildInfo::IsRemoveRoute() const
 {
 	return m_bRemoveRoute;
 }
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+bool CvBuildInfo::IsRemoveWaterCrossing() const
+{
+	return m_bRemoveWaterCrossing;
+}
+#endif
 
 //EAP: Civ req builds
 //------------------------------------------------------------------------------
@@ -3886,6 +3895,9 @@ bool CvBuildInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_bKill = kResults.GetBool("Kill");
 	m_bRepair = kResults.GetBool("Repair");
 	m_bRemoveRoute = kResults.GetBool("RemoveRoute");
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	m_bRemoveWaterCrossing = kResults.GetBool("RemoveWaterCrossing");
+#endif
 	m_bWater = kResults.GetBool("Water");
 	m_bCanBeEmbarked = kResults.GetBool("CanBeEmbarked");
 	//EAP: Adding Civ req to builds as well
@@ -5340,6 +5352,10 @@ CvFeatureInfo::CvFeatureInfo() :
 	m_bNukeImmune(false),
 	m_bRough(false),
 	m_bNaturalWonder(false),
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	m_bAllowsWalkWater(false),
+	m_iStackedDomainDefensePenalty(0),
+#endif
 	m_iWorldSoundscapeScriptId(0),
 	m_iEffectProbability(0),
 	m_piYieldChange(NULL),
@@ -5511,6 +5527,18 @@ bool CvFeatureInfo::IsNaturalWonder() const
 	return m_bNaturalWonder;
 }
 //------------------------------------------------------------------------------
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+bool CvFeatureInfo::IsAllowsWalkWater() const
+{
+	return m_bAllowsWalkWater;
+}
+//------------------------------------------------------------------------------
+int CvFeatureInfo::GetStackedDomainDefensePenalty() const
+{
+	return m_iStackedDomainDefensePenalty;
+}
+#endif
+//------------------------------------------------------------------------------
 const char* CvFeatureInfo::getArtDefineTag() const
 {
 	return m_strArtDefineTag;
@@ -5646,6 +5674,25 @@ bool CvFeatureInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_bNukeImmune = kResults.GetBool("NukeImmune");
 	m_bRough = kResults.GetBool("Rough");
 	m_bNaturalWonder = kResults.GetBool("NaturalWonder");
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (kResults.HasColumn("AllowsWalkWater"))
+	{
+		m_bAllowsWalkWater = kResults.GetBool("AllowsWalkWater");
+	}
+	if (kResults.HasColumn("StackedDomainDefensePenalty"))
+	{
+		m_iStackedDomainDefensePenalty = kResults.GetInt("StackedDomainDefensePenalty");
+	}
+	// FEATURE_SHALLOWS: walk-water feature (works even if schema columns are absent)
+	if (GetType() != NULL && strcmp(GetType(), "FEATURE_SHALLOWS") == 0)
+	{
+		m_bAllowsWalkWater = true;
+		if (m_iStackedDomainDefensePenalty == 0)
+		{
+			m_iStackedDomainDefensePenalty = 35;
+		}
+	}
+#endif
 
 	m_strEffectType = kResults.GetText("EffectType");
 	m_strEffectTypeTag = kResults.GetText("EffectTypeTag");

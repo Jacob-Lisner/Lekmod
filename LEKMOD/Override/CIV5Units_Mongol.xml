@@ -32,6 +32,21 @@
 		<!-- END VERSION -->
 		<!-- Start v35 -->
 
+		<Row Tag="TXT_KEY_FEATURE_SHALLOWS">
+			<Text>Shallows</Text>
+		</Row>
+		<Row Tag="TXT_KEY_FEATURE_SHALLOWS_HELP">
+			<Text>Shallow water that land units can walk across without embarking. Costs 2 [ICON_MOVES] Movement to enter. Land and naval combat units stacked here suffer a combat penalty.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_FEATURE_SHALLOWS_TEXT">
+			<Text>Shallows are natural fords and shoals where the water is shallow enough for armies to cross on foot.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILD_REMOVE_WATER_CROSSING">
+			<Text>Remove Water Crossing</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILD_REMOVE_WATER_CROSSING_HELP">
+			<Text>Removes a pontoon bridge or water polder from this tile.</Text>
+		</Row>
 		<Row Tag="TXT_KEY_ATTACKMOD_DOMAIN">
 			<Text>Attack VS {1_DomainTypeName}</Text>
 		</Row>
@@ -17039,7 +17054,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_MESSENGER_GODS"> 
 			<Text>
-				+1 [ICON_RESEARCH] Science, +1 [ICON_GOLD] Gold, and +1 [ICON_PEACE] Faith in Cities with a [ICON_CONNECTED] City Connection
+				+2 [ICON_RESEARCH] Science and +1 [ICON_PEACE] Faith in Cities with a [ICON_CONNECTED] City Connection
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_MESSENGER_GODS_SHORT"> 
@@ -137929,7 +137944,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_SPICE"> 
 			<Text>
-				The first 3 coastal cities founded on a different landmass than the [ICON_CAPITAL] Capital each provide 2 unique Luxury Resources (and can never be razed).
+				The first 3 coastal cities founded on a different landmass than the [ICON_CAPITAL] Capital each provide 2 unique Luxury Resources and +2 [ICON_GOLD] Gold (and can never be razed).
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_SPICE_SHORT"> 

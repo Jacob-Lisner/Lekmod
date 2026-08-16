@@ -2112,6 +2112,8 @@
 		<Column name="Priority" type="integer" default="0" /> <!-- the order resources in a group are placed, starts at 0 -->
 		<Column name="CycleGroup" type="boolean" default="false" /> <!-- cycle through the group, or not! -->
 	</Table>
+
+	<!-- V35: no longer places the resource under the city as a tile and grants it to the city itself -->
 	<Trait_FreeResourceCities>
 		<Delete />
 		<Row>
@@ -2156,6 +2158,22 @@
 			<ClaimPlot>true</ClaimPlot>
 		</Row>
 	</Trait_FreeResourceCities>
+
+	<!-- v35: now that resources are no longer placed on a tile, this table exist to still add custom yields to cities if desired-->
+	<Table name="Trait_FreeResourceCityYieldChanges">
+		<Column name="TraitType" type="text" reference="Traits(Type)" />
+		<Column name="YieldType" type="text" reference="Yields(Type)" />
+		<Column name="Yield" type="integer" />
+	</Table>
+
+	<Trait_FreeResourceCityYieldChanges>
+		<Delete />
+		<Row>
+			<TraitType>TRAIT_SPICE</TraitType>
+			<YieldType>YIELD_GOLD</YieldType>
+			<Yield>2</Yield>
+		</Row>
+	</Trait_FreeResourceCityYieldChanges>
 
 	<Table name="Trait_GoldenAgeYieldThresholdBonus">
 		<Column name="TraitType" type="text" reference="Traits(Type)" />
@@ -16526,6 +16544,11 @@
 			<TileType>Unit</TileType> 
 			<Asset>SV_Worker.dds</Asset> 
 		</Row>
+		<Row>
+			<StrategicViewType>ART_DEF_FEATURE_FORD</StrategicViewType>
+			<TileType>Feature</TileType>
+			<Asset>SV_Shallows.dds</Asset>
+		</Row>
 	</ArtDefine_StrategicView> 
 
 	<ArtDefine_UnitInfoMemberInfos>
@@ -30684,16 +30707,11 @@
 		<Row> 
 			<BeliefType>BELIEF_MESSENGER_GODS</BeliefType> 
 			<YieldType>YIELD_SCIENCE</YieldType> 
-			<Yield>1</Yield> 
+			<Yield>2</Yield> 
 		</Row>
 		<Row> 
 			<BeliefType>BELIEF_MESSENGER_GODS</BeliefType> 
 			<YieldType>YIELD_FAITH</YieldType> 
-			<Yield>1</Yield> 
-		</Row>
-		<Row> 
-			<BeliefType>BELIEF_MESSENGER_GODS</BeliefType> 
-			<YieldType>YIELD_GOLD</YieldType> 
 			<Yield>1</Yield> 
 		</Row>
 	</Belief_YieldChangeTradeRoute> 
@@ -47086,6 +47104,7 @@
 		<Column name="ShowInTechTree" type="boolean" default="true" />
 		<Column name="SpecificCivRequired" type="boolean" default="false" />
 		<Column name="CivilizationType" type="text" default="NULL" />
+		<Column name="RemoveWaterCrossing" type="boolean" default="false" />
 	</Table>
 	<Builds>
 		<Delete />
@@ -47842,6 +47861,19 @@
 			<IconIndex>33</IconIndex>
 			<IconAtlas>UNIT_ACTION_ATLAS</IconAtlas>
 		</Row>
+		<Row>
+			<Type>BUILD_REMOVE_WATER_CROSSING</Type>
+			<Description>TXT_KEY_BUILD_REMOVE_WATER_CROSSING</Description>
+			<Help>TXT_KEY_BUILD_REMOVE_WATER_CROSSING_HELP</Help>
+			<Water>true</Water>
+			<Time>300</Time>
+			<RemoveWaterCrossing>true</RemoveWaterCrossing>
+			<EntityEvent>ENTITY_EVENT_CHOP</EntityEvent>
+			<HotKey>KB_R</HotKey>
+			<OrderPriority>98</OrderPriority>
+			<IconIndex>39</IconIndex>
+			<IconAtlas>UNIT_ACTION_ATLAS</IconAtlas>
+	</Row>
 	</Builds>
 
 	<Table name="Calendars">
@@ -103761,6 +103793,14 @@
 			<FeatureType>FEATURE_ATOLL</FeatureType> 
 			<TerrainType>TERRAIN_OCEAN</TerrainType> 
 		</Row>
+		<Row>
+			<FeatureType>FEATURE_SHALLOWS</FeatureType>
+			<TerrainType>TERRAIN_COAST</TerrainType>
+		</Row>
+		<Row>
+			<FeatureType>FEATURE_SHALLOWS</FeatureType>
+			<TerrainType>TERRAIN_OCEAN</TerrainType>
+		</Row>
 	</Feature_TerrainBooleans> 
 
 	<Table name="Feature_YieldChanges">
@@ -105015,6 +105055,26 @@
 			<AdvancedStartRemoveCost>0</AdvancedStartRemoveCost> 
 			<PortraitIndex>2</PortraitIndex> 
 			<IconAtlas>EXPANSION2_WONDER_ATLAS</IconAtlas> 
+		</Row>
+		<Row>
+			<Type>FEATURE_SHALLOWS</Type>
+			<Description>TXT_KEY_FEATURE_SHALLOWS</Description>
+			<Civilopedia>TXT_KEY_FEATURE_SHALLOWS_TEXT</Civilopedia>
+			<Help>TXT_KEY_FEATURE_SHALLOWS_HELP</Help>
+			<ArtDefineTag>ART_DEF_FEATURE_FORD</ArtDefineTag>
+			<Movement>2</Movement>
+			<SeeThrough>0</SeeThrough>
+			<Defense>-15</Defense>
+			<InfluenceCost>-1</InfluenceCost>
+			<Impassable>false</Impassable>
+			<NoCity>true</NoCity>
+			<NoImprovement>true</NoImprovement>
+			<VisibleAlways>false</VisibleAlways>
+			<NukeImmune>true</NukeImmune>
+			<NaturalWonder>false</NaturalWonder>
+			<Rough>false</Rough>
+			<PortraitIndex>1</PortraitIndex>
+			<IconAtlas>NEW_TERRAIN_ATLAS_DLC</IconAtlas>
 		</Row>
 	</Features> 
 
@@ -136391,6 +136451,10 @@
 		<Column name="NoTwoAdjacent" type="boolean" default="false" />
 		<Column name="AdjacentLuxury" type="boolean" default="false" />
 		<Column name="AllowsWalkWater" type="boolean" default="false" />
+		<Column name="ActsAsRoute" type="boolean" default="false" />
+		<Column name="ActsAsRouteTech" type="text" reference="Technologies(Type)" />
+		<Column name="ActsAsRailroadTech" type="text" reference="Technologies(Type)" />
+		<Column name="StackedDomainDefensePenalty" type="integer" default="0" />
 		<Column name="AllowsSailLand" type="boolean" default="false" />
 		<Column name="CultureAdjacentSameType" type="integer" default="0" />
 		<Column name="TilesPerGoody" type="integer" default="0" />
@@ -136862,7 +136926,11 @@
 			<BuildableOnResources>true</BuildableOnResources>
 			<OutsideBorders>true</OutsideBorders>
 			<AllowsWalkWater>true</AllowsWalkWater>
-			<DefenseModifierGlobal>-75</DefenseModifierGlobal>
+			<ActsAsRoute>true</ActsAsRoute>
+			<ActsAsRouteTech>TECH_ENGINEERING</ActsAsRouteTech>
+			<ActsAsRailroadTech>TECH_RAILROAD</ActsAsRailroadTech>
+			<StackedDomainDefensePenalty>35</StackedDomainDefensePenalty>
+			<DefenseModifierGlobal>-15</DefenseModifierGlobal>
 			<RequiresXAdjacentLand>2</RequiresXAdjacentLand>
 			<PortraitIndex>0</PortraitIndex>
 			<IconAtlas>CIVIL_WAR_IMPROVEMENT_ICON_ATLAS</IconAtlas>
@@ -255994,6 +256062,10 @@
 			<UnitType>UNIT_WORKER</UnitType> 
 			<BuildType>BUILD_REMOVE_ROUTE</BuildType> 
 		</Row>
+		<Row> 
+			<UnitType>UNIT_WORKER</UnitType> 
+			<BuildType>BUILD_REMOVE_WATER_CROSSING</BuildType> 
+		</Row>
 		<!-- Shared Actions -->
 		<Row> 
 			<UnitType>UNIT_WORKER</UnitType> 
@@ -256332,6 +256404,10 @@
 		<Row> 
 			<UnitType>UNIT_AUSTRALIA_WORKER</UnitType> 
 			<BuildType>BUILD_REMOVE_ROUTE</BuildType> 
+		</Row>
+		<Row> 
+			<UnitType>UNIT_AUSTRALIA_WORKER</UnitType> 
+			<BuildType>BUILD_REMOVE_WATER_CROSSING</BuildType> 
 		</Row>
 		<!-- Shared Actions -->
 		<Row> 

@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -118,6 +118,12 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_bAllowsSailLand(false),
 	m_bCreatedByGreatPerson(false),
 	m_bSpecificCivRequired(false),
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	m_bActsAsRoute(false),
+	m_eActsAsRouteTech(NO_TECH),
+	m_eActsAsRailroadTech(NO_TECH),
+	m_iStackedDomainDefensePenalty(0),
+#endif
 	m_eImprovementUsageType(IMPROVEMENTUSAGE_BASIC),
 	m_eRequiredCivilization(NO_CIVILIZATION),
 	m_iWorldSoundscapeScriptId(0),
@@ -306,6 +312,16 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_bAllowsSailLand = kResults.GetBool("AllowsSailLand"); // from Izy
 	m_bCreatedByGreatPerson = kResults.GetBool("CreatedByGreatPerson");
 	m_bSpecificCivRequired = kResults.GetBool("SpecificCivRequired");
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	m_bActsAsRoute = kResults.GetBool("ActsAsRoute");
+	m_iStackedDomainDefensePenalty = kResults.GetInt("StackedDomainDefensePenalty");
+	{
+		const char* szRouteTech = kResults.GetText("ActsAsRouteTech");
+		m_eActsAsRouteTech = (szRouteTech != NULL) ? (TechTypes)GC.getInfoTypeForString(szRouteTech, true) : NO_TECH;
+		const char* szRailTech = kResults.GetText("ActsAsRailroadTech");
+		m_eActsAsRailroadTech = (szRailTech != NULL) ? (TechTypes)GC.getInfoTypeForString(szRailTech, true) : NO_TECH;
+	}
+#endif
 	m_iResourceExtractionMod = kResults.GetInt("ResourceExtractionMod");
 	m_iLuxuryCopiesSiphonedFromMinor = kResults.GetInt("LuxuryCopiesSiphonedFromMinor");
 
@@ -1019,6 +1035,24 @@ bool CvImprovementEntry::IsAllowsSailLand() const // from Izy
 {
     return m_bAllowsSailLand;
 }
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+bool CvImprovementEntry::IsActsAsRoute() const
+{
+	return m_bActsAsRoute;
+}
+TechTypes CvImprovementEntry::GetActsAsRouteTech() const
+{
+	return m_eActsAsRouteTech;
+}
+TechTypes CvImprovementEntry::GetActsAsRailroadTech() const
+{
+	return m_eActsAsRailroadTech;
+}
+int CvImprovementEntry::GetStackedDomainDefensePenalty() const
+{
+	return m_iStackedDomainDefensePenalty;
+}
+#endif
 /// Does this improvement need to be built inside or adjacent to a civ's borders?
 bool CvImprovementEntry::IsInAdjacentFriendly() const
 {

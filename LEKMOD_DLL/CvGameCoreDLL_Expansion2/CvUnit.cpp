@@ -2714,6 +2714,9 @@ bool CvUnit::canEnterTerrain(const CvPlot& enterPlot, byte bMoveFlags) const
 	bool bAllowsWalkWater = enterPlot.IsAllowsWalkWater();
 #ifdef AUI_UNIT_FIX_HOVERING_EMBARK
 	bAllowsWalkWater = bAllowsWalkWater || (IsHoveringUnit() && enterPlot.isWater() && enterPlot.getTerrainType() != GC.getDEEP_WATER_TERRAIN());
+#elif defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+	// Hover never embarks; may enter any water (including deep) unembarked
+	bAllowsWalkWater = bAllowsWalkWater || (IsHoveringUnit() && enterPlot.isWater());
 #endif
 	if (enterPlot.isWater() && (bMoveFlags & CvUnit::MOVEFLAG_STAY_ON_LAND) && !bAllowsWalkWater)
 	{
@@ -2810,13 +2813,15 @@ bool CvUnit::canEnterTerrain(const CvPlot& enterPlot, byte bMoveFlags) const
 					}
 				}
 #ifndef AUI_UNIT_FIX_HOVERING_EMBARK
-				// Does the unit hover above coast?
+				// Does the unit hover above water?
 				else if(IsHoveringUnit())
 				{
+#if !defined(LEKMOD_HELICOPTER_EMBARK_FIX)
 					if(enterPlot.getTerrainType() == GC.getDEEP_WATER_TERRAIN())
 					{
 						return false;
 					}
+#endif
 				}
 #endif
 				else
@@ -2850,13 +2855,15 @@ bool CvUnit::canEnterTerrain(const CvPlot& enterPlot, byte bMoveFlags) const
 			{
 				if(enterPlot.isWater() && !canMoveAllTerrain() && !enterPlot.isCity())
 				{
-					// Does the unit hover above coast?
+					// Does the unit hover above water?
 					if(IsHoveringUnit())
 					{
+#if !defined(LEKMOD_HELICOPTER_EMBARK_FIX)
 						if(enterPlot.getTerrainType() == GC.getDEEP_WATER_TERRAIN())
 						{
 							return false;
 						}
+#endif
 					}
 					else if(!isHuman() || (plot() && plot()->isWater()) || !canLoad(enterPlot))
 					{
@@ -3188,7 +3195,12 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 				return false;
 			}
 
-			if(getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && !plot.IsAllowsWalkWater())
+			if(getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && !plot.IsAllowsWalkWater()
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+				// Hover fights on all water unembarked (including deep ocean)
+				&& !IsHoveringUnit()
+#endif
+				)
 			{
 #if defined(v35_TRAITIFY)
 				if(!GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedUnitsFullStrength())
@@ -3557,6 +3569,8 @@ bool CvUnit::canMoveOrAttackIntoAttackOnly(const CvPlot& plot, byte bMoveFlags) 
 
 #ifdef AUI_UNIT_FIX_HOVERING_EMBARK
 			if (getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && (!IsHoveringUnit() || plot.getTerrainType() == GC.getDEEP_WATER_TERRAIN()) && !plot.IsAllowsWalkWater())
+#elif defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+			if (getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && !IsHoveringUnit() && !plot.IsAllowsWalkWater())
 #else
 			if (getDomainType() == DOMAIN_LAND && plot.isWater() && !canMoveAllTerrain() && !plot.IsAllowsWalkWater())
 #endif
@@ -3943,7 +3957,7 @@ void CvUnit::move(CvPlot& targetPlot, bool bShow)
 
 		if(pOldPlot->isWater())  // moving from water to the land
 		{
-			if(isEmbarked()) // disembark check first
+			if(isEmbarked()) // disembark check first — always leave the boat onto walk-water
 			{
 				if (m_unitMoveLocs.size())	// If we have some queued moves, execute them now, so that the disembark is done at the proper location visually
 					PublishQueuedVisualizationMoves();
@@ -3951,9 +3965,17 @@ void CvUnit::move(CvPlot& targetPlot, bool bShow)
 				disembark(pOldPlot);
 				if (targetPlot.IsAllowsWalkWater())
 				{
-					//need to add  something for denmark..
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+					// Match ConsumesAllMoves / CostsOnlyOne: Denmark pays 1 MP, everyone else ends turn
+					if (!GET_PLAYER(getOwner()).GetPlayerTraits()->IsEmbarkedToLandFlatCost())
+					{
+						finishMoves();
+						bShouldDeductCost = false;
+					}
+#else
 					finishMoves();
-				}		
+#endif
+				}
 			}
 			if (!targetPlot.IsAllowsWalkWater() && targetPlot.isWater() && pOldPlot->IsAllowsWalkWater())
 				//embark when you came from a water tile you can walk on
@@ -5616,6 +5638,13 @@ bool CvUnit::canDisembark(const CvPlot* pPlot) const
 bool CvUnit::canEmbarkOnto(const CvPlot& originPlot, const CvPlot& targetPlot, bool bOverrideEmbarkedCheck /* = false */, bool bIsDestination /* = false */) const
 {
 	VALIDATE_OBJECT
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+	// Hover units never embark (any terrain)
+	if (IsHoveringUnit())
+	{
+		return false;
+	}
+#endif
 	if(isEmbarked() && !bOverrideEmbarkedCheck)
 	{
 		return false;
@@ -5664,6 +5693,12 @@ bool CvUnit::canDisembarkOnto(const CvPlot& originPlot, const CvPlot& targetPlot
 	// This version is useful if the unit is not actually next to the plot yet -KS
 
 	VALIDATE_OBJECT
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+	if (IsHoveringUnit())
+	{
+		return false;
+	}
+#endif
 	if(getDomainType() != DOMAIN_LAND)
 	{
 		return false;
@@ -5700,6 +5735,12 @@ bool CvUnit::canDisembarkOnto(const CvPlot& originPlot, const CvPlot& targetPlot
 bool CvUnit::canDisembarkOnto(const CvPlot& targetPlot, bool bIsDestination /* = false */) const
 {
 	VALIDATE_OBJECT
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+	if (IsHoveringUnit())
+	{
+		return false;
+	}
+#endif
 	if(getDomainType() != DOMAIN_LAND)
 	{
 		return false;
@@ -17310,7 +17351,15 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 										// Some units can't capture civilians. Embarked units are also not captured, they're simply killed. And some aren't a type that gets captured.
 										// slewis - removed the capture clause so that helicopter gunships could capture workers. The promotion says that No Capture only effects cities.
 										//if(!isNoCapture() && (!pLoopUnit->isEmbarked() || pLoopUnit->getUnitInfo().IsCaptureWhileEmbarked()) && pLoopUnit->getCaptureUnitType(GET_PLAYER(pLoopUnit->getOwner()).getCivilizationType()) != NO_UNIT)
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+										// Unembarked civilians on an intact pontoon capture normally.
+										// Also allow capture if somehow still embarked on walk-water (safety).
+										const bool bCaptureDespiteEmbark =
+											pLoopUnit->isEmbarked() && pNewPlot != NULL && pNewPlot->IsAllowsWalkWater();
+										if((!pLoopUnit->isEmbarked() || pLoopUnit->getUnitInfo().IsCaptureWhileEmbarked() || bCaptureDespiteEmbark) && pLoopUnit->getCaptureUnitType(GET_PLAYER(pLoopUnit->getOwner()).getCivilizationType()) != NO_UNIT)
+#else
 										if((!pLoopUnit->isEmbarked() || pLoopUnit->getUnitInfo().IsCaptureWhileEmbarked()) && pLoopUnit->getCaptureUnitType(GET_PLAYER(pLoopUnit->getOwner()).getCivilizationType()) != NO_UNIT)
+#endif
 										{
 											bDoCapture = true;
 
@@ -23473,6 +23522,15 @@ bool CvUnit::canRangeStrike() const
 		return false;
 	}
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Hide ranged attack UI when stacked land+naval on walk-water (cannot fire)
+	CvPlot* pPlot = plot();
+	if (pPlot && pPlot->IsAllowsWalkWater() && pPlot->HasStackedLandAndNavalUnits())
+	{
+		return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -23563,6 +23621,14 @@ bool CvUnit::canRangeStrikeAt(int iX, int iY, bool bNeedWar, bool bNoncombatAllo
 	{
 		return false;
 	}
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	CvPlot* pFromPlot = plot();
+	if (pFromPlot && pFromPlot->IsAllowsWalkWater() && pFromPlot->HasStackedLandAndNavalUnits())
+	{
+		return false;
+	}
+#endif
 
 	if(!canEverRangeStrikeAt(iX, iY))
 	{
@@ -24553,6 +24619,18 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 	{
 		if(!isOutOfAttacks() && (!IsCityAttackOnly() || pDestPlot->isEnemyCity(*this) || !pDestPlot->getBestDefender(NO_PLAYER)))
 		{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			// Stacked walk-water (or other) attack lock: only abort real attacks.
+			// Peaceful 1-tile moves must fall through (return false) so UnitPathTo can move.
+			if (getDomainType() != DOMAIN_AIR && !IsCanAttackWithMoveNow())
+			{
+				if (pDestPlot->isEnemyCity(*this) || pDestPlot->getVisibleEnemyDefender(getOwner()) != NULL)
+				{
+					return true;
+				}
+				return false;
+			}
+#endif
 			// don't allow an attack if we already have one
 			if(isFighting() || pDestPlot->isFighting())
 			{
@@ -25382,6 +25460,14 @@ bool CvUnit::IsCanAttackWithMoveNow() const
 		return iCount <= 1;	// Just us?  Then it is ok.
 	}
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Mixed land + naval stack on water-walk tiles may not initiate attacks from the tile
+	if (pkPlot->IsAllowsWalkWater() && pkPlot->HasStackedLandAndNavalUnits())
+	{
+		return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -25764,7 +25850,9 @@ bool CvUnit::PlotValid(CvPlot* pPlot) const
 		break;
 
 	case DOMAIN_LAND:
-#ifdef AUI_UNIT_FIX_HOVERING_EMBARK
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+		if (pPlot->getArea() == getArea() || canMoveAllTerrain() || pPlot->IsAllowsWalkWater() || (IsHoveringUnit() && pPlot->isWater()))
+#elif defined(AUI_UNIT_FIX_HOVERING_EMBARK)
 		if (pPlot->getArea() == getArea() || canMoveAllTerrain() || pPlot->IsAllowsWalkWater() || (IsHoveringUnit() && pPlot->isWater() && pPlot->getTerrainType() != GC.getDEEP_WATER_TERRAIN()))
 #else
 		if(pPlot->getArea() == getArea() || canMoveAllTerrain() || pPlot->IsAllowsWalkWater())

@@ -1123,6 +1123,9 @@ public:
 	bool isKill() const;
 	bool isRepair() const;
 	bool IsRemoveRoute() const;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool IsRemoveWaterCrossing() const;
+#endif
 #ifdef LEKMOD_BUILD_CIV_REQ
 	//EAP Civ req builds
 	bool IsSpecificCivRequired() const;
@@ -1162,6 +1165,9 @@ protected:
 	bool m_bKill;
 	bool m_bRepair;
 	bool m_bRemoveRoute;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool m_bRemoveWaterCrossing;
+#endif
 	//EAP civ req builds
 	bool m_bSpecificCivRequired;
 
@@ -1609,6 +1615,10 @@ public:
 	bool isNukeImmune() const;
 	bool IsRough() const;
 	bool IsNaturalWonder() const;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool IsAllowsWalkWater() const;
+	int GetStackedDomainDefensePenalty() const;
+#endif
 
 	const char* getArtDefineTag() const;
 	void setArtDefineTag(const char* szTag);
@@ -1668,6 +1678,10 @@ protected:
 	bool m_bNukeImmune;
 	bool m_bRough;
 	bool m_bNaturalWonder;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool m_bAllowsWalkWater;
+	int m_iStackedDomainDefensePenalty;
+#endif
 
 	// Set each time the game is started
 	bool m_bClearable;

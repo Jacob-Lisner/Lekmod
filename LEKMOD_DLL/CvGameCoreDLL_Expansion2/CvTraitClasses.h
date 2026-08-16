@@ -329,6 +329,10 @@ public:
 	int GetUnimprovedFeatureYieldChanges(FeatureTypes eIndex1, YieldTypes eIndex2) const;
 	const std::vector<FreeResourceCities>& GetFreeResourceCities() const { return m_vFreeResourceCities; }
 
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	int GetFreeResourceCityYieldChange(int i) const;
+#endif
+
 #if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
 	const std::vector<GoldenAgeYieldThreshold>& GetGoldenAgeYieldThresholds() const { return m_sGoldenAgeYieldThresholds; }
 #endif
@@ -615,6 +619,9 @@ protected:
 	std::vector<GoldenAgeYieldThreshold> m_sGoldenAgeYieldThresholds;
 #endif
 	std::vector<FreeResourceCities> m_vFreeResourceCities;
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	int* m_piFreeResourceCityYieldChange;
+#endif
 	std::vector<bool> m_abNoTrainUnitClass;
 
 #ifdef LEKMOD_TRAIT_NO_BUILD_IMPROVEMENTS
@@ -1305,6 +1312,9 @@ public:
 	const std::vector<FreeResourceCities>& GetFreeResourceCities() const { return m_vFreeResourceCities; }
 	std::vector<std::pair<int, int> >& GetUsedGroupAreas() { return m_vUsedGroupAreas; }
 	std::vector<std::pair<int, int> >& GetGroupPriority() { return m_vGroupPriority; }
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	int GetFreeResourceCityYieldChange(YieldTypes eYield) const;
+#endif
 #if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
 	const std::vector<GoldenAgeYieldThreshold>& CvPlayerTraits::GetGoldenAgeYieldThresholdBonus() const { return m_sGoldenAgeYieldThreshold; }
 #endif
@@ -1688,6 +1698,9 @@ private:
 	std::vector<FreeResourceCities> m_vFreeResourceCities;
 	std::vector<std::pair<int, int> > m_vUsedGroupAreas;
 	std::vector<std::pair<int, int> > m_vGroupPriority;
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	int m_aiFreeResourceCityYieldChange[NUM_YIELD_TYPES];
+#endif
 #if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
 	std::vector<GoldenAgeYieldThreshold> m_sGoldenAgeYieldThreshold;
 #endif

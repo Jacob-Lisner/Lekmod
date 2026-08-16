@@ -730,11 +730,16 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 
 			if (pRule->m_bCity)
 			{
+#ifdef LEKMOD_FREE_RESOURCE_CITY_GRANT
+				// Free copies tied to the city (like buildings), do not overwrite the city-tile resource.
+				GrantFreeResourceFromTrait(pRule->m_eResource, pRule->m_iResourceQuantity);
+#else
 				// Resource is placed under the city and overrides any existing resource.
 				// Cities already claim their founding plot, so no claim check is needed here.
 				plot()->setResourceType(NO_RESOURCE, 0);
 				plot()->setResourceType(pRule->m_eResource, pRule->m_iResourceQuantity);
 				plot()->updateYield();
+#endif
 			}
 			else
 			{
@@ -1273,6 +1278,9 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 		m_aiResourceYieldRateModifier.setAt(iI, 0);
 		m_aiExtraSpecialistYield.setAt(iI, 0);
 		m_aiProductionToYieldModifier.setAt(iI, 0);
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+		m_aiYieldFromFreeResourceCity[iI] = 0;
+#endif
 	}
 
 	m_aiDomainFreeExperience.resize(NUM_DOMAIN_TYPES);
@@ -1349,6 +1357,12 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 			m_paiFreeResource.setAt(iI, 0);
 			m_paiNumResourcesLocal.setAt(iI, 0);
 		}
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+		for (iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		{
+			m_aiYieldFromFreeResourceCity[iI] = 0;
+		}
+#endif
 
 #ifdef AUI_WARNING_FIXES
 		uint iNumProjectInfos = GC.getNumProjectInfos();
@@ -1854,6 +1868,21 @@ void CvCity::PreKill()
 		}
 	}
 
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	// Free resources granted by Trait_FreeResourceCities (City=true) — revoke from current owner
+	{
+		const int iNumResources = GC.getNumResourceInfos();
+		for (int iResource = 0; iResource < iNumResources; ++iResource)
+		{
+			const int iQty = GetFreeResource((ResourceTypes)iResource);
+			if (iQty != 0)
+			{
+				GET_PLAYER(getOwner()).changeNumResourceTotal((ResourceTypes)iResource, -iQty, false);
+			}
+		}
+	}
+#endif
+
 	if(GET_PLAYER(getOwner()).isMinorCiv())
 	{
 		GET_PLAYER(getOwner()).GetMinorCivAI()->DoRemoveStartingResources(plot());
@@ -2171,9 +2200,6 @@ void CvCity::doTurn()
 	setDrafted(false);
 	setMadeAttack(false);
 	GetCityBuildings()->SetSoldBuildingThisTurn(false);
-#if defined(LEKMOD_v34) // Move WLTKD to happen before yield calculations
-	DoTestResourceDemanded();
-#endif
 #if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
 	SetNumThingsPurchasedThisTurn(0);
 #endif
@@ -2232,11 +2258,13 @@ void CvCity::doTurn()
 				}
 			}
 		}
-#if !defined(LEKMOD_v34)
-#ifndef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
+#if defined(LEKMOD_v34)
+		// King Day ends after growth so the final WLTKD turn still gets its 25% growth bonus
+		// (same ordering idea as yields before trade routes / deals expire under LEKMOD_v34)
+		DoTestResourceDemanded();
+#elif !defined(AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE)
 		// Following function also looks at WLTKD stuff
 		DoTestResourceDemanded();
-#endif
 #endif
 		// Culture accumulation
 #ifdef AUI_YIELDS_APPLIED_AFTER_TURN_NOT_BEFORE
@@ -12860,6 +12888,114 @@ void CvCity::ChangeBaseYieldRateFromMisc(YieldTypes eIndex, int iChange)
 	}
 }
 
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+//	--------------------------------------------------------------------------------
+int CvCity::GetFreeResource(ResourceTypes eResource) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eResource >= 0, "eResource expected to be >= 0");
+	CvAssertMsg(eResource < GC.getNumResourceInfos(), "eResource expected to be < GC.getNumResourceInfos()");
+	if (eResource < 0 || eResource >= (ResourceTypes)m_paiFreeResource.size())
+	{
+		return 0;
+	}
+	return m_paiFreeResource[eResource];
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::ChangeFreeResource(ResourceTypes eResource, int iChange)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eResource >= 0, "eResource expected to be >= 0");
+	CvAssertMsg(eResource < GC.getNumResourceInfos(), "eResource expected to be < GC.getNumResourceInfos()");
+	if (iChange == 0 || eResource < 0 || eResource >= (ResourceTypes)m_paiFreeResource.size())
+	{
+		return;
+	}
+
+	m_paiFreeResource.setAt(eResource, m_paiFreeResource[eResource] + iChange);
+	GET_PLAYER(getOwner()).changeNumResourceTotal(eResource, iChange, false);
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::GrantFreeResourceFromTrait(ResourceTypes eResource, int iQuantity)
+{
+	VALIDATE_OBJECT
+	if (eResource == NO_RESOURCE || iQuantity == 0)
+	{
+		return;
+	}
+
+	int iHadFree = 0;
+	const int iNumResources = GC.getNumResourceInfos();
+	for (int i = 0; i < iNumResources; ++i)
+	{
+		iHadFree += GetFreeResource((ResourceTypes)i);
+	}
+
+	ChangeFreeResource(eResource, iQuantity);
+
+	// Yields from Trait_FreeResourceCityYieldChanges apply once per city that receives a City=true grant
+	if (iHadFree == 0)
+	{
+		CvPlayerTraits* pTraits = GET_PLAYER(getOwner()).GetPlayerTraits();
+		if (pTraits)
+		{
+			for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+			{
+				const int iYieldChange = pTraits->GetFreeResourceCityYieldChange((YieldTypes)iYield);
+				if (iYieldChange != 0)
+				{
+					ChangeYieldFromFreeResourceCity((YieldTypes)iYield, iYieldChange);
+				}
+			}
+		}
+	}
+
+	if (plot())
+	{
+		plot()->updateYield();
+	}
+}
+
+//	--------------------------------------------------------------------------------
+int CvCity::GetYieldFromFreeResourceCity(YieldTypes eIndex) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
+	if (eIndex < 0 || eIndex >= NUM_YIELD_TYPES)
+	{
+		return 0;
+	}
+	return m_aiYieldFromFreeResourceCity[eIndex];
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::ChangeYieldFromFreeResourceCity(YieldTypes eIndex, int iChange)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
+	if (iChange != 0 && eIndex >= 0 && eIndex < NUM_YIELD_TYPES)
+	{
+		m_aiYieldFromFreeResourceCity[eIndex] += iChange;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::SetYieldFromFreeResourceCity(YieldTypes eIndex, int iValue)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
+	if (eIndex >= 0 && eIndex < NUM_YIELD_TYPES)
+	{
+		m_aiYieldFromFreeResourceCity[eIndex] = iValue;
+	}
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 /// Base yield rate from Religion
 int CvCity::GetBaseYieldRateFromReligion(YieldTypes eIndex) const
@@ -18389,6 +18525,12 @@ void CvCity::read(FDataStream& kStream)
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNoResource.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiFreeResource.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourcesLocal.dirtyGet());
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+	{
+		kStream >> m_aiYieldFromFreeResourceCity[iYield];
+	}
+#endif
 
 	kStream >> m_paiSpecialistProduction;
 	kStream >> m_paiProjectProduction;
@@ -18739,6 +18881,12 @@ void CvCity::write(FDataStream& kStream) const
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiNoResource);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiFreeResource);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiNumResourcesLocal);
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+	{
+		kStream << m_aiYieldFromFreeResourceCity[iYield];
+	}
+#endif
 
 	kStream << m_paiSpecialistProduction;
 	kStream << m_paiProjectProduction;

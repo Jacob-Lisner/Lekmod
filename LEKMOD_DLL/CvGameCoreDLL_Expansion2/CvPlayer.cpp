@@ -2653,6 +2653,20 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift, bool bP
 	UnitTypes eAcquiredCitySettlerUnit = pOldCity->SettlerUnit();
 #endif
 
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	const int iNumResourceInfosForFreeGrant = GC.getNumResourceInfos();
+	std::vector<int> paiFreeResourceCityGrant(iNumResourceInfosForFreeGrant, 0);
+	int aiYieldFromFreeResourceCity[NUM_YIELD_TYPES] = {};
+	for (int iResource = 0; iResource < iNumResourceInfosForFreeGrant; ++iResource)
+	{
+		paiFreeResourceCityGrant[iResource] = pOldCity->GetFreeResource((ResourceTypes)iResource);
+	}
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+	{
+		aiYieldFromFreeResourceCity[iYield] = pOldCity->GetYieldFromFreeResourceCity((YieldTypes)iYield);
+	}
+#endif
+
 	// Traded cities between humans don't heal (an exploit would be to trade a city back and forth between teammates to get an instant heal.)
 	if(!bGift || !isHuman() || !GET_PLAYER(pOldCity->getOwner()).isHuman())
 	{
@@ -2913,6 +2927,28 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift, bool bP
 	if (!bIsMinorCivBuyout)
 	{
 		pNewCity->SetSettlerUnit(eAcquiredCitySettlerUnit);
+	}
+#endif
+
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	if (!bIsMinorCivBuyout)
+	{
+		for (int iResource = 0; iResource < iNumResourceInfosForFreeGrant; ++iResource)
+		{
+			const int iQty = paiFreeResourceCityGrant[iResource];
+			if (iQty != 0)
+			{
+				pNewCity->ChangeFreeResource((ResourceTypes)iResource, iQty);
+			}
+		}
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+		{
+			pNewCity->SetYieldFromFreeResourceCity((YieldTypes)iYield, aiYieldFromFreeResourceCity[iYield]);
+		}
+		if (pNewCity->plot())
+		{
+			pNewCity->plot()->updateYield();
+		}
 	}
 #endif
 

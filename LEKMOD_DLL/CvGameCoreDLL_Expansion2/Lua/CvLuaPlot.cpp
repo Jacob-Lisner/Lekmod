@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -33,6 +33,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetTerrainType);
 	Method(IsRiver);
 	Method(IsWater);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	Method(IsAllowsWalkWater);
+#endif
 	Method(SetFeatureType);
 	Method(SetTerrainType);
 
@@ -339,6 +342,13 @@ int CvLuaPlot::lIsWater(lua_State* L)
 
 	return 1;
 }
+//------------------------------------------------------------------------------
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+int CvLuaPlot::lIsAllowsWalkWater(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::IsAllowsWalkWater);
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaPlot::lSetFeatureType(lua_State* L)
 {

@@ -47,6 +47,11 @@ protected:
 	//! (LUA) CvPlot::IsWater.
 	static int lIsWater(lua_State* L);
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	//! (LUA) CvPlot::IsAllowsWalkWater.
+	static int lIsAllowsWalkWater(lua_State* L);
+#endif
+
 	//! (LUA) CvPlot::SetFeatureType.
 	static int lSetFeatureType(lua_State* L);
 

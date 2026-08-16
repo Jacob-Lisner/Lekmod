@@ -692,6 +692,15 @@ public:
 	int GetBaseYieldRateFromMisc(YieldTypes eIndex) const;
 	void ChangeBaseYieldRateFromMisc(YieldTypes eIndex, int iChange);
 
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	int GetFreeResource(ResourceTypes eResource) const;
+	void ChangeFreeResource(ResourceTypes eResource, int iChange);
+	void GrantFreeResourceFromTrait(ResourceTypes eResource, int iQuantity);
+	int GetYieldFromFreeResourceCity(YieldTypes eIndex) const;
+	void ChangeYieldFromFreeResourceCity(YieldTypes eIndex, int iChange);
+	void SetYieldFromFreeResourceCity(YieldTypes eIndex, int iValue);
+#endif
+
 	int GetBaseYieldRateFromReligion(YieldTypes eIndex) const;
 	void ChangeBaseYieldRateFromReligion(YieldTypes eIndex, int iChange);
 #if defined(STANDARDIZE_YIELDS)
@@ -1132,6 +1141,9 @@ protected:
 
 	FAutoVariable<std::vector<int>, CvCity> m_paiNoResource;
 	FAutoVariable<std::vector<int>, CvCity> m_paiFreeResource;
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	int m_aiYieldFromFreeResourceCity[NUM_YIELD_TYPES];
+#endif
 	FAutoVariable<std::vector<int>, CvCity> m_paiNumResourcesLocal;
 	FAutoVariable<std::vector<int>, CvCity> m_paiProjectProduction;
 	FAutoVariable<std::vector<int>, CvCity> m_paiSpecialistProduction;

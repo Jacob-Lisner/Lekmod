@@ -7234,11 +7234,16 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 
 					if (pRule->m_bCity)
 					{
+#ifdef LEKMOD_FREE_RESOURCE_CITY_GRANT
+						pLoopCity->GrantFreeResourceFromTrait(pRule->m_eResource, pRule->m_iResourceQuantity);
+						bPlaced = true;
+#else
 						pCityPlot->setResourceType(NO_RESOURCE, 0);
 						pCityPlot->setResourceType(pRule->m_eResource, pRule->m_iResourceQuantity);
 						pCityPlot->updateYield();
 
 						bPlaced = true;
+#endif
 					}
 					else
 					{

@@ -212,6 +212,9 @@ CvTraitEntry::CvTraitEntry() :
 	m_ppiCityEraYieldChange(NULL),
 	m_ppiCityTechYieldChange(NULL),
 #endif
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	m_piFreeResourceCityYieldChange(NULL),
+#endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	m_paiGreatWorkYieldChanges(NULL),
 	m_ppiGreatWorkClassYieldChanges(NULL),
@@ -313,6 +316,9 @@ CvTraitEntry::~CvTraitEntry()
 	SAFE_DELETE_ARRAY(m_piCityYieldChange);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiCityEraYieldChange);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiCityTechYieldChange);
+#endif
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	SAFE_DELETE_ARRAY(m_piFreeResourceCityYieldChange);
 #endif
 #if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 	SAFE_DELETE_ARRAY(m_paiGreatWorkYieldChanges);
@@ -1137,6 +1143,12 @@ int CvTraitEntry::GetCityEraYieldChange(int i, int j) const
 int CvTraitEntry::GetCityTechYieldChange(int i, int j) const
 {
 	return m_ppiCityTechYieldChange ? m_ppiCityTechYieldChange[i][j] : 0;
+}
+#endif
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+int CvTraitEntry::GetFreeResourceCityYieldChange(int i) const
+{
+	return m_piFreeResourceCityYieldChange ? m_piFreeResourceCityYieldChange[i] : 0;
 }
 #endif
 /// Accessor:: Extra yield from strategic resources
@@ -3094,6 +3106,9 @@ inner join BuildingClasses on BuildingClasses.Type = BuildingClassType inner joi
 		}
 		pResults->Reset();
 	}
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	kUtility.SetYields(m_piFreeResourceCityYieldChange, "Trait_FreeResourceCityYieldChanges", "TraitType", szTraitType);
+#endif
 #if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
 	// GoldenAgeYieldThresholdBonus
 	{
@@ -3834,6 +3849,12 @@ void CvPlayerTraits::InitPlayerTraits()
 			{
 				m_vFreeResourceCities.push_back(vRules[i]);
 			}
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+			for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+			{
+				m_aiFreeResourceCityYieldChange[iYield] += trait->GetFreeResourceCityYieldChange(iYield);
+			}
+#endif
 #if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
 			const std::vector<GoldenAgeYieldThreshold>& vThresholds = trait->GetGoldenAgeYieldThresholds();
 			for (size_t i = 0; i < vThresholds.size(); ++i)
@@ -4236,6 +4257,9 @@ void CvPlayerTraits::Reset()
 			m_ppaaiCityTechYieldChange[iTech] = yield;
 		}
 #endif
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+		m_aiFreeResourceCityYieldChange[iYield] = 0;
+#endif
 		for (int iFeature = 0; iFeature < GC.getNumFeatureInfos(); iFeature++)
 #endif
 		{
@@ -4394,6 +4418,12 @@ void CvPlayerTraits::Reset()
 	}
 
 	m_vFreeResourceCities.clear();
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+	{
+		m_aiFreeResourceCityYieldChange[iYield] = 0;
+	}
+#endif
 }
 
 /// Does this player possess a specific trait?
@@ -4886,6 +4916,17 @@ int CvPlayerTraits::GetCityYieldChange(YieldTypes eYieldType)
 	}
 	return m_aiCityYieldChange[(int)eYieldType];
 }
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+int CvPlayerTraits::GetFreeResourceCityYieldChange(YieldTypes eYield) const
+{
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "Invalid eYield parameter in call to CvPlayerTraits::GetFreeResourceCityYieldChange()");
+	if (eYield == NO_YIELD)
+	{
+		return 0;
+	}
+	return m_aiFreeResourceCityYieldChange[(int)eYield];
+}
+#endif
 // Yield From Tech - All Cities
 int CvPlayerTraits::GetCityTechYieldChange(TechTypes eTech, YieldTypes eYield)
 {

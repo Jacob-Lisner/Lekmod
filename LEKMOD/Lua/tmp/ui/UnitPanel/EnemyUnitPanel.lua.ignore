@@ -974,12 +974,41 @@ Events.WorldMouseOver.Add( OnWorldMouseOver );
 
 function UnitRangedAttackOnlyInDomain( pUnit, pPlot )
 	if (pUnit:IsRanged() and pUnit:IsRangeAttackOnlyInDomain()) then
-		if (pUnit:GetDomainType() == DomainTypes.DOMAIN_LAND and pPlot:IsWater()) then
+		-- Walk-water (pontoon) is land-like for domain-restricted ranged attacks.
+		local bPlotWater = pPlot:IsWater() and not (pPlot.IsAllowsWalkWater and pPlot:IsAllowsWalkWater());
+		if (pUnit:GetDomainType() == DomainTypes.DOMAIN_LAND and bPlotWater) then
 			return true;
-		elseif (pUnit:GetDomainType() == DomainTypes.DOMAIN_SEA and not pPlot:IsWater()) then
+		elseif (pUnit:GetDomainType() == DomainTypes.DOMAIN_SEA and not bPlotWater) then
 			return true;
 		end
 	end
+	return false;
+end
+
+-- Cross-domain melee prediction rules (must match what can actually attack).
+function CanShowCrossDomainMeleePrediction( pHeadUnit, pUnit, pBattlePlot )
+	-- Hover units (DOMAIN_HOVER / hovering promo) can always melee land and naval.
+	-- getDomainType() morphs with terrain, so same-domain checks alone miss many cases.
+	if ((pHeadUnit.IsHoveringUnit and pHeadUnit:IsHoveringUnit()) or (pUnit.IsHoveringUnit and pUnit:IsHoveringUnit())) then
+		return true;
+	end
+	if (pHeadUnit:GetDomainType() == pUnit:GetDomainType()) then
+		return true;
+	end
+	if (pHeadUnit:IsRanged()) then
+		return true;
+	end
+	if (pHeadUnit:GetDomainType() == DomainTypes.DOMAIN_SEA and pUnit:IsEmbarked()) then
+		return true;
+	end
+
+	-- Walk-water only enables cross-domain when the *defender* is on the pontoon
+	-- (land can attack onto it; naval can fight land stacked there). Naval on a
+	-- pontoon still cannot attack a true land tile.
+	if (pBattlePlot ~= nil and pBattlePlot.IsAllowsWalkWater and pBattlePlot:IsAllowsWalkWater()) then
+		return true;
+	end
+
 	return false;
 end
 
@@ -1079,8 +1108,9 @@ function OnMouseOverHex( hexX, hexY )
 									--if (pUnit:GetDomainType() ~= DomainTypes.DOMAIN_AIR) then
 										
 										-- Other guy must be same domain, OR we must be ranged, OR we must be naval and he is embarked,
-										-- OR we are embarked ourselves and our trait lets embarked units fight at full strength (melee vs. naval/embarked targets).
-										if (pHeadUnit:GetDomainType() == pUnit:GetDomainType() or pHeadUnit:IsRanged() or (pHeadUnit:GetDomainType() == DomainTypes.DOMAIN_SEA and pUnit:IsEmbarked())
+										-- OR we are embarked ourselves and our trait lets embarked units fight at full strength (melee vs. naval/embarked targets),
+										-- OR walk-water (pontoon) enables cross-domain melee.
+										if (CanShowCrossDomainMeleePrediction(pHeadUnit, pUnit, pPlot)
 											or (bEmbarkedFullStrength and pHeadUnit:IsEmbarked() and (pUnit:GetDomainType() == DomainTypes.DOMAIN_SEA or pUnit:IsEmbarked()))) then
 										
 											 if (pUnit:GetBaseCombatStrength() > 0 or pHeadUnit:IsRanged()) then

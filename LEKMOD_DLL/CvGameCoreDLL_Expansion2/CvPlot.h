@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -461,6 +461,18 @@ public:
 	bool IsAllowsWalkWater() const;
 
 	bool IsAllowsSailLand() const;
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	/// Effective route from ActsAsRoute improvement (road/rail by team tech), else NO_ROUTE
+	RouteTypes GetImprovementActsAsRouteType(TeamTypes eTeam) const;
+	/// Best of plot route and improvement-as-route
+	RouteTypes GetEffectiveRouteType(const CvUnit* pUnit) const;
+	RouteTypes GetEffectiveRouteType(TeamTypes eTeam) const;
+	bool HasStackedLandAndNavalUnits() const;
+	/// True if pUnit arriving on this walk-water plot would create a land+naval combat lock
+	bool WouldBlockAttacksWithUnit(const CvUnit* pUnit) const;
+	void DoHandleUnitsAfterWaterWalkLost();
+#endif
 
 	bool isRoughGround() const
 	{

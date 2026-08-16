@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -1083,7 +1083,12 @@ void UnitPathInitialize(const void* pointer, CvAStar* finder)
 
 	pCacheData->m_ePlayerID = pUnit->getOwner();
 	pCacheData->m_eTeamID = pUnit->getTeam();
-	pCacheData->m_eDomainType = pUnit->getDomainType();
+	// DOMAIN_HOVER morphs with terrain via getDomainType(); pathfinding must treat hover as land
+	// so land?coast transitions use hover rules instead of naval embark/city rules.
+	if (pUnit->IsHoveringUnit() || pUnit->getUnitInfo().GetDomainType() == DOMAIN_HOVER)
+		pCacheData->m_eDomainType = DOMAIN_LAND;
+	else
+		pCacheData->m_eDomainType = pUnit->getDomainType();
 	pCacheData->m_bIsHuman = pUnit->isHuman();
 	pCacheData->m_bIsAutomated = pUnit->IsAutomated();
 	pCacheData->m_bIsImmobile = pUnit->IsImmobile();
@@ -1382,9 +1387,17 @@ int PathCost(CvAStarNode* parent, CvAStarNode* node, int data, const void* point
 		iCost = (PATH_MOVEMENT_WEIGHT * iCost);
 
 #ifdef AUI_UNIT_MOVEMENT_FIX_BAD_ALLOWS_WATER_WALK_CHECK
-		if (eUnitDomain == DOMAIN_LAND && !bFromPlotIsWater && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+		if (eUnitDomain == DOMAIN_LAND && !bFromPlotIsWater && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true)
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+			&& !pUnit->IsHoveringUnit()
+#endif
+			)
 #else
-		if(eUnitDomain == DOMAIN_LAND && !pFromPlot->isWater() && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+		if(eUnitDomain == DOMAIN_LAND && !pFromPlot->isWater() && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true)
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+			&& !pUnit->IsHoveringUnit()
+#endif
+			)
 #endif
 		{
 			iCost += PATH_INCORRECT_EMBARKING_WEIGHT;
@@ -2120,6 +2133,17 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 		}
 	}
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Cannot melee-attack from a walk-water tile that would be land+naval stacked after arriving.
+	// Combat units only  civilians never attack and must not be blocked by this check.
+	if (pUnit->IsCombatUnit() &&
+		(kToNodeCacheData.bContainsVisibleEnemyDefender || kToNodeCacheData.bContainsEnemyCity) &&
+		pFromPlot != NULL && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
+	{
+		return FALSE;
+	}
+#endif
+
 	if(pUnitPlot == pFromPlot)
 	{
 		return TRUE;
@@ -2547,9 +2571,17 @@ int IgnoreUnitsCost(CvAStarNode* parent, CvAStarNode* node, int data, const void
 		iCost = (PATH_MOVEMENT_WEIGHT * iCost);
 
 #ifdef AUI_UNIT_MOVEMENT_FIX_BAD_ALLOWS_WATER_WALK_CHECK
-		if (pUnit->getDomainType() == DOMAIN_LAND && !bFromPlotIsWater && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+		if (pUnit->getDomainType() == DOMAIN_LAND && !bFromPlotIsWater && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true)
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+			&& !pUnit->IsHoveringUnit()
+#endif
+			)
 #else
-		if(!pFromPlot->isWater() && pToPlot->isWater() && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+		if(!pFromPlot->isWater() && pToPlot->isWater() && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true)
+#if defined(LEKMOD_HELICOPTER_EMBARK_FIX)
+			&& !pUnit->IsHoveringUnit()
+#endif
+			)
 #endif
 		{
 			iCost += PATH_INCORRECT_EMBARKING_WEIGHT;
@@ -4653,6 +4685,11 @@ int UIPathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* po
 	{
 		if (!pUnit->canMoveInto(*pToPlot, CvUnit::MOVEFLAG_ATTACK))
 			return FALSE;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		CvPlot* pFromPlot = GC.getMap().plot(parent->m_iX, parent->m_iY);
+		if (pFromPlot && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
+			return FALSE;
+#endif
 	}
 #endif
 
@@ -4689,6 +4726,11 @@ int UIPathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* po
 	{
 		if (!pUnit->canMoveInto(*pToPlot, CvUnit::MOVEFLAG_ATTACK, true, true))
 			return FALSE;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		CvPlot* pFromPlotUI = GC.getMap().plot(parent->m_iX, parent->m_iY);
+		if (pFromPlotUI && pFromPlotUI->WouldBlockAttacksWithUnit(pUnit))
+			return FALSE;
+#endif
 	}
 #endif
 
@@ -4751,8 +4793,27 @@ int AttackPathAdd(CvAStarNode* parent, CvAStarNode* node, int data, const void* 
 		{
 			if(pPlot->isVisible(pUnit->getTeam()) && (pPlot->isVisibleEnemyUnit(pUnit) || pPlot->isEnemyCity(*pUnit)))
 			{
-				auto_ptr<ICvPlot1> pDllPlot = GC.WrapPlotPointer(pPlot);
-				GC.GetEngineUserInterface()->AddHexToUIRange(pDllPlot.get());
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				// Only highlight if we can actually attack from the previous plot after arriving there
+				bool bCanAttackFrom = true;
+				if (parent != NULL)
+				{
+					CvPlot* pFromPlot = GC.getMap().plot(parent->m_iX, parent->m_iY);
+					if (pFromPlot && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
+					{
+						bCanAttackFrom = false;
+					}
+				}
+				else if (!pUnit->IsCanAttackWithMoveNow())
+				{
+					bCanAttackFrom = false;
+				}
+				if (bCanAttackFrom)
+#endif
+				{
+					auto_ptr<ICvPlot1> pDllPlot = GC.WrapPlotPointer(pPlot);
+					GC.GetEngineUserInterface()->AddHexToUIRange(pDllPlot.get());
+				}
 			}
 		}
 	}
@@ -4776,6 +4837,22 @@ int AttackPathDestEval(int iToX, int iToY, const void* pointer, CvAStar* finder,
 	{
 		if (pUnit->canMoveInto(*pPlot, CvUnit::MOVEFLAG_ATTACK))
 		{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			// Attack-from plot is the path parent; reject if arriving there would create a combat lock
+			CvAStarNode* pParent = pNode->m_pParent;
+			if (pParent != NULL)
+			{
+				CvPlot* pFromPlot = GC.getMap().plot(pParent->m_iX, pParent->m_iY);
+				if (pFromPlot && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
+				{
+					return FALSE;
+				}
+			}
+			else if (!pUnit->IsCanAttackWithMoveNow())
+			{
+				return FALSE;
+			}
+#endif
 			if(bOnlyFortified)
 			{
 				CvUnit* pEnemyUnit = pPlot->getVisibleEnemyDefender(pUnit->getOwner());
@@ -5245,6 +5322,17 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 			}
 		}
 	}
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Cannot melee-attack from a walk-water tile that would be land+naval stacked after arriving.
+	// Combat units only  civilians never attack and must not be blocked by this check.
+	if (pUnit->IsCombatUnit() &&
+		(kToNodeCacheData.bContainsVisibleEnemyDefender || kToNodeCacheData.bContainsEnemyCity) &&
+		pFromPlot != NULL && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
+	{
+		return FALSE;
+	}
+#endif
 
 	if(pUnitPlot == pFromPlot)
 	{

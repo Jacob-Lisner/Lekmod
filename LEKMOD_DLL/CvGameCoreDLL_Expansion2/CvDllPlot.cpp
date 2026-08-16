@@ -203,7 +203,13 @@ PlotTypes CvDllPlot::GetPlotType() const
 //------------------------------------------------------------------------------
 bool CvDllPlot::IsWater() const
 {
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// EXE path indicator treats water plots as embark tiles for land units.
+	// Walk-water (pontoon) is land-like for that purpose — keep CvPlot::isWater() unchanged.
+	return m_pPlot->isWater() && !m_pPlot->IsAllowsWalkWater();
+#else
 	return m_pPlot->isWater();
+#endif
 }
 //------------------------------------------------------------------------------
 bool CvDllPlot::IsHills() const

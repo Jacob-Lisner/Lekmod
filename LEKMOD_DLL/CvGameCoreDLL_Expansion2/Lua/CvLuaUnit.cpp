@@ -248,6 +248,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IgnoreBuildingDefense);
 	Method(CanMoveImpassable);
 	Method(CanMoveAllTerrain);
+	Method(IsHoveringUnit);
 	Method(FlatMovementCost);
 	Method(IgnoreTerrainCost);
 	Method(IsNeverInvisible);
@@ -2715,6 +2716,12 @@ int CvLuaUnit::lCanMoveAllTerrain(lua_State* L)
 
 	lua_pushboolean(L, bResult);
 	return 1;
+}
+//------------------------------------------------------------------------------
+//bool IsHoveringUnit();
+int CvLuaUnit::lIsHoveringUnit(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvUnit::IsHoveringUnit);
 }
 //------------------------------------------------------------------------------
 //bool flatMovementCost();

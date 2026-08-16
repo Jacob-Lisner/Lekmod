@@ -256,6 +256,7 @@ protected:
 	static int lIgnoreBuildingDefense(lua_State* L);
 	static int lCanMoveImpassable(lua_State* L);
 	static int lCanMoveAllTerrain(lua_State* L);
+	static int lIsHoveringUnit(lua_State* L);
 	static int lFlatMovementCost(lua_State* L);
 	static int lIgnoreTerrainCost(lua_State* L);
 	static int lIsNeverInvisible(lua_State* L);
