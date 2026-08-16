@@ -606,10 +606,10 @@ function GetMapScriptInfo()
 				"Off - Old Default",
 				"Warning Only",
 				"[COLOR:0:185:135:255]5.0 Cutoff (Low Remake Chance)[ENDCOLOR]",
-				"[COLOR:0:185:135:255]7.0 Cutoff (Medium Remake Chance)[ENDCOLOR]",
-				"[COLOR:0:185:255:255]9.0 Cutoff (High Remake Chance)[ENDCOLOR]",
+				"[COLOR:0:185:255:255]7.0 Cutoff (Medium Remake Chance)[ENDCOLOR]",
+				"[COLOR:0:185:135:255]9.0 Cutoff (High Remake Chance)[ENDCOLOR]",
 			},
-			DefaultValue = 5,
+			DefaultValue = 4,
 			SortPriority = -99,
 			},
 			{
