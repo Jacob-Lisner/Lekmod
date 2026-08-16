@@ -13552,7 +13552,7 @@ int CvUnit::GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* p
 
 			// Open Ground
 			if (pTargetPlot->isOpenGround())
-				iModifier += openRangedAttackModifier();f
+				iModifier += openRangedAttackModifier();
 
 			// Rough Ground
 			if (pTargetPlot->isRoughGround())
@@ -14908,8 +14908,8 @@ int CvUnit::GetMaxDefenseStrength(const CvCombatInfo& kInfo, CvCombatModifierLis
 		iCombat *= (100 + GetEmbarkDefensiveModifier());
 		iCombat /= 100;
 	}
-	// are we defending a sweep or are the intercepting unit?
-	if (kInfo.getAttackIsAirSweep() || kInfo.getUnit(BATTLE_UNIT_INTERCEPTOR) == this)
+	// are we the intercepting unit?
+	if (kInfo.getUnit(BATTLE_UNIT_INTERCEPTOR) == this)
 	{
 		if (kModifierList)
 		{
@@ -15552,6 +15552,9 @@ int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) co
 	{
 		iInterceptorStrength = GetMaxDefenseStrength(plot(), pAttacker);
 	}
+	// Mod to interceptor strength
+	iInterceptorStrength *= (100 + GetInterceptionCombatModifier());
+	iInterceptorStrength /= 100;
 #else
 	CvCombatInfo kCombatInfo;
 	kCombatInfo.setUnit(BATTLE_UNIT_ATTACKER, const_cast<CvUnit*>(pAttacker));
@@ -15561,9 +15564,6 @@ int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) co
 	int iAttackerStrength = pAttacker->GetMaxAttackStrength(kCombatInfo);
 	int iInterceptorStrength = GetMaxDefenseStrength(kCombatInfo);
 #endif
-	// Mod to interceptor strength
-	iInterceptorStrength *= (100 + GetInterceptionCombatModifier());
-	iInterceptorStrength /= 100;
 
 	// The roll will vary damage between 2 and 3 (out of 10) for two units of identical strength
 
@@ -23130,14 +23130,9 @@ void CvUnit::read(FDataStream& kStream)
 	// automagically, no need to explicitly load them here
 	kStream >> m_syncArchive;
 
-	if (m_pUnitInfo != NULL)
-	{
-		m_iCachedPower = m_pUnitInfo->DoUpdatePower(m_iBaseCombat, m_iBaseRangedCombat);
-	}
-
 	// anything not in m_syncArchive needs to be explicitly
 	// read
-	
+
 	// The 'automagic' sync archive saves out the unit type index, which is bad since that can change.
 	// Read in the hash and update the value.
 	{
@@ -23154,6 +23149,7 @@ void CvUnit::read(FDataStream& kStream)
 	kStream >> m_iLastMoveTurn;
 	m_Promotions.Read(kStream);
 	m_pUnitInfo = (NO_UNIT != m_eUnitType) ? GC.getUnitInfo(m_eUnitType) : NULL;
+
 	kStream >> m_combatUnit.eOwner;
 	kStream >> m_combatUnit.iID;
 	kStream >> m_transportUnit.eOwner;
@@ -23171,6 +23167,8 @@ void CvUnit::read(FDataStream& kStream)
 	{
 		m_iNumGoodyHutsPopped = 0;
 	}
+
+	kStream >> m_iCachedPower;
 
 	kStream >> m_bIgnoreDangerWakeup;
 
@@ -23349,7 +23347,7 @@ void CvUnit::write(FDataStream& kStream) const
 	VALIDATE_OBJECT
 
 	// Current version number
-	uint uiVersion = 9;
+	uint uiVersion = 10;
 	kStream << uiVersion;
 
 	kStream << m_syncArchive;
@@ -23372,6 +23370,7 @@ void CvUnit::write(FDataStream& kStream) const
 	kStream << m_iEverSelectedCount;
 	kStream << m_iMapLayer;
 	kStream << m_iNumGoodyHutsPopped;
+	kStream << m_iCachedPower;
 
 	// slewis - move to autovariable when saves are broken
 	kStream << m_bIgnoreDangerWakeup;

@@ -1222,6 +1222,8 @@ romania and brazil traits are double counted
 #define LEKMOD_LUA_FEATURETYPES_FROM_DB
 // Change the Yield from Cities depending on thier CvArea. 
 #define LEKMOD_AREA_BASED_CITY_YIELD
+// Grant building yields based on nearby terrain: either per matching tile in a radius, or a flat bonus once a terrain count threshold is met in a radius
+#define LEKMOD_NEARBY_TERRAIN_FREE_YIELDS
 // Fix all the specificity in Beliefs
 #define LEKMOD_BELIEF_YIELDIFY
 // When a resource is removed from a plot, but it can't be seen by the player, move it to a new plot instead of deleting it.

@@ -196,7 +196,11 @@ function GetHelpTextForBuilding(iBuildingID, bExcludeName, bExcludeHeader, bNoMa
     	if pCity ~= nil then
     	    iYieldChange = iYieldChange + pCity:GetReligionBuildingClassYieldChange(buildingClassID, iYieldType) + pCity:GetLeagueBuildingClassYieldChange(buildingClassID, iYieldType);
     	end
-
+		local buildingClassType = pBuildingInfo.BuildingClass
+		local buildingClass = GameInfo.BuildingClasses[ buildingClassType ]
+		if buildingClass and tonumber(buildingClass.MaxGlobalInstances) or 0 then -- this is a World Wonder
+			iYieldChange = iYieldChange + pActivePlayer:GetWorldWonderYieldChanges(iYieldType);
+		end
     	iYieldModifier = iYieldModifier + Game.GetBuildingYieldModifier(iBuildingID, iYieldType) + pActivePlayer:GetPolicyBuildingClassYieldModifier(buildingClassID, iYieldType);
 
     	for row in GameInfo.Building_YieldChangesPerPop{ BuildingType = pBuildingInfo.Type, YieldType = Yields.Type } do
@@ -210,6 +214,22 @@ function GetHelpTextForBuilding(iBuildingID, bExcludeName, bExcludeHeader, bNoMa
 		    if eRowEra and iTeamEra >= eRowEra then
 		        iEraEnhancedYield = iEraEnhancedYield + (row.Yield or 0);
 		    end
+		end
+		local iNearbyTerrainYield = 0;
+		if pCity then
+			for row in GameInfo.Building_NearbyTerrainFreeYields{ BuildingType = pBuildingInfo.Type, YieldType = Yields.Type } do
+				local eTerrain = GameInfoTypes[row.TerrainType];
+				-- Radius 0 means "max city working radius", which is 3 (see CvCity::GetNumTerrainNearCity)
+				local iRadius = ((row.Radius or 0) ~= 0) and row.Radius or 3;
+				local iNumNearbyTerrain = eTerrain and pCity:GetNumTerrainNearby(eTerrain, iRadius, row.RequiresOwner) or 0;
+				if (row.MinTerrainRequired or 0) > 0 then
+					if iNumNearbyTerrain >= row.MinTerrainRequired then
+						iNearbyTerrainYield = iNearbyTerrainYield + (row.Yield or 0);
+					end
+				else
+					iNearbyTerrainYield = iNearbyTerrainYield + (row.Yield or 0) * iNumNearbyTerrain;
+				end
+			end
 		end
 		-- I'll get Firaxis for this later....
 		if Yields.Type == "YIELD_CULTURE" then
@@ -225,6 +245,9 @@ function GetHelpTextForBuilding(iBuildingID, bExcludeName, bExcludeHeader, bNoMa
 		end
 		if iEraEnhancedYield ~= 0 then
 			iYieldChange = iYieldChange + iEraEnhancedYield;
+		end
+		if iNearbyTerrainYield ~= 0 then
+			iYieldChange = iYieldChange + iNearbyTerrainYield;
 		end
     	if iYieldChange ~= 0 then
     	    table.insert(lines, strYieldIcon .. " " .. strYieldName .. string.format(": %+i", iYieldChange))

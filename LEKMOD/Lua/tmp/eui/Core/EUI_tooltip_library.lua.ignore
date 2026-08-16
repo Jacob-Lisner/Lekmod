@@ -677,6 +677,9 @@ end
 					yieldChange = yieldChange + activePlayer:GetPlayerBuildingClassYieldChange( buildingClassID, yieldID )
 								+ activePlayer:GetPolicyBuildingClassYieldChange( buildingClassID, yieldID )
 								+ activePlayer:GetTraitBuildingClassYieldChange( buildingClassID, yieldID )
+					if maxGlobalInstances > 0 then
+						yieldChange = yieldChange + activePlayer:GetWorldWonderYieldChanges(yieldID)
+					end
 				end
 				yieldModifier = yieldModifier + activePlayer:GetPolicyBuildingClassYieldModifier( buildingClassID, yieldID )
 				for i=1, #activePerkTypes do
@@ -716,6 +719,19 @@ end
 				
 				if techEnhancedYield ~= 0 and teamHasTech then
 					yieldChange = yieldChange + techEnhancedYield
+				end
+			end
+			if city then
+				for row in GameInfo.Building_NearbyTerrainFreeYields{ BuildingType = buildingType, YieldType = yield.Type } do
+					local eTerrain = GameInfoTypes[ row.TerrainType ]
+					local numNearbyTerrain = eTerrain and city:GetNumTerrainNearby( eTerrain, row.Radius or 0, row.RequiresOwner ) or 0
+					if (row.MinTerrainRequired or 0) > 0 then
+						if numNearbyTerrain >= row.MinTerrainRequired then
+							yieldChange = yieldChange + (row.Yield or 0)
+						end
+					else
+						yieldChange = yieldChange + (row.Yield or 0) * numNearbyTerrain
+					end
 				end
 			end
 			-- MOD.EAP END
@@ -944,6 +960,22 @@ end
 				end
 			end
 			tips:insertIf( #tip > 0 and L(terrain.Description) .. ":" .. tip )
+
+			-- Nearby Terrain Free Yields: describes the rule (already folded into the yield totals above when a city is known)
+			for row in GameInfo.Building_NearbyTerrainFreeYields{ BuildingType = buildingType, TerrainType = terrain.Type } do
+				item = GameInfo.Yields[ row.YieldType ]
+				if item and (row.Yield or 0) ~= 0 then
+					-- Radius 0 means "max city working radius", which is 3 (see CvCity::GetNumTerrainNearCity)
+					local radius = ( (row.Radius or 0) ~= 0 ) and row.Radius or 3
+					if (row.MinTerrainRequired or 0) > 0 then
+						tips:insert( S( "[ICON_BULLET]%+i%s if %i+ %s in %i tiles",
+							row.Yield, tostring(item.IconString), row.MinTerrainRequired, L(terrain.Description), radius ) )
+					else
+						tips:insert( S( "[ICON_BULLET]%+i%s per %s in %i tiles",
+							row.Yield, tostring(item.IconString), L(terrain.Description), radius ) )
+					end
+				end
+			end
 		end
 	end
 	-- Specialist Yields enhanced by Building
@@ -1074,6 +1106,13 @@ end
 			items[row.PolicyType] = S( "%s %+i%s", items[row.PolicyType] or "", row.YieldChange, tostring(YieldIcons[row.YieldType]) )
 		end
 	end
+	if maxGlobalInstances > 0 then -- world wonder
+		for row in GameInfo.WorldWonderYieldChanges() do
+			if row.PolicyType and (row.YieldChange or 0)~=0 then
+				items[row.PolicyType] = S( "%s %+i%s", items[row.PolicyType] or "", row.Yield, tostring(YieldIcons[row.YieldType]) )
+			end
+		end
+	end
 	for row in GameInfo.Policy_BuildingClassCultureChanges( thisBuildingClassType ) do
 		if row.PolicyType and (row.CultureChange or 0)~=0 then
 			items[row.PolicyType] = S( "%s %+i[ICON_CULTURE]", items[row.PolicyType] or "", row.CultureChange )
@@ -1117,7 +1156,7 @@ end
 				end
 			end
 			if maxGlobalInstances > 0 then -- world wonder
-				for row in GameInfo.Belief_YieldChangeWorldWonder() do
+				for row in GameInfo.WorldWonderYieldChanges() do
 					if row.BeliefType and (row.Yield or 0)~=0 then
 						items[row.BeliefType] = S( "%s %+i%s", items[row.BeliefType] or "", row.Yield, tostring(YieldIcons[row.YieldType]) )
 					end

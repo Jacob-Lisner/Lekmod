@@ -1098,6 +1098,9 @@ protected:
 	static int lGetYieldFromTraitsTimes100(lua_State* L);
 	static int lGetYieldFromReligionTimes100(lua_State* L);
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	static int lGetWorldWonderYieldChanges(lua_State* L);
+#endif
 	static int lGetNumCitiesPolicyCostDiscount(lua_State* L);
 #if defined(v35_TRAITIFY)
 	static int lIsEmbarkedUnitsFullStrength(lua_State* L);

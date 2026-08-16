@@ -14,6 +14,24 @@
 
 #define MAX_THEMING_BONUSES 12
 
+struct BuildingFreeTerrainYields
+{
+	BuildingFreeTerrainYields() :
+		m_eTerrain(NO_TERRAIN),
+		m_eYield(NO_YIELD),
+		m_bRequiresOwner(false),
+		m_iRadius(1),
+		m_iMinTerrainRequired(0),
+		m_iYieldChange(0)
+	{
+	};
+	TerrainTypes m_eTerrain;
+	YieldTypes m_eYield;
+	bool m_bRequiresOwner;
+	int m_iRadius;
+	int m_iMinTerrainRequired;
+	int m_iYieldChange;
+};
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  class : CvThemingBonusInfo
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -221,9 +239,6 @@ public:
 	int GetCityStateTradeRouteGoldModifier() const; // NQMP GJS - new Economic Union
 	int GetGreatScientistBeakerModifier() const;
 	int GetExtraLeagueVotes() const;
-#if defined(MISC_CHANGES) // CvBuildingClasses Getters
-	int GetMountainTourism() const;
-#endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	int GetGarrisonStrengthBonus() const;
 	int IsGarrisonMaintenanceFree() const { return m_bGarrisonMaintenanceFree; };
@@ -365,6 +380,9 @@ public:
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	int GetSameLandMassYieldChange(int i) const;
 	int GetDifferentLandMassYieldChange(int i) const;
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	const std::vector<BuildingFreeTerrainYields>& GetFreeTerrainYields() const;
 #endif
 
 	int GetResourceYieldChange(int i, int j) const;
@@ -534,9 +552,6 @@ private:
 	int m_iCityStateTradeRouteGoldModifier; // NQMP GJS - new Economic Union
 	int m_iGreatScientistBeakerModifier;
 	int m_iExtraLeagueVotes;
-#if defined(MISC_CHANGES) // CvBuildingClasses member variables
-	int m_iTourismPerMountain;
-#endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	int m_iGarrisonStrengthBonus;
 	bool m_bGarrisonMaintenanceFree;
@@ -663,6 +678,9 @@ private:
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	int* m_piSameLandMassYieldChange;
 	int* m_piDifferentLandMassYieldChange;
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	std::vector<BuildingFreeTerrainYields> m_aFreeTerrainYields;
 #endif
 	int** m_ppaiFeatureYieldChange;
 	std::map<int, std::map<int, int>> m_ppiResourceYieldChangeGlobal;
@@ -861,6 +879,10 @@ public:
 	int GetDifferentLandMassYieldChange(YieldTypes eYield) const;
 	void ChangeDifferentLandMassYieldChange(YieldTypes eYield, int iChange);
 #endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	int GetFreeTerrainYieldChange(YieldTypes eYield) const;
+	void ChangeFreeTerrainYieldChange(YieldTypes eYield, int iChange);
+#endif
 	int GetBuildingDefense() const;
 	void ChangeBuildingDefense(int iChange);
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
@@ -917,6 +939,9 @@ private:
 #if defined(LEKMOD_AREA_BASED_CITY_YIELD)
 	int* m_paiSameLandMassYieldChange;
 	int* m_paiDifferentLandMassYieldChange;
+#endif
+#if defined(LEKMOD_NEARBY_TERRAIN_FREE_YIELDS)
+	int* m_paiFreeTerrainYieldChange;
 #endif
 #if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
 	int m_iFirstPurchaseDiscount;
