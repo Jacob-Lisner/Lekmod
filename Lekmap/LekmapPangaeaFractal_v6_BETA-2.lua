@@ -9371,9 +9371,7 @@ function ZonePinches()
 			local i = xy_to_i(x, y, iW, iH)
 			local plot = Map.GetPlot(x, y)
 			if BETA_TECTONIC_LANDS[i] > 0 and plot:GetPlotType() == PlotTypes.PLOT_OCEAN and beta_using_lekmod and plot:GetTerrainType() == TerrainTypes.TERRAIN_COAST then
-				-- plot:SetImprovementType(GameInfo.Improvements.IMPROVEMENT_PONTOON_BRIDGE.ID)
-				-- plot:SetFeatureType(FeatureTypes.FEATURE_SHALLOWS) ---- THIS PRODUCES ICE
-				plot:SetFeatureType(25)   ---- THIS PRODUCES SHALLOWS
+				plot:SetFeatureType(FeatureTypes.FEATURE_SHALLOWS)
 			end
 		end
 	end
