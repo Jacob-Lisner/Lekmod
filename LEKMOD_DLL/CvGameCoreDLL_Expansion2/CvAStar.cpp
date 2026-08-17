@@ -2965,9 +2965,17 @@ int IgnoreUnitsValid(CvAStarNode* parent, CvAStarNode* node, int data, const voi
 	if(pCacheData->getDomainType() == DOMAIN_LAND)
 	{
 #ifdef AUI_ASTAR_FIX_CAN_ENTER_TERRAIN_NO_DUPLICATE_CALLS
-		if (!kFromNodeCacheData.bIsWater && kToNodeCacheData.bIsWater && kToNodeCacheData.bIsRevealedToTeam && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+		if (!kFromNodeCacheData.bIsWater && kToNodeCacheData.bIsWater && kToNodeCacheData.bIsRevealedToTeam && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true)
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			&& !pToPlot->IsAllowsWalkWater() && !(pFromPlot && pFromPlot->IsAllowsWalkWater())
+#endif
+			)
 #else
-		if(!pFromPlot->isWater() && pToPlot->isWater() && pToPlot->isRevealed(eUnitTeam) && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+		if(!pFromPlot->isWater() && pToPlot->isWater() && pToPlot->isRevealed(eUnitTeam) && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true)
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			&& !pToPlot->IsAllowsWalkWater() && !pFromPlot->IsAllowsWalkWater()
+#endif
+			)
 #endif
 		{
 			return FALSE;

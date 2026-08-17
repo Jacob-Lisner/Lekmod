@@ -12,21 +12,21 @@
 	<Language_en_US>
 		<!-- Version Number, Leave at top -->
 		<Row Tag="TXT_KEY_LEKMOD_VERSION">
-			<Text>LEKMOD v35.005</Text>
+			<Text>LEKMOD v35.006</Text>
 		</Row>
 		<Replace Tag="TXT_KEY_MULTIPLAYER_STAGING_ROOM"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v35 Beta Test 5[ENDCOLOR]
+				[COLOR_POSITIVE_TEXT]LEKMOD v35[ENDCOLOR]
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_AD_SETUP_ADVANCED_OPTIONS"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v35 Beta Test 5[ENDCOLOR]  
+				[COLOR_POSITIVE_TEXT]LEKMOD v35[ENDCOLOR]  
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_GAME_SELECTION_SCREEN"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v35 Beta Test 5[ENDCOLOR] 
+				[COLOR_POSITIVE_TEXT]LEKMOD v35[ENDCOLOR] 
 			</Text>
 		</Replace>
 		<!-- END VERSION -->
@@ -17054,7 +17054,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_MESSENGER_GODS"> 
 			<Text>
-				+2 [ICON_RESEARCH] Science and +1 [ICON_PEACE] Faith in Cities with a [ICON_CONNECTED] City Connection
+				+2 [ICON_RESEARCH] Science and +1 [ICON_GOLD] Gold in Cities with a [ICON_CONNECTED] City Connection
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_MESSENGER_GODS_SHORT"> 

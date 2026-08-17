@@ -127,6 +127,9 @@ Controls.ExitButton:RegisterCallback( Mouse.eLClick, OnExitGame );
 function ShowHideBackButton()
 	local bShow = not IsInGameScreen();
 	Controls.BackButton:SetHide( not bShow );
+	if Draft_RefreshBottomButtonBar ~= nil then
+		Draft_RefreshBottomButtonBar();
+	end
 end
 
 -------------------------------------------------
@@ -285,6 +288,12 @@ end
 -------------------------------------------------
 function StartCountdown()
 	g_fCountdownTimer = 10;
+	local countdownString = Locale.ConvertTextKey("TXT_KEY_GAMESTART_COUNTDOWN_FORMAT", math.floor(g_fCountdownTimer) );
+	Controls.CountdownButton:SetText( countdownString );
+	Controls.CountdownButton:SetHide(false);
+	if Draft_RefreshBottomButtonBar ~= nil then
+		Draft_RefreshBottomButtonBar();
+	end
 	EnsureStagingUpdate();
 end
 
@@ -294,6 +303,9 @@ end
 function StopCountdown()
 	Controls.CountdownButton:SetHide(true);
 	g_fCountdownTimer = -1;
+	if Draft_RefreshBottomButtonBar ~= nil then
+		Draft_RefreshBottomButtonBar();
+	end
 	-- Keep OnStagingUpdate alive for ban/player scroll sync + version checks
 	-- (ClearUpdate here broke ban-column scroll for non-host clients).
 	EnsureStagingUpdate();

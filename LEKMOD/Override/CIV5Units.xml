@@ -30755,7 +30755,7 @@
 		</Row>
 		<Row> 
 			<BeliefType>BELIEF_MESSENGER_GODS</BeliefType> 
-			<YieldType>YIELD_FAITH</YieldType> 
+			<YieldType>YIELD_GOLD</YieldType> 
 			<Yield>1</Yield> 
 		</Row>
 	</Belief_YieldChangeTradeRoute> 
@@ -137095,7 +137095,7 @@
 			<Type>IMPROVEMENT_BUGANDA_LAKE</Type>
 			<Description>TXT_KEY_BUGANDA_LAKE</Description>
 			<Civilopedia>TXT_KEY_CIV5_BUGANDA_LAKE_TEXT</Civilopedia>
-			<ArtDefineTag>ART_DEF_IMPROVEMENT_WELL</ArtDefineTag>
+			<ArtDefineTag>ART_DEF_FEATURE_OASIS</ArtDefineTag>
 			<SpecificCivRequired>true</SpecificCivRequired>
 			<CivilizationType>CIVILIZATION_BUGANDA</CivilizationType>
 			<BuildableOnResources>true</BuildableOnResources>

@@ -5,7 +5,7 @@
 LekmodVersion = LekmodVersion or {}
 
 -- Technical version for MP handshake / update checks (display titles live in TXT_KEY_LEKMOD_*).
-LekmodVersion.LOCAL_VERSION = "v35.005"
+LekmodVersion.LOCAL_VERSION = "v35.006"
 
 LekmodVersion.HANDSHAKE_PREFIX = "#LEKVER#"
 -- System / "Game:" chat lines (kick notices, ui_check warnings, etc.).

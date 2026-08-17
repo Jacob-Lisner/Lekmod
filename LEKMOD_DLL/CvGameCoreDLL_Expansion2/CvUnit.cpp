@@ -23036,23 +23036,48 @@ bool CvUnit::CanSwapWithUnitHere(CvPlot& swapPlot) const
 		if(canEnterTerrain(swapPlot))
 #endif
 		{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			// Land <-> pontoon/shallows is a domain-area change. The ignore-units
+			// pathfinder often reports that as "not this turn", so adjacent walk-water
+			// 1UPT swaps never fire. Adjacent tiles are a single step if we can enter.
+			CvPlot* pHerePlot = plot();
+			const bool bAdjacentWalkWaterSwap = pHerePlot != NULL && canMove() &&
+				pHerePlot->isAdjacent(&swapPlot) &&
+				(pHerePlot->IsAllowsWalkWater() || swapPlot.IsAllowsWalkWater());
+#endif
 			// Can I get there this turn?
 #ifdef AUI_ASTAR_MINOR_OPTIMIZATION
 			CvIgnoreUnitsPathFinder& kPathfinder = GC.getIgnoreUnitsPathFinder();
 #ifdef AUI_ASTAR_TURN_LIMITER
-			if (kPathfinder.DoesPathExist(this, plot(), &swapPlot, 1))
+			if (
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				bAdjacentWalkWaterSwap ||
+#endif
+				kPathfinder.DoesPathExist(this, plot(), &swapPlot, 1))
 #else
-			if (kPathfinder.DoesPathExist(this, plot(), &swapPlot))
+			if (
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				bAdjacentWalkWaterSwap ||
+#endif
+				kPathfinder.DoesPathExist(this, plot(), &swapPlot))
 #endif
 			{
 				CvPlot* pEndTurnPlot = kPathfinder.GetPathEndTurnPlot();
 #else
 			CvUnit* pUnit = (CvUnit*)this;
-			if(GC.getIgnoreUnitsPathFinder().DoesPathExist(*(pUnit), plot(), &swapPlot))
+			if(
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				bAdjacentWalkWaterSwap ||
+#endif
+				GC.getIgnoreUnitsPathFinder().DoesPathExist(*(pUnit), plot(), &swapPlot))
 			{
 				CvPlot* pEndTurnPlot = GC.getIgnoreUnitsPathFinder().GetPathEndTurnPlot();
 #endif
-				if(pEndTurnPlot == &swapPlot)
+				if(
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+					bAdjacentWalkWaterSwap ||
+#endif
+					pEndTurnPlot == &swapPlot)
 				{
 					if(swapPlot.getNumFriendlyUnitsOfType(this) >= GC.getPLOT_UNIT_LIMIT())
 					{
@@ -23093,18 +23118,46 @@ bool CvUnit::CanSwapWithUnitHere(CvPlot& swapPlot) const
 										// Can the unit I am swapping with get to me this turn?
 #ifdef AUI_ASTAR_MINOR_OPTIMIZATION
 #ifdef AUI_ASTAR_TURN_LIMITER
-										if (pLoopUnit->ReadyToMove() && kPathfinder.DoesPathExist(pLoopUnit, &swapPlot, plot(), 1))
+										if (pLoopUnit->ReadyToMove() &&
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+											(bAdjacentWalkWaterSwap ||
+#endif
+											kPathfinder.DoesPathExist(pLoopUnit, &swapPlot, plot(), 1)
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+											)
+#endif
+											)
 #else
-										if (pLoopUnit->ReadyToMove() && kPathfinder.DoesPathExist(pLoopUnit, &swapPlot, plot()))
+										if (pLoopUnit->ReadyToMove() &&
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+											(bAdjacentWalkWaterSwap ||
+#endif
+											kPathfinder.DoesPathExist(pLoopUnit, &swapPlot, plot())
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+											)
+#endif
+											)
 #endif
 										{
 											CvPlot* pPathEndTurnPlot = kPathfinder.GetPathEndTurnPlot();
 #else
-										if(pLoopUnit->ReadyToMove() && GC.getIgnoreUnitsPathFinder().DoesPathExist(*(pLoopUnit), &swapPlot, plot()))
+										if(pLoopUnit->ReadyToMove() &&
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+											(bAdjacentWalkWaterSwap ||
+#endif
+											GC.getIgnoreUnitsPathFinder().DoesPathExist(*(pLoopUnit), &swapPlot, plot())
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+											)
+#endif
+											)
 										{
 											CvPlot* pPathEndTurnPlot = GC.getIgnoreUnitsPathFinder().GetPathEndTurnPlot();
 #endif
-											if(pPathEndTurnPlot == plot())
+											if(
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+												bAdjacentWalkWaterSwap ||
+#endif
+												pPathEndTurnPlot == plot())
 #ifdef AUI_ASTAR_MINOR_OPTIMIZATION
 												return true;
 #else

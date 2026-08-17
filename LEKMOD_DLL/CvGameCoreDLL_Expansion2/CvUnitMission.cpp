@@ -614,9 +614,29 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 						{
 							// Start the swap
 							hUnit->UnitPathTo(HeadMissionQueueNode(kMissionQueue)->iData1, HeadMissionQueueNode(kMissionQueue)->iData2, MOVE_IGNORE_STACKING);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+							// Pathfinder can refuse land <-> walk-water even for a 1-tile swap.
+							if (hUnit->plot() != pTargetPlot && pOriginationPlot &&
+								pOriginationPlot->isAdjacent(pTargetPlot) &&
+								(pOriginationPlot->IsAllowsWalkWater() || pTargetPlot->IsAllowsWalkWater()) &&
+								hUnit->canMove() && hUnit->canEnterTerrain(*pTargetPlot))
+							{
+								hUnit->move(*pTargetPlot, true);
+							}
+#endif
 
 							// Move the other unit back out
-							pUnit2->UnitPathTo(pOriginationPlot->getX(), pOriginationPlot->getY(), 0);
+							pUnit2->UnitPathTo(pOriginationPlot->getX(), pOriginationPlot->getY(), MOVE_IGNORE_STACKING);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+							if (pUnit2->plot() != pOriginationPlot && pOriginationPlot &&
+								pUnit2->plot() && pUnit2->plot()->isAdjacent(pOriginationPlot) &&
+								(pOriginationPlot->IsAllowsWalkWater() || pUnit2->plot()->IsAllowsWalkWater() ||
+									(pTargetPlot && pTargetPlot->IsAllowsWalkWater())) &&
+								pUnit2->canMove() && pUnit2->canEnterTerrain(*pOriginationPlot))
+							{
+								pUnit2->move(*pOriginationPlot, true);
+							}
+#endif
 							bDone = true;
 						}
 					}

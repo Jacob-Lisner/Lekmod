@@ -915,18 +915,20 @@
     <!-- Bottom Buttons (slight inset from panel; << >> have their own slots so buttons never draw under them). -->
     <Box Anchor="L,B" AnchorSide="I.I" Offset="20,54"   Size="1200,70" Color="255,255,255,0" ID="BottomButtonBar" >
 
-      <Container Anchor="L,B" Offset="0,0" Size="1200,45" ID="BottomButtonScrollRow">
+      <!-- Back stays pinned left; same 45px band as the other bottom buttons. -->
+      <Container Anchor="L,B" Offset="0,0" Size="150,45">
+        <GridButton Anchor="L,C" Style="SmallButton" Size="150,32" Offset="0,0" StateOffsetIncrement="0,0" ID="BackButton" >
+          <Label Anchor="C,C" Offset="0,0" String="TXT_KEY_BACK_BUTTON" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+        </GridButton>
+      </Container>
+
+      <Container Anchor="L,B" Offset="158,0" Size="1042,45" ID="BottomButtonScrollRow">
         <GridButton Style="SmallButton" Size="32,32" Anchor="L,C" Offset="0,0" String="&lt;&lt;" ID="BottomButtonScrollLeft" Hidden="1" ToolTip="More buttons" />
-        <ScrollPanel Anchor="L,C" Offset="36,0" Size="1128,40" Vertical="0" AutoScrollBar="0" ID="BottomButtonScroll" ConsumeMouseOver="1">
+        <ScrollPanel Anchor="L,C" Offset="36,0" Size="970,40" Vertical="0" AutoScrollBar="0" ID="BottomButtonScroll" ConsumeMouseOver="1">
           <Stack Anchor="L,C" Offset="0,0" StackGrowth="Right" Padding="8" ID="BottomButtonStack" >
             <!-- Quit Button  -->
             <GridButton Anchor="L,B"  Style="SmallButton" Size="150,32"  Offset="0,0" StateOffsetIncrement="0,0" ID="ExitButton"  >
               <Label Anchor="C,C"  Offset="0,0"  String="TXT_KEY_EXIT_BUTTON" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow"  />
-            </GridButton>
-        
-            <!-- Back Button  -->
-            <GridButton Anchor="L,B"  Style="SmallButton" Size="150,32"  Offset="0,0" StateOffsetIncrement="0,0" ID="BackButton"  >
-              <Label Anchor="C,C"  Offset="0,0"  String="TXT_KEY_BACK_BUTTON" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow"  />
             </GridButton>
 
             <GridButton Style="SmallButton" Size="160,32" ID="CreateDraftButton" ToolTip="Generate draft pools once all players have readied their bans">
@@ -972,7 +974,7 @@
     <GridButton Anchor="R,B" ID="LaunchButton"   ColorSet="Beige_Black" Font="TwCenMT22" FontStyle="Shadow"  Offset="38,54"     Size="260,45"    Style="BaseButton" String="TXT_KEY_MULTIPLAYER_LAUNCH_GAME" >
     </GridButton>
 
-    <GridButton Anchor="R,B" ID="CountdownButton"   ColorSet="Beige_Black" Font="TwCenMT22" FontStyle="Shadow"  Offset="38,128"     Size="260,45"    Style="BaseButton" String="Unknown Time: " Hidden="1">
+    <GridButton Anchor="R,B" ID="CountdownButton"   ColorSet="Beige_Black" Font="TwCenMT22" FontStyle="Shadow"  Offset="38,54"     Size="260,45"    Style="BaseButton" String="Unknown Time: " Hidden="1">
     </GridButton>
 
     <!-- Game Options Summary (right column) -->

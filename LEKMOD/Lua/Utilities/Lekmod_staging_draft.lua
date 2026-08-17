@@ -1737,7 +1737,7 @@ function Draft_UpdateActionButtons()
 		Controls.DraftResetButton:SetDisabled(not isHost or history or gameReadyLock);
 		Controls.DraftResetButton:SetHide(history);
 	end
-	Draft_RefreshBottomButtonScroll();
+	Draft_RefreshBottomButtonBar();
 end
 
 -- Re-measure Create Draft / Save / etc. strip after show/hide or resize.
@@ -1749,6 +1749,77 @@ function Draft_RefreshBottomButtonScroll()
 		Controls.BottomButtonScrollRight,
 		true
 	);
+end
+
+-- Back stays left. When Launch / Game Starting is on the right, shrink the
+-- remaining buttons into a horizontal scroll so they are not drawn under it.
+function Draft_RefreshBottomButtonBar()
+	if Controls.BottomButtonBar == nil then
+		return;
+	end
+
+	local function setSize(ctrl, w, h)
+		if ctrl == nil then return; end
+		if w ~= nil and h ~= nil then
+			ctrl:SetSizeVal(w, h);
+		elseif w ~= nil then
+			ctrl:SetSizeX(w);
+		elseif h ~= nil then
+			ctrl:SetSizeY(h);
+		end
+	end
+	local function setOffset(ctrl, x, y)
+		if ctrl == nil then return; end
+		pcall(function() ctrl:SetOffsetVal(x, y); end);
+	end
+
+	local screenX = UIManager:GetScreenSizeVal();
+	local compact = (screenX < LOBBY_COMPACT_MAX_SCREEN);
+	local mainW = compact and LOBBY_COMPACT_W or LOBBY_WIDE_W;
+	local barLeft = 20;
+	local barRightInset = 20;
+	local startBtnW = 260;
+	local startBtnRight = 38;
+	local startBtnGap = 8;
+	local backW = 150;
+	local backGap = 8;
+	local arrowSlot = 36;
+
+	local startVisible = false;
+	if Controls.CountdownButton ~= nil and not Controls.CountdownButton:IsHidden() then
+		startVisible = true;
+	end
+	if Controls.LaunchButton ~= nil and not Controls.LaunchButton:IsHidden() then
+		startVisible = true;
+	end
+
+	local bottomBarW = math.max(360, mainW - barLeft - barRightInset);
+	if startVisible then
+		bottomBarW = math.max(200, mainW - barLeft - startBtnRight - startBtnW - startBtnGap);
+	end
+	setSize(Controls.BottomButtonBar, bottomBarW, 70);
+	setOffset(Controls.BottomButtonBar, barLeft, 54);
+
+	-- Keep Launch / countdown in the same bottom-right slot (not in the chat).
+	setOffset(Controls.LaunchButton, startBtnRight, 54);
+	setOffset(Controls.CountdownButton, startBtnRight, 54);
+
+	local backVisible = Controls.BackButton ~= nil and not Controls.BackButton:IsHidden();
+	local scrollOffsetX = 0;
+	if backVisible then
+		scrollOffsetX = backW + backGap;
+	end
+	local scrollRowW = math.max(120, bottomBarW - scrollOffsetX);
+	if Controls.BottomButtonScrollRow ~= nil then
+		setSize(Controls.BottomButtonScrollRow, scrollRowW, 45);
+		setOffset(Controls.BottomButtonScrollRow, scrollOffsetX, 0);
+	end
+	if Controls.BottomButtonScroll ~= nil then
+		setSize(Controls.BottomButtonScroll, math.max(80, scrollRowW - arrowSlot * 2), 40);
+		setOffset(Controls.BottomButtonScroll, arrowSlot, 0);
+	end
+	pcall(function() Controls.BottomButtonBar:ReprocessAnchoring(); end);
+	Draft_RefreshBottomButtonScroll();
 end
 
 function Draft_OnBanSwapClick(playerID)
@@ -2750,19 +2821,7 @@ function Draft_AdjustScreenSize()
 		Controls.OptionsScrollPanel:CalculateInternalSize();
 	end
 	if Controls.BottomButtonBar ~= nil then
-		-- Slightly inset from MainGrid edges so the strip doesn't clip the gold frame.
-		local bottomBarW = math.max(360, mainW - 40);
-		local arrowSlot = 36; -- dedicated << / >> columns (buttons never draw under them)
-		setSize(Controls.BottomButtonBar, bottomBarW, 70);
-		setOffset(Controls.BottomButtonBar, 20, 54);
-		if Controls.BottomButtonScrollRow ~= nil then
-			setSize(Controls.BottomButtonScrollRow, bottomBarW, 45);
-		end
-		if Controls.BottomButtonScroll ~= nil then
-			setSize(Controls.BottomButtonScroll, math.max(200, bottomBarW - arrowSlot * 2), 40);
-			setOffset(Controls.BottomButtonScroll, arrowSlot, 0);
-		end
-		Draft_RefreshBottomButtonScroll();
+		Draft_RefreshBottomButtonBar();
 	end
 	if Controls.ChatBox ~= nil then
 		setSize(Controls.ChatBox, chatW, 164);
