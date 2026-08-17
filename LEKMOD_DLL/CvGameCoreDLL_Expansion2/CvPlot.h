@@ -472,6 +472,7 @@ public:
 	/// True if pUnit arriving on this walk-water plot would create a land+naval combat lock
 	bool WouldBlockAttacksWithUnit(const CvUnit* pUnit) const;
 	void DoHandleUnitsAfterWaterWalkLost();
+	void DoHandleUnitsAfterWaterWalkGained();
 #endif
 
 	bool isRoughGround() const

@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -22,6 +22,23 @@ CvDllPlot::CvDllPlot(CvPlot* pPlot)
 {
 	FAssertMsg(pPlot != NULL, "SHOULD NOT HAPPEN");
 }
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+int CvDllPlot::ms_iGameplayWaterOverride = 0;
+
+void CvDllPlot::PushGameplayWaterOverride()
+{
+	++ms_iGameplayWaterOverride;
+}
+
+void CvDllPlot::PopGameplayWaterOverride()
+{
+	if (ms_iGameplayWaterOverride > 0)
+	{
+		--ms_iGameplayWaterOverride;
+	}
+}
+#endif
 //------------------------------------------------------------------------------
 CvDllPlot::~CvDllPlot()
 {
@@ -204,6 +221,10 @@ PlotTypes CvDllPlot::GetPlotType() const
 bool CvDllPlot::IsWater() const
 {
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (ms_iGameplayWaterOverride > 0)
+	{
+		return m_pPlot->isWater();
+	}
 	// EXE path indicator treats water plots as embark tiles for land units.
 	// Walk-water (pontoon) is land-like for that purpose — keep CvPlot::isWater() unchanged.
 	return m_pPlot->isWater() && !m_pPlot->IsAllowsWalkWater();
@@ -269,6 +290,13 @@ int CvDllPlot::GetWorldAnchorData() const
 //------------------------------------------------------------------------------
 RouteTypes CvDllPlot::GetRouteType() const
 {
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const TeamTypes eTeam = GC.getGame().getActiveTeam();
+	if (eTeam != NO_TEAM && m_pPlot->isRevealed(eTeam))
+	{
+		return m_pPlot->GetEffectiveRouteType(eTeam);
+	}
+#endif
 	return m_pPlot->getRouteType();
 }
 //------------------------------------------------------------------------------

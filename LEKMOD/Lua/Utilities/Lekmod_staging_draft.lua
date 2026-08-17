@@ -1631,10 +1631,9 @@ end
 function Draft_RefreshDraftIconsAll()
 	local show = g_DraftLocked == true;
 
-	-- Host (own box): Name → Draft → Civ in one stack (already correct).
-	-- Other slots: CivSelectBox stays fixed; LeftInfoStack (Name+Draft) is placed so
-	-- when draft shows, Name+Draft bottom aligns with Difficulty (Handicap) for humans,
-	-- or with Team/SlotType rows for AI (no handicap).
+	-- Host and other slots: Name → Draft icons → Civ/leader in one stack.
+	-- DraftIconRow is height 0 when hidden, so civ/leader sits on the SlotType row
+	-- until a draft is showing (then it drops to the Handicap/difficulty row).
 	local function ApplyDraftRow(row, scroll, stack, leftBtn, rightBtn, playerID, leftStack)
 		if stack ~= nil and playerID ~= nil then
 			RefreshDraftIcons(playerID, stack);
@@ -1669,28 +1668,15 @@ function Draft_RefreshDraftIconsAll()
 			local slot = m_SlotInstances[i];
 			if slot ~= nil then
 				-- Humans show Team + SlotType + Handicap (3 rows). Start higher so handicap
-				-- fits in the box. AI (no handicap) keep Team@36 / SlotType@67 with Civ.
+				-- fits in the box. AI (no handicap) keep Team@36 / SlotType@67.
+				-- Left stack stays at topY so Name is always the top row.
 				local humanLayout = slot.playerID ~= nil and IsHumanSlot(slot.playerID);
 				local topY = humanLayout and 20 or 36;
-				local civY = humanLayout and 51 or 67; -- topY + 27 + 4
-				if slot.CivSelectBox ~= nil then
-					slot.CivSelectBox:SetOffsetVal(128, civY);
-				end
 				if slot.RightInfoStack ~= nil then
 					slot.RightInfoStack:SetOffsetVal(400, topY);
 				end
 				if slot.LeftInfoStack ~= nil then
-					local leftY = topY;
-					if show then
-						if humanLayout then
-							-- Name(27)+pad(4)+Draft(27)=58; Handicap bottom = topY+62+27 = topY+89
-							-- → leftY = topY + 89 - 58 = topY + 31 (draft bottom = difficulty bottom)
-							leftY = topY + 31;
-						else
-							leftY = 5; -- draft row lands near Team for AI
-						end
-					end
-					slot.LeftInfoStack:SetOffsetVal(128, leftY);
+					slot.LeftInfoStack:SetOffsetVal(128, topY);
 				end
 				ApplyDraftRow(slot.DraftIconRow, slot.DraftIconScroll, slot.DraftIconStack,
 					slot.DraftScrollLeft, slot.DraftScrollRight, slot.playerID, slot.LeftInfoStack);

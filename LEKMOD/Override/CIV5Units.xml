@@ -32206,6 +32206,24 @@
 			<Cost>0</Cost>
 			<Remove>true</Remove>
 		</Row>
+		<Row>
+			<BuildType>BUILD_PONTOON_BRIDGE</BuildType>
+			<FeatureType>FEATURE_SHALLOWS</FeatureType>
+			<PrereqTech>TECH_MINING</PrereqTech>
+			<Time>0</Time>
+			<Production>0</Production>
+			<Cost>0</Cost>
+			<Remove>false</Remove>
+		</Row>
+		<Row>
+			<BuildType>BUILD_WATER_POLDER</BuildType>
+			<FeatureType>FEATURE_SHALLOWS</FeatureType>
+			<PrereqTech>TECH_MINING</PrereqTech>
+			<Time>200</Time>
+			<Production>0</Production>
+			<Cost>0</Cost>
+			<Remove>false</Remove>
+		</Row>
 	</BuildFeatures> 
 
 	<Table name="Build_TechTimeChanges">
@@ -47670,7 +47688,7 @@
 			<HotKey>KB_Z</HotKey>
 			<HotKeyPriority>1</HotKeyPriority>
 			<OrderPriority>98</OrderPriority>
-			<Time>700</Time>
+			<Time>400</Time>
 			<Water>true</Water>
 			<CanBeEmbarked>true</CanBeEmbarked>
 			<PrereqTech>TECH_ENGINEERING</PrereqTech>
@@ -47883,7 +47901,7 @@
 			<Description>TXT_KEY_BUILD_REMOVE_WATER_CROSSING</Description>
 			<Help>TXT_KEY_BUILD_REMOVE_WATER_CROSSING_HELP</Help>
 			<Water>true</Water>
-			<Time>300</Time>
+			<Time>0</Time>
 			<RemoveWaterCrossing>true</RemoveWaterCrossing>
 			<EntityEvent>ENTITY_EVENT_CHOP</EntityEvent>
 			<HotKey>KB_R</HotKey>
@@ -105085,7 +105103,7 @@
 			<InfluenceCost>-1</InfluenceCost>
 			<Impassable>false</Impassable>
 			<NoCity>true</NoCity>
-			<NoImprovement>true</NoImprovement>
+			<NoImprovement>false</NoImprovement>
 			<VisibleAlways>false</VisibleAlways>
 			<NukeImmune>true</NukeImmune>
 			<NaturalWonder>false</NaturalWonder>
@@ -137052,6 +137070,11 @@
 			<CivilizationType>CIVILIZATION_NETHERLANDS</CivilizationType>
 			<Water>true</Water>
 			<AllowsWalkWater>true</AllowsWalkWater>
+			<ActsAsRoute>true</ActsAsRoute>
+			<ActsAsRouteTech>TECH_ENGINEERING</ActsAsRouteTech>
+			<ActsAsRailroadTech>TECH_RAILROAD</ActsAsRailroadTech>
+			<StackedDomainDefensePenalty>35</StackedDomainDefensePenalty>
+			<DefenseModifierGlobal>-15</DefenseModifierGlobal>
 			<PillageGold>18</PillageGold>
 			<RequiresXAdjacentLand>3</RequiresXAdjacentLand>
 			<PortraitIndex>0</PortraitIndex>

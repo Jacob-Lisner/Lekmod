@@ -18,6 +18,14 @@ void CvUnitMovement::GetCostsForMove(const CvUnit* pUnit, const CvPlot* pFromPlo
 	CvTeam& kUnitTeam = GET_TEAM(eUnitTeam);
 	int iMoveDenominator = GC.getMOVE_DENOMINATOR();
 	bool bRiverCrossing = pFromPlot->isRiverCrossing(directionXY(pFromPlot, pToPlot));
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Pontoon/shallows are the crossing. A coastal river edge must not burn all MP
+	// (that forces a stop on the first land tile and blocks 1UPT pass-through).
+	if (bRiverCrossing && (pFromPlot->IsAllowsWalkWater() || pToPlot->IsAllowsWalkWater()))
+	{
+		bRiverCrossing = false;
+	}
+#endif
 	FeatureTypes eFeature = pToPlot->getFeatureType();
 	CvFeatureInfo* pFeatureInfo = (eFeature > NO_FEATURE) ? GC.getFeatureInfo(eFeature) : 0;
 	TerrainTypes eTerrain = pToPlot->getTerrainType();
@@ -69,7 +77,7 @@ void CvUnitMovement::GetCostsForMove(const CvUnit* pUnit, const CvPlot* pFromPlo
 		}
 	}
 
-	if(pFromPlot->isValidRoute(pUnit) && pToPlot->isValidRoute(pUnit) && ((kUnitTeam.isBridgeBuilding() || !(pFromPlot->isRiverCrossing(directionXY(pFromPlot, pToPlot))))))
+	if(pFromPlot->isValidRoute(pUnit) && pToPlot->isValidRoute(pUnit) && (kUnitTeam.isBridgeBuilding() || !bRiverCrossing))
 	{
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
 		RouteTypes eFromPlotRoute = pFromPlot->GetEffectiveRouteType(pUnit);
@@ -248,7 +256,13 @@ bool CvUnitMovement::ConsumesAllMoves(const CvUnit* pUnit, const CvPlot* pFromPl
 			return true;
 	}
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const bool bFromWaterForEmbark = pFromPlot->isWater() && !pFromPlot->IsAllowsWalkWater();
+	const bool bToWaterForEmbark = pToPlot->isWater() && !pToPlot->IsAllowsWalkWater();
+	if (bFromWaterForEmbark != bToWaterForEmbark && pUnit->CanEverEmbark())
+#else
 	if(pToPlot->isWater() != pFromPlot->isWater() && pUnit->CanEverEmbark())
+#endif
 
 	{
 		//

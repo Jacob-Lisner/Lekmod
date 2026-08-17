@@ -3258,12 +3258,6 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 	{
 		CvFeatureInfo* pkFeature = GC.getFeatureInfo(getFeatureType());
 		iModifier = pkFeature ? pkFeature->getDefenseModifier() : 0;
-#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
-		if (pkFeature && HasStackedLandAndNavalUnits())
-		{
-			iModifier -= pkFeature->GetStackedDomainDefensePenalty();
-		}
-#endif
 	}
 	// Terrain
 	else
@@ -3286,26 +3280,70 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 		eImprovement = getImprovementType();
 	}
 
+	int iImprovementDef = 0;
+	int iImprovementGlobal = 0;
+	CvImprovementEntry* pkImprovement = NULL;
 	if(eImprovement != NO_IMPROVEMENT && !IsImprovementPillaged())
 	{
-		if(eDefender != NO_TEAM && (getTeam() == NO_TEAM || GET_TEAM(eDefender).isFriendlyTerritory(getTeam())))
-		{
-			CvImprovementEntry* pkImprovement = GC.getImprovementInfo(eImprovement);
-			if (pkImprovement)
-				iModifier += pkImprovement->GetDefenseModifier();
-		}
-		CvImprovementEntry* pkImprovement = GC.getImprovementInfo(eImprovement);
+		pkImprovement = GC.getImprovementInfo(eImprovement);
 		if (pkImprovement)
 		{
-			iModifier += pkImprovement->GetDefenseModifierGlobal();
-#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
-			if (HasStackedLandAndNavalUnits())
+			if(eDefender != NO_TEAM && (getTeam() == NO_TEAM || GET_TEAM(eDefender).isFriendlyTerritory(getTeam())))
 			{
-				iModifier -= pkImprovement->GetStackedDomainDefensePenalty();
+				iImprovementDef = pkImprovement->GetDefenseModifier();
 			}
-#endif
+			iImprovementGlobal = pkImprovement->GetDefenseModifierGlobal();
 		}
 	}
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	{
+		bool bWalkWaterFeature = false;
+		if (getFeatureType() != NO_FEATURE)
+		{
+			CvFeatureInfo* pkWalkFeature = GC.getFeatureInfo(getFeatureType());
+			bWalkWaterFeature = pkWalkFeature && pkWalkFeature->IsAllowsWalkWater();
+		}
+		const bool bWalkWaterImprovement = pkImprovement && pkImprovement->IsAllowsWalkWater();
+		if (bWalkWaterFeature && bWalkWaterImprovement && !isHills() && !isMountain())
+		{
+			// Shallows feature + pontoon improvement: one plot defense, not both
+			iModifier = std::min(iModifier, iImprovementDef);
+		}
+		else
+		{
+			iModifier += iImprovementDef;
+		}
+	}
+#else
+	iModifier += iImprovementDef;
+#endif
+	iModifier += iImprovementGlobal;
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Pontoon + shallows stacked-domain penalties must not add together
+	if (HasStackedLandAndNavalUnits())
+	{
+		int iStackedPenalty = 0;
+		if (getFeatureType() != NO_FEATURE)
+		{
+			CvFeatureInfo* pkStackedFeature = GC.getFeatureInfo(getFeatureType());
+			if (pkStackedFeature)
+			{
+				iStackedPenalty = std::max(iStackedPenalty, pkStackedFeature->GetStackedDomainDefensePenalty());
+			}
+		}
+		if (eImprovement != NO_IMPROVEMENT && !IsImprovementPillaged())
+		{
+			CvImprovementEntry* pkStackedImprovement = GC.getImprovementInfo(eImprovement);
+			if (pkStackedImprovement)
+			{
+				iStackedPenalty = std::max(iStackedPenalty, pkStackedImprovement->GetStackedDomainDefensePenalty());
+			}
+		}
+		iModifier -= iStackedPenalty;
+	}
+#endif
 
 	if(!bHelp)
 	{
@@ -3627,6 +3665,30 @@ void CvPlot::DoHandleUnitsAfterWaterWalkLost()
 	else if (pToEmbark != NULL && !pToEmbark->CanEverEmbark())
 	{
 		pToEmbark->jumpToNearestValidPlot();
+	}
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::DoHandleUnitsAfterWaterWalkGained()
+{
+	const IDInfo* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(*pUnitNode);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (pLoopUnit == NULL || pLoopUnit->isDelayedDeath())
+		{
+			continue;
+		}
+		if (pLoopUnit->getDomainType() != DOMAIN_LAND || !pLoopUnit->isEmbarked())
+		{
+			continue;
+		}
+		if (pLoopUnit->canMoveAllTerrain() || pLoopUnit->IsHoveringUnit())
+		{
+			continue;
+		}
+		pLoopUnit->disembark(this);
 	}
 }
 #endif
@@ -4698,7 +4760,11 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 	}
 
 	bool bPretendEmbarked = false;
-	if(isWater() && pUnit->canEmbarkOnto(*pUnit->plot(), *this))
+	if(isWater()
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		&& !IsAllowsWalkWater()
+#endif
+		&& pUnit->canEmbarkOnto(*pUnit->plot(), *this))
 	{
 		bPretendEmbarked = true;
 	}
@@ -6606,6 +6672,10 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 		{
 			DoHandleUnitsAfterWaterWalkLost();
 		}
+		else if (!bHadActiveWalkWater && IsAllowsWalkWater())
+		{
+			DoHandleUnitsAfterWaterWalkGained();
+		}
 #endif
 	}
 }
@@ -6939,15 +7009,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 	if (eOldImprovement != eNewValue)
 	{
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
-		bool bHadActiveWalkWater = false;
-		if (eOldImprovement != NO_IMPROVEMENT)
-		{
-			CvImprovementEntry* pkOldWalk = GC.getImprovementInfo(eOldImprovement);
-			if (pkOldWalk && pkOldWalk->IsAllowsWalkWater() && !IsImprovementPillaged())
-			{
-				bHadActiveWalkWater = true;
-			}
-		}
+		const bool bHadActiveWalkWater = IsAllowsWalkWater();
 #endif
 #ifdef AUI_PLOT_FIX_PILLAGED_PLOT_ON_NEW_IMPROVEMENT
 		SetImprovementPillaged(false);
@@ -7291,9 +7353,33 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 		}
 
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		{
+			CvImprovementEntry* pkOld = (eOldImprovement != NO_IMPROVEMENT) ? GC.getImprovementInfo(eOldImprovement) : NULL;
+			CvImprovementEntry* pkNew = (eNewValue != NO_IMPROVEMENT) ? GC.getImprovementInfo(eNewValue) : NULL;
+			if ((pkOld && pkOld->IsActsAsRoute()) || (pkNew && pkNew->IsActsAsRoute()))
+			{
+				setLayoutDirty(true);
+				for (int iDir = 0; iDir < NUM_DIRECTION_TYPES; ++iDir)
+				{
+					CvPlot* pAdj = plotDirection(getX(), getY(), (DirectionTypes)iDir);
+					if (pAdj)
+					{
+						pAdj->setLayoutDirty(true);
+					}
+				}
+			}
+		}
+		if (isWater() && IsAllowsWalkWater() && getRouteType() != NO_ROUTE)
+		{
+			setRouteType(NO_ROUTE);
+		}
 		if (bHadActiveWalkWater && !IsAllowsWalkWater())
 		{
 			DoHandleUnitsAfterWaterWalkLost();
+		}
+		else if (!bHadActiveWalkWater && IsAllowsWalkWater())
+		{
+			DoHandleUnitsAfterWaterWalkGained();
 		}
 #endif
 	}
@@ -7314,22 +7400,26 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 	if(bPillaged != bWasPillaged)
 	{
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
-		bool bWasWalkWater = false;
-		if (bPillaged && !bWasPillaged && getImprovementType() != NO_IMPROVEMENT)
+		bool bWalkWaterImprovement = false;
+		if (getImprovementType() != NO_IMPROVEMENT)
 		{
 			CvImprovementEntry* pkImprovement = GC.getImprovementInfo(getImprovementType());
-			if (pkImprovement && pkImprovement->IsAllowsWalkWater())
-			{
-				bWasWalkWater = true;
-			}
+			bWalkWaterImprovement = pkImprovement && pkImprovement->IsAllowsWalkWater();
 		}
 #endif
 		m_bImprovementPillaged = bPillaged;
 		updateYield();
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
-		if (bWasWalkWater)
+		if (bWalkWaterImprovement)
 		{
-			DoHandleUnitsAfterWaterWalkLost();
+			if (bPillaged && !IsAllowsWalkWater())
+			{
+				DoHandleUnitsAfterWaterWalkLost();
+			}
+			else if (!bPillaged && IsAllowsWalkWater())
+			{
+				DoHandleUnitsAfterWaterWalkGained();
+			}
 		}
 #endif
 #if defined(LEKMOD_POLICY_GREATPERSON_IMPROVEMENT_ADJACENCY_YIELD)
@@ -10614,6 +10704,10 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 			// Constructed Route
 			if(pkBuildInfo->getRoute() != NO_ROUTE)
 			{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				if (!IsAllowsWalkWater())
+#endif
+				{
 				const RouteTypes eRoute = (RouteTypes)pkBuildInfo->getRoute();
 				CvRouteInfo* pkRouteInfo = GC.getRouteInfo(eRoute);
 				if(pkRouteInfo)
@@ -10629,6 +10723,7 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 						}
 						SetPlayerResponsibleForRoute(ePlayer);
 					}
+				}
 				}
 			}
 
@@ -11754,9 +11849,26 @@ void CvPlot::updateLayout(bool bDebug)
 	}
 
 	RouteTypes eRoute = getRevealedRouteType(eActiveTeam, bDebug);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const RouteTypes eRevealedRoute = eRoute;
+	if (eRoute == NO_ROUTE && eFOWMode == FOGOFWARMODE_OFF)
+	{
+		eRoute = GetEffectiveRouteType(eActiveTeam);
+	}
+	// ActsAsRoute pontoons: pass eRoute so adjacent roads stub toward this plot,
+	// but do not assign ROAD_REGULAR / RR_REGULAR (that draws a mesh on the water).
+	const bool bActsAsRouteOnly = (eRevealedRoute == NO_ROUTE && eRoute != NO_ROUTE);
+#endif
 	byte eRoadTypeValue = NUM_ROAD_RR_TYPES;
 	if(eRoute != NO_ROUTE)
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		if (bActsAsRouteOnly)
+		{
+			// Keep eRoute; leave eRoadTypeValue as NUM_ROAD_RR_TYPES.
+		}
+		else
+#endif
 		switch(eRoute)
 		{
 		case ROUTE_ROAD:
@@ -11839,6 +11951,13 @@ void CvPlot::updateLayout(bool bDebug)
 	}
 
 	auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(this));
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const bool bHideWalkWaterRoadMesh = isWater() && IsAllowsWalkWater() && bActsAsRouteOnly;
+	if (bHideWalkWaterRoadMesh)
+	{
+		CvDllPlot::PushGameplayWaterOverride();
+	}
+#endif
 	gDLL->GameplayPlotStateChange
 	(
 	    pDllPlot.get(),
@@ -11848,6 +11967,12 @@ void CvPlot::updateLayout(bool bDebug)
 	    eRoute,
 	    eRoadTypeValue
 	);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (bHideWalkWaterRoadMesh)
+	{
+		CvDllPlot::PopGameplayWaterOverride();
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------

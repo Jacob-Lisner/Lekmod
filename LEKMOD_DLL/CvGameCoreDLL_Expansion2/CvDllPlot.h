@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -24,6 +24,13 @@ public:
 	static void* operator new(size_t bytes);
 
 	CvPlot* GetInstance();
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// While > 0, IsWater() reports the real terrain so GameplayPlotStateChange
+	// will not place a land-road mesh on a pontoon. Pathing still sees walk-water as land.
+	static void PushGameplayWaterOverride();
+	static void PopGameplayWaterOverride();
+#endif
 
 	TeamTypes DLLCALL GetTeam() const;
 	FogOfWarModeTypes DLLCALL GetActiveFogOfWarMode() const;
@@ -86,4 +93,7 @@ private:
 
 	unsigned int m_uiRefCount;
 	CvPlot* m_pPlot;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	static int ms_iGameplayWaterOverride;
+#endif
 };

@@ -3294,7 +3294,15 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 						// EFB: Added so units can't come out of cities to attack (but so that units in city's pathing doesn't fail all the time)
 						if(!(bMoveFlags & MOVEFLAG_NOT_ATTACKING_THIS_TURN) && !IsCanAttackWithMoveNow())
 						{
-							return false;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+							// Melee only: stacked lock is on the live plot. Adjacent melee fires from here;
+							// non-adjacent melee moves first, so do not block pathing/prediction.
+							// Ranged units still cannot path/predict an attack out of a stacked walk-water tile.
+							if (plotDistance(getX(), getY(), plot.getX(), plot.getY()) == 1 || isRanged())
+#endif
+							{
+								return false;
+							}
 						}
 					}
 				}
@@ -3658,7 +3666,15 @@ bool CvUnit::canMoveOrAttackIntoAttackOnly(const CvPlot& plot, byte bMoveFlags) 
 						// EFB: Added so units can't come out of cities to attack (but so that units in city's pathing doesn't fail all the time)
 						if (!(bMoveFlags & MOVEFLAG_NOT_ATTACKING_THIS_TURN) && !IsCanAttackWithMoveNow())
 						{
-							return false;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+							// Melee only: stacked lock is on the live plot. Adjacent melee fires from here;
+							// non-adjacent melee moves first, so do not block pathing/prediction.
+							// Ranged units still cannot path/predict an attack out of a stacked walk-water tile.
+							if (plotDistance(getX(), getY(), plot.getX(), plot.getY()) == 1 || isRanged())
+#endif
+							{
+								return false;
+							}
 						}
 					}
 				}
@@ -25596,7 +25612,7 @@ bool CvUnit::IsEnemyInMovementRange(bool bOnlyFortified, bool bOnlyCities)
 	bool bCanFindPath = thePathfinder.GeneratePath(getX(), getY(), -1, -1, MOVE_DECLARE_WAR, false);
 
 	// change the unit pathfinder back
-	thePathfinder.SetValidFunc(PathValid);
+	thePathfinder.SetValidFunc(UIPathValid);
 	thePathfinder.SetDestValidFunc(PathDestValid);
 	thePathfinder.SetIsPathDestFunc(PathDest);
 	thePathfinder.ForceReset();

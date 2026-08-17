@@ -5768,6 +5768,30 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 			{
 				CvPlot* pLoopPlot = GC.getMap().plotByIndexUnchecked(iPlotLoop);
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				if (bIsActiveTeam && bNewValue)
+				{
+					const ImprovementTypes eImp = pLoopPlot->getImprovementType();
+					if (eImp != NO_IMPROVEMENT)
+					{
+						CvImprovementEntry* pkImp = GC.getImprovementInfo(eImp);
+						if (pkImp && pkImp->IsActsAsRoute() &&
+							(pkImp->GetActsAsRouteTech() == eIndex || pkImp->GetActsAsRailroadTech() == eIndex))
+						{
+							pLoopPlot->setLayoutDirty(true);
+							for (int iDir = 0; iDir < NUM_DIRECTION_TYPES; ++iDir)
+							{
+								CvPlot* pAdj = plotDirection(pLoopPlot->getX(), pLoopPlot->getY(), (DirectionTypes)iDir);
+								if (pAdj)
+								{
+									pAdj->setLayoutDirty(true);
+								}
+							}
+						}
+					}
+				}
+#endif
+
 				const ResourceTypes eResource = pLoopPlot->getResourceType();
 				if(eResource != NO_RESOURCE)
 				{

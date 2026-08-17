@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	? 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -2135,7 +2135,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
 	// Cannot melee-attack from a walk-water tile that would be land+naval stacked after arriving.
-	// Combat units only  civilians never attack and must not be blocked by this check.
+	// Combat units only ? civilians never attack and must not be blocked by this check.
 	if (pUnit->IsCombatUnit() &&
 		(kToNodeCacheData.bContainsVisibleEnemyDefender || kToNodeCacheData.bContainsEnemyCity) &&
 		pFromPlot != NULL && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
@@ -3594,6 +3594,19 @@ int RouteValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poi
 		}
 	}
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	RouteTypes eRouteType = pNewPlot->GetEffectiveRouteType(kPlayer.getTeam());
+	if(eRouteType == NO_ROUTE)
+	{
+		return FALSE;
+	}
+
+	// Only a real (non-improvement) pillaged route blocks; leftover pillage flags must not hide ActsAsRoute
+	if(pNewPlot->getRouteType() != NO_ROUTE && pNewPlot->IsRoutePillaged())
+	{
+		return FALSE;
+	}
+#else
 	RouteTypes eRouteType = pNewPlot->getRouteType();
 	if(eRouteType == NO_ROUTE)
 	{
@@ -3604,6 +3617,7 @@ int RouteValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poi
 	{
 		return FALSE;
 	}
+#endif
 
 	if(!pNewPlot->IsFriendlyTerritory(ePlayer))
 	{
@@ -4710,7 +4724,22 @@ int UIPathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* po
 				if (!pUnit->canMoveAllTerrain())
 #endif
 				{
-					return FALSE;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+					// Walk-water lets land units leave their starting landmass (land -> pontoon -> other land).
+					// Vanilla only allows plots adjacent to the unit's current area, which hides those tiles.
+#ifdef AUI_ASTAR_CACHE_PLOTS_AT_NODES
+					const CvPlot* pFromPlot = parent->m_pPlot;
+#else
+					CvPlot* pFromPlot = GC.getMap().plot(parent->m_iX, parent->m_iY);
+#endif
+					const bool bWalkWaterBridge = pToPlot->IsAllowsWalkWater() ||
+						(pFromPlot && (pFromPlot->IsAllowsWalkWater() ||
+							((!pFromPlot->isWater() || pFromPlot->IsAllowsWalkWater()) && pFromPlot->getArea() == pToPlot->getArea())));
+					if (!bWalkWaterBridge)
+#endif
+					{
+						return FALSE;
+					}
 				}
 			}
 		}
@@ -5325,7 +5354,7 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 
 #if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
 	// Cannot melee-attack from a walk-water tile that would be land+naval stacked after arriving.
-	// Combat units only  civilians never attack and must not be blocked by this check.
+	// Combat units only ? civilians never attack and must not be blocked by this check.
 	if (pUnit->IsCombatUnit() &&
 		(kToNodeCacheData.bContainsVisibleEnemyDefender || kToNodeCacheData.bContainsEnemyCity) &&
 		pFromPlot != NULL && pFromPlot->WouldBlockAttacksWithUnit(pUnit))
@@ -5863,7 +5892,12 @@ int TradeRouteLandPathCost(CvAStarNode* parent, CvAStarNode* node, int data, con
 	FeatureTypes eFeature = pToPlot->getFeatureType();
 
 	// super duper low costs for moving along routes
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const TeamTypes eOriginTeam = pCacheData->getTeam().GetID();
+	if (pFromPlot->GetEffectiveRouteType(eOriginTeam) != NO_ROUTE && pToPlot->GetEffectiveRouteType(eOriginTeam) != NO_ROUTE)
+#else
 	if (pFromPlot->getRouteType() != NO_ROUTE && pToPlot->getRouteType() != NO_ROUTE)
+#endif
 	{
 		iCost = iCost / 2;
 	}
@@ -5942,14 +5976,27 @@ int TradeRouteLandValid(CvAStarNode* parent, CvAStarNode* node, int data, const 
 	const CvPlot* pNewPlot = node->m_pPlot;
 	if (!pOldPlot || !pNewPlot)
 		return FALSE;
-
-	if (pOldPlot->getArea() != pNewPlot->getArea())
 #else
 	CvMap& kMap = GC.getMap();
-	CvPlot* pNewPlot = kMap.plotUnchecked(node->m_iX, node->m_iY);
-
-	if(kMap.plotUnchecked(parent->m_iX, parent->m_iY)->getArea() != pNewPlot->getArea())
+	const CvPlot* pOldPlot = kMap.plotUnchecked(parent->m_iX, parent->m_iY);
+	const CvPlot* pNewPlot = kMap.plotUnchecked(node->m_iX, node->m_iY);
 #endif
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (pNewPlot->isWater() && !pNewPlot->IsAllowsWalkWater())
+	{
+		return FALSE;
+	}
+
+	if (pOldPlot->getArea() != pNewPlot->getArea())
+	{
+		if (!pOldPlot->IsAllowsWalkWater() && !pNewPlot->IsAllowsWalkWater())
+		{
+			return FALSE;
+		}
+	}
+#else
+	if (pOldPlot->getArea() != pNewPlot->getArea())
 	{
 		return FALSE;
 	}
@@ -5958,6 +6005,7 @@ int TradeRouteLandValid(CvAStarNode* parent, CvAStarNode* node, int data, const 
 	{
 		return FALSE;
 	}
+#endif
 
 #ifdef AUI_ASTAR_FIX_STEP_VALID_CONSIDERS_MOUNTAINS
 	if (pNewPlot->isImpassable())
