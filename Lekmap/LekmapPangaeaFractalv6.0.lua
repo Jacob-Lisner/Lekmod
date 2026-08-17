@@ -357,19 +357,7 @@ function GetMapScriptInfo()
 			-- 	DefaultValue = 1,
 			-- 	SortPriority = -81,
 			-- },
-			-- {
-			-- 	Name = "[COLOR_POSITIVE_TEXT]Mountain Reduction[ENDCOLOR]", -- (21)
-			-- 	Values = {
-			-- 		"0% - Old Default",
-			-- 		"5%",
-			-- 		"10%",
-			-- 		"[COLOR_POSITIVE_TEXT]15%[ENDCOLOR]",
-			-- 		"20%",
-			-- 		"30%",
-			-- 	},
-			-- 	DefaultValue = 4,
-			-- 	SortPriority = -99,
-			-- },
+
 			-- {
 			-- 	Name = "[COLOR_POSITIVE_TEXT]Bay/Lake Rework[ENDCOLOR]", -- (22)
 			-- 	Values = {
@@ -715,6 +703,33 @@ function GetMapScriptInfo()
 			-- DefaultValue = 2,
 			-- SortPriority = -99,
 			-- },
+			{
+				Name = "Mountain Reduction", -- (20)
+				Values = {
+					"0% - Old Default",
+					"5%",
+					"10%",
+					"15% - Default",
+					"20%",
+					"30%",
+				},
+				DefaultValue = 4,
+				SortPriority = -99,
+			},
+			{
+				Name = "Independent Hill Reduction", -- (21)
+				Values = {
+					"0% - Old Default",
+					"5% - Default",
+					"10%",
+					"20%",
+					"30%",
+					"40%",
+					"50%",
+				},
+				DefaultValue = 2,
+				SortPriority = -99,
+			},
 		},
 	};
 end
@@ -1259,10 +1274,10 @@ function PangaeaFractalWorld:GeneratePlotTypes(args)
 		-- local fjordlengthmodif = Map.GetCustomOption(20);
 		local fjordlengthmodif = 1
 
-		-- local beta_mountain_mod = Map.GetCustomOption(21);
-		-- local beta_hill_mod = Map.GetCustomOption(28);
-		local beta_mountain_mod = 4
-		local beta_hill_mod = 2
+		local beta_mountain_mod = Map.GetCustomOption(20);
+		local beta_hill_mod = Map.GetCustomOption(21);
+		-- local beta_mountain_mod = 4
+		-- local beta_hill_mod = 2
 
 		local hill_prob = 100
 		if beta_hill_mod == 2 then
