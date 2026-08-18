@@ -1,8 +1,6 @@
 ----------------------------------------------------------------        
 -- Globals
 ----------------------------------------------------------------   
-include( "Lekmod_version.lua" );
-
 local g_joinFailed = false;		-- Are we attempting to close this page after a join failure?
 															-- Used to prevent the ActivateAllowedDLC mechanic in ShowHideHander 
 															-- from restoring the page after a join failed.  This can occur
@@ -127,18 +125,8 @@ function OnConnectionCompete()
         UIManager:DequeuePopup( ContextPtr );
 	end
 
-    -- Version handshake so hosts can detect vanilla / mismatched Lekmod clients.
-    Network.SendChat(LekmodVersion.GetHandshakeMessage());
-
-    -- Warn lobby if ui_check.bat was never run (FrontEnd post-check sets LekmodUiCheck.done).
-    local uiCheckDone = false;
-    pcall(function()
-        local userData = Modding.OpenUserData("LekmodUiCheck", 1);
-        uiCheckDone = (tonumber(userData.GetValue("done")) == 1);
-    end);
-    if not uiCheckDone then
-        Network.SendChat(LekmodVersion.EncodeGameChat(Locale.ConvertTextKey("TXT_KEY_UI_CHECK_BAT")));
-    end
+    -- Version mismatch vs host lobby name (TXT_KEY_LEKMOD_VERSION).
+    checkLekmodMismatch();
 end
 
 -------------------------------------------------
@@ -172,20 +160,29 @@ Events.PlayerVersionMismatchEvent.Add( OnVersionMismatch );
 
 function checkLekmodMismatch(player_id)
 
-	local current_game_version = Matchmaking.GetCurrentGameName();
-	print("current_game_version: " .. current_game_version);
+	if Matchmaking.IsHost() then
+		return;
+	end
+	if g_joinFailed then
+		return;
+	end
+
+	local current_game_version = Matchmaking.GetCurrentGameName() or "";
 	local lekmod_version = Locale.ConvertTextKey("TXT_KEY_LEKMOD_VERSION");
-	print("lekmod_version: " .. lekmod_version);
-	--if not host
-	if not Matchmaking.IsHost() then
-		-- check if the game name includes the lekmod version
-		if not string.find(current_game_version, lekmod_version) then
-			-- did not find the lekmod version in the game name, assume player does not have it, kick player
-			Events.FrontEndPopup.CallImmediate( Locale.ConvertTextKey( "TXT_KEY_MP_VERSION_MISMATCH_FOR_PLAYER" ) );
-			g_joinFailed = true;
-			Matchmaking.LeaveMultiplayerGame();
-			UIManager:DequeuePopup( ContextPtr );
-		end
+	print("current_game_version: " .. tostring(current_game_version));
+	print("lekmod_version: " .. tostring(lekmod_version));
+	if current_game_version == "" then
+		return;
+	end
+	if lekmod_version == nil or lekmod_version == "" or lekmod_version == "TXT_KEY_LEKMOD_VERSION" then
+		return;
+	end
+	-- Plain find: dots in v35.006 must not be Lua patterns.
+	if string.find(current_game_version, lekmod_version, 1, true) == nil then
+		Events.FrontEndPopup.CallImmediate( Locale.ConvertTextKey( "TXT_KEY_MP_VERSION_MISMATCH_FOR_PLAYER" ) );
+		g_joinFailed = true;
+		Matchmaking.LeaveMultiplayerGame();
+		UIManager:DequeuePopup( ContextPtr );
 	end
 
 end

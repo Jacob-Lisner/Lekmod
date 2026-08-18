@@ -3,12 +3,19 @@
 -- FrontEnd
 -------------------------------------------------
 
--- Written only by the post-ui_check FrontEnd. Joiners without ui_check never set this.
 local function MarkLekmodUiCheckDone()
 	pcall(function()
 		local userData = Modding.OpenUserData("LekmodUiCheck", 1);
 		userData.SetValue("done", 1);
 	end);
+end
+
+local function IsUiCheckConfigured()
+	LekmodUiConfigured = nil;
+	pcall(function()
+		include("LekmodUiConfigured");
+	end);
+	return LekmodUiConfigured == true;
 end
 
 function ShowHideHandler( bIsHide, bIsInit )
@@ -17,20 +24,17 @@ function ShowHideHandler( bIsHide, bIsInit )
 		-- the Civ5App::eHasShownLegal and not show the legal/touch screens.
 		UI:CheckForCommandLineInvitation();
 
----------- Temudjin START
---    if not UI:HasShownLegal() then
---        UIManager:QueuePopup( Controls.LegalScreen, PopupPriority.LegalScreen );
---    end
----------- Temudjin END
-
-	-- Presence of this FrontEnd.lua means ui_check.bat has been run.
-	MarkLekmodUiCheckDone();
-
     if not bIsHide then
         Controls.AtlasLogo:SetTexture( "CivilzationVAtlas.dds" );
         Controls.AtlasLogo:SetTexture( "oracle_background.dds" );
     	UIManager:SetUICursor( 0 );
-        UIManager:QueuePopup( Controls.MainMenu, PopupPriority.MainMenu );
+		if not IsUiCheckConfigured() then
+			-- Manual install without ui_check.bat: block the menus.
+			UIManager:QueuePopup( Controls.LegalScreen, PopupPriority.LegalScreen );
+		else
+			MarkLekmodUiCheckDone();
+			UIManager:QueuePopup( Controls.MainMenu, PopupPriority.MainMenu );
+		end
     else
         Controls.AtlasLogo:UnloadTexture();
     end

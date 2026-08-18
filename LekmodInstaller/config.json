@@ -1,12 +1,15 @@
 {
   "_comment": "Lekmod Installer Configuration",
   
-  "installer_version": "1.0.1",
+  "installer_version": "1.1",
   
   "installer_update_url": "https://raw.githubusercontent.com/EnormousApplePie/Lekmod/main/LekmodInstaller/github_setup/installer_version.json",
   
   "version_check_url": "https://raw.githubusercontent.com/EnormousApplePie/Lekmod/main/LekmodInstaller/github_setup/versions.json",
+
+  "lekmap_version_check_url": "https://raw.githubusercontent.com/EnormousApplePie/Lekmod/main/LekmodInstaller/github_setup/lekmap_versions.json",
   
-  "versions": {}
+  "versions": {},
+  "lekmap_versions": {}
 }
 

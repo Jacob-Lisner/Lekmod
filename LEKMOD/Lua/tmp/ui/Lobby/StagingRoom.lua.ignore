@@ -20,9 +20,7 @@ local g_ChatInstances = {};
 local g_LobbyChatHistory = {};
 local g_bRequestedLobbyChatHistory = false;
 local bFlipper = false;
-local g_VersionVerified = {}; -- [playerID] = true/false
-local g_VersionDeadline = {}; -- [playerID] = remaining seconds
-local g_fVersionCheckAccum = 0;
+local g_bSentUiCheckWarning = false;
 
 -- UserData key shared with DiploCorner for lobby → in-game chat handoff.
 local LOBBY_CHAT_USERDATA = "LekmodLobbyChat";
@@ -253,7 +251,6 @@ function OnStagingUpdate( fDTime )
 	if Draft_SyncBanScroll ~= nil then
 		Draft_SyncBanScroll();
 	end
-	VersionCheckUpdate( fDTime );
 
 	-- Countdown only runs while g_fCountdownTimer is active (>= 0).
 	if( g_fCountdownTimer < 0 ) then
@@ -1181,6 +1178,9 @@ function SendLobbyChatHistoryToPlayer( playerID )
 	if( playerID == Matchmaking.GetLocalID() ) then
 		return;
 	end
+	if( PreGame.GameStarted() ) then
+		return;
+	end
 
 	Network.SendChat( LOBBY_CHAT_CLEAR, -1, playerID );
 	for _, msg in ipairs( g_LobbyChatHistory ) do
@@ -1198,115 +1198,23 @@ function RequestLobbyChatHistory()
 	if( PreGame.IsHotSeatGame() or Matchmaking.IsHost() or g_bRequestedLobbyChatHistory ) then
 		return;
 	end
+	-- Hotjoin into a started game: host is already in DiploCorner, not the lobby.
+	if( PreGame.GameStarted() ) then
+		return;
+	end
 	g_bRequestedLobbyChatHistory = true;
 	Network.SendChat( LOBBY_CHAT_REQ );
 end
 
 -------------------------------------------------
--- Multiplayer Lekmod version handshake
+-- ui_check.bat missing: announce in lobby chat
 -------------------------------------------------
-function GetPlayerDisplayName( playerID )
-	if m_PlayerNames[ playerID ] ~= nil then
-		return m_PlayerNames[ playerID ];
-	end
-	local name = PreGame.GetNickName( playerID );
-	if name ~= nil and name ~= "" then
-		return name;
-	end
-	return "Player " .. tostring( playerID );
-end
-
-function MarkPlayerVersionVerified( playerID )
-	g_VersionVerified[ playerID ] = true;
-	g_VersionDeadline[ playerID ] = nil;
-end
-
-function StartPlayerVersionWatch( playerID )
-	if( not Matchmaking.IsHost() or PreGame.IsHotSeatGame() ) then
+function SendUiCheckNotLaunchedIfNeeded()
+	if( PreGame.IsHotSeatGame() or g_bSentUiCheckWarning ) then
 		return;
 	end
-	if( playerID == Matchmaking.GetLocalID() ) then
-		MarkPlayerVersionVerified( playerID );
-		return;
-	end
-	if( g_VersionVerified[ playerID ] ) then
-		return;
-	end
-	g_VersionVerified[ playerID ] = false;
-	g_VersionDeadline[ playerID ] = LekmodVersion.HANDSHAKE_TIMEOUT;
-end
-
-function KickForVersionIssue( playerID, reasonKey, expectedVersion )
-	if( not Matchmaking.IsHost() ) then
-		return;
-	end
-	local name = GetPlayerDisplayName( playerID );
-	local msg;
-	if reasonKey == "missing" then
-		msg = Locale.ConvertTextKey( "TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK", name );
-		if msg == "TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK" then
-			msg = "Kicked " .. name .. ": missing/outdated Lekmod (no version handshake)";
-		end
-	else
-		msg = Locale.ConvertTextKey( "TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK", name, expectedVersion );
-		if msg == "TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK" then
-			msg = "Kicked " .. name .. ": version mismatch (expected " .. tostring(expectedVersion) .. ")";
-		end
-	end
-	-- Announce as yellow "Game:" chat, then kick (no modal popup).
-	Network.SendChat( LekmodVersion.EncodeGameChat( msg ) );
-	if Draft_OnPlayerKicked ~= nil then
-		Draft_OnPlayerKicked( playerID );
-	end
-	Matchmaking.KickPlayer( playerID );
-	g_VersionVerified[ playerID ] = nil;
-	g_VersionDeadline[ playerID ] = nil;
-end
-
-function HandleVersionHandshake( fromPlayer, version )
-	local localVersion = LekmodVersion.GetLocal();
-	if( Matchmaking.IsHost() ) then
-		if version ~= nil and localVersion ~= nil and LekmodVersion.Compare( version, localVersion ) == 0 then
-			MarkPlayerVersionVerified( fromPlayer );
-		else
-			KickForVersionIssue( fromPlayer, "mismatch", localVersion );
-		end
-	end
-end
-
-function SendLocalVersionHandshake()
-	if( PreGame.IsHotSeatGame() ) then
-		return;
-	end
-	Network.SendChat( LekmodVersion.GetHandshakeMessage() );
-end
-
-function VersionCheckUpdate( fDTime )
-	if( ContextPtr:IsHidden() or not Matchmaking.IsHost() or PreGame.IsHotSeatGame() ) then
-		return;
-	end
-
-	g_fVersionCheckAccum = g_fVersionCheckAccum + fDTime;
-	if( g_fVersionCheckAccum < 0.5 ) then
-		return;
-	end
-	local dt = g_fVersionCheckAccum;
-	g_fVersionCheckAccum = 0;
-
-	for playerID, deadline in pairs( g_VersionDeadline ) do
-		if( g_VersionVerified[ playerID ] ) then
-			g_VersionDeadline[ playerID ] = nil;
-		elseif( Network.IsPlayerConnected( playerID ) ) then
-			local remaining = deadline - dt;
-			if remaining <= 0 then
-				KickForVersionIssue( playerID, "missing", LekmodVersion.GetLocal() );
-			else
-				g_VersionDeadline[ playerID ] = remaining;
-			end
-		else
-			g_VersionDeadline[ playerID ] = nil;
-			g_VersionVerified[ playerID ] = nil;
-		end
+	if LekmodVersion.SendUiCheckNotLaunchedChat() then
+		g_bSentUiCheckWarning = true;
 	end
 end
 
@@ -1426,7 +1334,6 @@ function OnConnect( playerID )
     	UpdateDisplay();
       BuildPlayerNames();
     	OnChat( playerID, -1, Locale.ConvertTextKey( "TXT_KEY_CONNECTED" ) );
-		StartPlayerVersionWatch( playerID );
 
     end
 end
@@ -1842,15 +1749,8 @@ function ShowHideHandler( bIsHide, bIsInit )
 		ShowHideSaveButton();
 		UIManager:SetUICursor( 0 );
 		RequestLobbyChatHistory();
-		SendLocalVersionHandshake();
+		SendUiCheckNotLaunchedIfNeeded();
 		if( Matchmaking.IsHost() and not PreGame.IsHotSeatGame() ) then
-			MarkPlayerVersionVerified( Matchmaking.GetLocalID() );
-			-- Watch any humans already connected when we open/refresh the lobby.
-			for i = 0, GameDefines.MAX_MAJOR_CIVS - 1 do
-				if( i ~= Matchmaking.GetLocalID() and Network.IsPlayerConnected( i ) ) then
-					StartPlayerVersionWatch( i );
-				end
-			end
 			EnsureStagingUpdate();
 		end
 	end
@@ -2330,10 +2230,8 @@ function OnChat( fromPlayer, toPlayer, text, eTargetType )
 		return;
 	end
 
-	-- Lekmod version handshake (must not show in chat).
-	local handshakeVersion = LekmodVersion.ParseHandshake( text );
-	if( handshakeVersion ~= nil or (text ~= nil and string.sub(text, 1, #LekmodVersion.HANDSHAKE_PREFIX) == LekmodVersion.HANDSHAKE_PREFIX) ) then
-		HandleVersionHandshake( fromPlayer, handshakeVersion );
+	-- Ignore leftover handshake protocol from older clients.
+	if LekmodVersion.StartsWith( text, LekmodVersion.OLD_HANDSHAKE_PREFIX ) then
 		return;
 	end
 
@@ -2407,13 +2305,8 @@ Events.GameMessageChat.Add( OnChat );
 -------------------------------------------------
 function SendChat( text )
     if( string.len( text ) > 0 ) then
-		local syncFromPlayer = DecodeLobbyChatSync( text );
-		local handshakeVersion = LekmodVersion.ParseHandshake( text );
 		-- Never let players manually send protocol messages.
-		if( text == LOBBY_CHAT_REQ or text == LOBBY_CHAT_CLEAR or syncFromPlayer ~= nil or handshakeVersion ~= nil
-			or string.sub(text, 1, #LekmodVersion.HANDSHAKE_PREFIX) == LekmodVersion.HANDSHAKE_PREFIX
-			or LekmodVersion.IsGameChat( text )
-			or (Draft_IsProtocol ~= nil and Draft_IsProtocol( text )) ) then
+		if( LekmodVersion.IsHiddenChatProtocol( text ) or LekmodVersion.IsGameChat( text ) ) then
 			Controls.ChatEntry:ClearString();
 			return;
 		end

@@ -1745,7 +1745,16 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 			else if(pkQueueData->eMissionType == CvTypes::getMISSION_ROUTE_TO())
 			{
 				auto_ptr<ICvUnit1> pDllUnit(new CvDllUnit(hUnit.pointer()));
-				gDLL->GameplayUnitWork(pDllUnit.get(), 0);
+				// Vanilla passed 0 here, which assumed Builds ID 0 was BUILD_ROAD (ENTITY_EVENT_SHOVEL).
+				// Lekmod rebuilds the Builds table with BUILD_REMOVE_FOREST as ID 0, so Route To
+				// played ENTITY_EVENT_CHOP while auto-connecting cities.
+				BuildTypes eWorkBuild = NO_BUILD;
+				hUnit->GetBestBuildRoute(hUnit->plot(), &eWorkBuild);
+				if(eWorkBuild == NO_BUILD)
+				{
+					eWorkBuild = (BuildTypes)GC.getInfoTypeForString("BUILD_ROAD", true);
+				}
+				gDLL->GameplayUnitWork(pDllUnit.get(), eWorkBuild);
 			}
 
 			else if(pkQueueData->eMissionType == CvTypes::getMISSION_LEAD())

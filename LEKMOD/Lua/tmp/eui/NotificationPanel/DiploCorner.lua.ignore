@@ -162,6 +162,10 @@ Controls.ChatToggle:RegisterCallback( Mouse.eLClick, OnChatToggle );
 local bFlipper = false;
 function OnChat( fromPlayer, toPlayer, text, eTargetType, bSkipSound, iTurn, iTimestamp )
 
+    if LekmodVersion.IsHiddenChatProtocol( text ) then
+        return;
+    end
+
     local controlTable = {};
     ContextPtr:BuildInstanceForControl( "ChatEntry", controlTable, Controls.ChatStack );
   
@@ -236,7 +240,7 @@ Events.GameMessageChat.Add( OnChat );
 -------------------------------------------------
 function SendChat( text )
     if( string.len( text ) > 0 ) then
-        if LekmodVersion.IsGameChat( text ) then
+        if LekmodVersion.IsGameChat( text ) or LekmodVersion.IsHiddenChatProtocol( text ) then
             Controls.ChatEntry:ClearString();
             return;
         end
@@ -658,7 +662,7 @@ function ImportLobbyChatHistory()
         local text = userData.GetValue("text" .. i) or "";
         local name = userData.GetValue("name" .. i) or "";
         local bGameChat = (fromPlayer ~= nil and fromPlayer < 0) or name == LekmodVersion.GAME_CHAT_NAME or LekmodVersion.IsGameChat( text );
-        if text ~= "" and (bGameChat or (fromPlayer ~= nil and fromPlayer >= 0)) then
+        if text ~= "" and not LekmodVersion.IsHiddenChatProtocol( text ) and (bGameChat or (fromPlayer ~= nil and fromPlayer >= 0)) then
             if bGameChat then
                 fromPlayer = -1;
                 if LekmodVersion.IsGameChat( text ) then

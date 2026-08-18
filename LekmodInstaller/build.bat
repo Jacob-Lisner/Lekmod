@@ -59,6 +59,23 @@ if %errorlevel% neq 0 (
     echo Pillow found!
 )
 
+echo Checking for requests...
+python -m pip show requests >nul 2>&1
+if %errorlevel% neq 0 (
+    echo requests not found. Installing...
+    python -m pip install requests
+    python -m pip show requests >nul 2>&1
+    if %errorlevel% neq 0 (
+        echo ERROR: Failed to install requests!
+        echo.
+        pause
+        exit /b 1
+    )
+    echo requests installed successfully!
+) else (
+    echo requests found!
+)
+
 echo.
 echo All dependencies OK!
 echo.
@@ -68,7 +85,7 @@ echo.
 
 REM Build the executable with all resources
 REM Note: Images (background.png, banner.png, icon.ico) will be bundled if they exist
-python -m PyInstaller --onefile --windowed --name="LekmodInstaller" --icon=icon.ico --add-data "config.json;." --hidden-import=tkinter --hidden-import=tkinter.ttk --hidden-import=tkinter.messagebox --hidden-import=tkinter.filedialog --hidden-import=tkinter.scrolledtext installer.py
+python -m PyInstaller --noconfirm --onefile --windowed --name="LekmodInstaller" --icon=icon.ico --add-data "config.json;." --hidden-import=tkinter --hidden-import=tkinter.ttk --hidden-import=tkinter.messagebox --hidden-import=tkinter.filedialog --hidden-import=tkinter.scrolledtext --hidden-import=requests --hidden-import=urllib3 --hidden-import=certifi --hidden-import=charset_normalizer --hidden-import=idna installer.py
 
 if errorlevel 1 (
     echo.

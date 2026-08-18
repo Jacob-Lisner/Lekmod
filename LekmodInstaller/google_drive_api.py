@@ -10,7 +10,7 @@ class GoogleDriveDownloader:
         self.config = config
         self.base_url = "https://drive.google.com/uc?export=download"
         
-    def download_version_with_info(self, version, version_info, log_callback, progress_callback=None):
+    def download_version_with_info(self, version, version_info, log_callback, progress_callback=None, filename_prefix="LEKMOD"):
         """Download version from Google Drive using provided version info"""
         if not version_info:
             raise Exception(f"No configuration found for version {version}")
@@ -19,7 +19,7 @@ class GoogleDriveDownloader:
         if not file_id:
             raise Exception(f"No Google Drive file ID found for version {version}")
             
-        return self._download_file(file_id, version, log_callback, progress_callback)
+        return self._download_file(file_id, version, log_callback, progress_callback, filename_prefix=filename_prefix)
         
     def download_version(self, version, log_callback):
         """Download version from Google Drive (legacy method)"""
@@ -34,9 +34,9 @@ class GoogleDriveDownloader:
         if not file_id:
             raise Exception(f"No Google Drive file ID found for version {version}")
         
-        return self._download_file(file_id, version, log_callback)
+        return self._download_file(file_id, version, log_callback, filename_prefix="LEKMOD")
     
-    def _download_file(self, file_id, version, log_callback, progress_callback=None):
+    def _download_file(self, file_id, version, log_callback, progress_callback=None, filename_prefix="LEKMOD"):
         """Internal method to download file from Google Drive"""
         log_callback(f"Connecting to Google Drive...")
         log_callback(f"File ID: {file_id}")
@@ -120,7 +120,8 @@ class GoogleDriveDownloader:
         download_dir.mkdir(exist_ok=True)
         
         # Use version-specific filename
-        download_path = download_dir / f"LEKMOD_{version}.zip"
+        safe_version = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in str(version))
+        download_path = download_dir / f"{filename_prefix}_{safe_version}.zip"
         
         # Download with progress
         log_callback(f"Downloading to {download_path}...")

@@ -1,16 +1,23 @@
 ------------------------------------------------------------------------------
--- Lekmod version helpers (menu status + multiplayer handshake)
+-- Lekmod version helpers (menu status + lobby version-name checks)
 ------------------------------------------------------------------------------
 
 LekmodVersion = LekmodVersion or {}
 
--- Technical version for MP handshake / update checks (display titles live in TXT_KEY_LEKMOD_*).
-LekmodVersion.LOCAL_VERSION = "v35.006"
+-- Technical version for MP lobby name / update checks (display titles live in TXT_KEY_LEKMOD_*).
+LekmodVersion.LOCAL_VERSION = "v35.1001"
 
-LekmodVersion.HANDSHAKE_PREFIX = "#LEKVER#"
--- System / "Game:" chat lines (kick notices, ui_check warnings, etc.).
+-- Plain lobby chat posted by clients that skipped ui_check.bat (Steam invite bypasses the legal screen).
+LekmodVersion.UI_CHECK_CHAT = "UI_CHECK NOT LAUNCHED"
+-- System / "Game:" chat lines (draft notices, etc.).
 LekmodVersion.GAME_CHAT_PREFIX = "#LGAME#"
 LekmodVersion.GAME_CHAT_NAME = "Game"
+-- Lobby/in-game protocol prefixes that must never appear as player chat.
+LekmodVersion.OLD_HANDSHAKE_PREFIX = "#LEKVER#"
+LekmodVersion.LOBBY_CHAT_REQ = "#LCHREQ#"
+LekmodVersion.LOBBY_CHAT_CLEAR = "#LCHCLEAR#"
+LekmodVersion.LOBBY_CHAT_PREFIX = "#LCH#"
+LekmodVersion.DRAFT_PREFIX = "#LDRAFT#"
 LekmodVersion.VERSIONS_PAGE_URL = "https://github.com/EnormousApplePie/Lekmod/blob/main/LekmodInstaller/github_setup/versions.json"
 -- FrontEnd fetches these via undocumented vanilla Network.HttpRequest (Civ5-Patch pattern).
 LekmodVersion.VERSIONS_RAW_URLS = {
@@ -18,7 +25,6 @@ LekmodVersion.VERSIONS_RAW_URLS = {
 	"https://cdn.jsdelivr.net/gh/EnormousApplePie/Lekmod@main/LekmodInstaller/github_setup/versions.json",
 }
 LekmodVersion.HTTP_TIMEOUT = 10 -- seconds
-LekmodVersion.HANDSHAKE_TIMEOUT = 12 -- seconds after connect before host kicks unverified players
 
 function LekmodVersion.Normalize(versionText)
 	if versionText == nil then
@@ -39,19 +45,53 @@ function LekmodVersion.GetLocal()
 	return LekmodVersion.Normalize(raw) or raw
 end
 
-function LekmodVersion.GetHandshakeMessage()
-	return LekmodVersion.HANDSHAKE_PREFIX .. (LekmodVersion.GetLocal() or "unknown")
+-- Stamp file written by ui_check.bat / the installer into Lua/UI/LekmodUiConfigured.lua.
+function LekmodVersion.IsUiCheckConfigured()
+	LekmodUiConfigured = nil
+	pcall(function()
+		include("LekmodUiConfigured")
+	end)
+	return LekmodUiConfigured == true
 end
 
-function LekmodVersion.ParseHandshake(text)
-	if text == nil then
-		return nil
+-- Visible as this player's own chat so vanilla hosts still see it.
+function LekmodVersion.SendUiCheckNotLaunchedChat()
+	if LekmodVersion.IsUiCheckConfigured() then
+		return false
 	end
-	local prefix = LekmodVersion.HANDSHAKE_PREFIX
-	if string.sub(text, 1, #prefix) ~= prefix then
-		return nil
+	if Network == nil or type(Network.SendChat) ~= "function" then
+		return false
 	end
-	return LekmodVersion.Normalize(string.sub(text, #prefix + 1))
+	Network.SendChat(LekmodVersion.UI_CHECK_CHAT)
+	return true
+end
+
+function LekmodVersion.StartsWith(text, prefix)
+	if text == nil or prefix == nil then
+		return false
+	end
+	return string.sub(tostring(text), 1, #prefix) == prefix
+end
+
+-- True for handshake / lobby-history / draft tokens. Hide these in in-game chat.
+function LekmodVersion.IsHiddenChatProtocol(text)
+	if text == nil or text == "" then
+		return false
+	end
+	text = tostring(text)
+	if text == LekmodVersion.LOBBY_CHAT_REQ or text == LekmodVersion.LOBBY_CHAT_CLEAR then
+		return true
+	end
+	if LekmodVersion.StartsWith(text, LekmodVersion.OLD_HANDSHAKE_PREFIX) then
+		return true
+	end
+	if LekmodVersion.StartsWith(text, LekmodVersion.LOBBY_CHAT_PREFIX) then
+		return true
+	end
+	if LekmodVersion.StartsWith(text, LekmodVersion.DRAFT_PREFIX) then
+		return true
+	end
+	return false
 end
 
 function LekmodVersion.IsGameChat(text)

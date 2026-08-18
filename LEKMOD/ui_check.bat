@@ -9,6 +9,12 @@ IF EXIST "UI_bc1" (
 IF EXIST "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" (
   copy /y "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" "%patchfolder%\CityStatePersonalityHelper.lua.bak" > nul
 )
+IF EXIST "%patchfolder%\Lua\UI\LegalScreen.lua" (
+  copy /y "%patchfolder%\Lua\UI\LegalScreen.lua" "%patchfolder%\LegalScreen.lua.bak" > nul
+)
+IF EXIST "%patchfolder%\Lua\UI\LegalScreen.xml" (
+  copy /y "%patchfolder%\Lua\UI\LegalScreen.xml" "%patchfolder%\LegalScreen.xml.bak" > nul
+)
 DEL /q "%patchfolder%\Lua\UI\"
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\AncientRuins\GoodyHutPopup.lua.ignore" "%patchfolder%\Lua\UI\GoodyHutPopup.lua" > nul
@@ -58,6 +64,9 @@ IF EXIST "%euifolder%\Core\EUI_unit_include.lua" (
   copy /y "%patchfolder%\Lua\tmp\eui\Core\EUI_unit_include.lua.ignore" "%patchfolder%\Lua\UI\EUI_unit_include.lua" > nul
 )
 copy /y "%patchfolder%\Lua\tmp\ui\Core\IconSupport.lua.ignore" "%patchfolder%\Lua\UI\IconSupport.lua" > nul
+IF NOT EXIST "%patchfolder%\Lua\UI\IconSupport.lua" (
+  copy /y "%patchfolder%\Lua\tmp\ui\Core\IconSupport.lua" "%patchfolder%\Lua\UI\IconSupport.lua" > nul
+)
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\CultureOverview\CultureOverview.lua.ignore" "%patchfolder%\Lua\UI\CultureOverview.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\CultureOverview\CultureOverview.xml.ignore" "%patchfolder%\Lua\UI\CultureOverview.xml" > nul
@@ -227,9 +236,18 @@ IF EXIST "%patchfolder%\CityStatePersonalityHelper.lua.bak" (
   copy /y "%patchfolder%\CityStatePersonalityHelper.lua.bak" "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" > nul
   del "%patchfolder%\CityStatePersonalityHelper.lua.bak"
 )
+IF EXIST "%patchfolder%\LegalScreen.lua.bak" (
+  copy /y "%patchfolder%\LegalScreen.lua.bak" "%patchfolder%\Lua\UI\LegalScreen.lua" > nul
+  del "%patchfolder%\LegalScreen.lua.bak"
+)
+IF EXIST "%patchfolder%\LegalScreen.xml.bak" (
+  copy /y "%patchfolder%\LegalScreen.xml.bak" "%patchfolder%\Lua\UI\LegalScreen.xml" > nul
+  del "%patchfolder%\LegalScreen.xml.bak"
+)
+echo LekmodUiConfigured = true> "%patchfolder%\Lua\UI\LekmodUiConfigured.lua"
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\Improvements\SocialPolicyPopup.lua" (
-  copy /y "%patchfolder%\Lua\tmp\ui\ToolTips\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
+  copy /y "%patchfolder%\Lua\tmp\ui\Popups\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
 ) ELSE (
   copy /y "%patchfolder%\Lua\tmp\eui\Improvements\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
 )

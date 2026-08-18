@@ -24,10 +24,10 @@ except ImportError:
 class LekmodInstaller:
     def __init__(self, root):
         self.root = root
-        self.root.title("Lekmod Installer & Updater")
-        self.root.geometry("600x600")
+        self.root.title("Lekmod / Lekmap Installer")
+        self.root.geometry("640x880")
         self.root.resizable(True, True)
-        self.root.minsize(560, 560)
+        self.root.minsize(600, 820)
         
         # Set window icon
         try:
@@ -63,6 +63,7 @@ class LekmodInstaller:
         # State
         self.use_eui = tk.BooleanVar(value=False)
         self.versions_data = {}  # Store full version data
+        self.lekmap_versions_data = {}
         
         self.setup_ui()
         self.check_installer_updates()  # Check on startup
@@ -129,7 +130,7 @@ class LekmodInstaller:
         
         # Create canvas window - center it
         self.canvas_window_id = self.canvas.create_window(
-            0, 0, window=self.main_frame, anchor='center', tags="frame_window"
+            0, 0, window=self.main_frame, anchor='n', tags="frame_window"
         )
         
         # Bind canvas resize with debouncing for performance
@@ -143,8 +144,8 @@ class LekmodInstaller:
         
         self.canvas.bind('<Configure>', on_canvas_resize)
         
-        # Initial center
-        self.root.after(100, lambda: self._center_content())
+        # Initial center + size to the new Lekmod/Lekmap layout
+        self.root.after(100, self._fit_window_to_content)
         
         # Combined settings frame (Installation Path + UI Config + Version)
         settings_outer, settings_frame = self.create_civ5_frame(content, padx=8, pady=5)
@@ -189,13 +190,15 @@ class LekmodInstaller:
                                      bg='#1a3d0f')
         self.status_label.pack(fill=tk.X, pady=(2, 0))
         
-        self.version_label = tk.Label(settings_frame, text="Version: Checking...", 
+        # --- Lekmod ---
+        tk.Frame(settings_frame, bg='#d2b48c', height=1).pack(fill=tk.X, pady=(6, 4))
+        tk.Label(settings_frame, text="Lekmod", 
+                font=("Arial", 11, "bold"), bg='#1a3d0f', fg='#f5deb3').pack(anchor=tk.W)
+        
+        self.version_label = tk.Label(settings_frame, text="Lekmod: Checking...", 
                                       anchor=tk.W, bg='#1a3d0f', fg='#f5deb3',
                                       font=("Arial", 9))
-        self.version_label.pack(fill=tk.X, pady=(2, 3))
-        
-        # Separator line
-        tk.Frame(settings_frame, bg='#d2b48c', height=1).pack(fill=tk.X, pady=(0, 3))
+        self.version_label.pack(fill=tk.X, pady=(1, 2))
         
         # UI Type Selection
         tk.Label(settings_frame, text="User Interface Mode:", 
@@ -223,12 +226,8 @@ class LekmodInstaller:
                                           anchor=tk.W, fg="#90ee90",
                                           bg='#1a3d0f',
                                           font=("Arial", 9, "italic"))
-        self.eui_detected_label.pack(anchor=tk.W, pady=(0, 3))
+        self.eui_detected_label.pack(anchor=tk.W, pady=(0, 2))
         
-        # Separator line
-        tk.Frame(settings_frame, bg='#d2b48c', height=1).pack(fill=tk.X, pady=(0, 3))
-        
-        # Version selection
         tk.Label(settings_frame, text="Select Version:", 
                 font=("Arial", 10), bg='#1a3d0f', fg='#f5deb3', anchor=tk.W).pack(fill=tk.X)
         
@@ -237,33 +236,58 @@ class LekmodInstaller:
                                           state="readonly", width=45, font=("Arial", 9))
         self.version_combo.pack(fill=tk.X, pady=(2, 3))
         
-        # Separator line
-        tk.Frame(settings_frame, bg='#d2b48c', height=1).pack(fill=tk.X, pady=(0, 3))
+        lekmod_btn_row = tk.Frame(settings_frame, bg='#1a3d0f')
+        lekmod_btn_row.pack(fill=tk.X, pady=(0, 2))
+        install_frame, self.install_btn = self.create_civ5_button(
+            lekmod_btn_row, "Install/Update", self.install_update,
+            width=18, height=1, font_size=10, font_weight='bold'
+        )
+        install_frame.pack(fill=tk.X)
         
-        # Action buttons - now inside settings frame
+        # --- Lekmap ---
+        tk.Frame(settings_frame, bg='#d2b48c', height=1).pack(fill=tk.X, pady=(6, 4))
+        tk.Label(settings_frame, text="Lekmap", 
+                font=("Arial", 11, "bold"), bg='#1a3d0f', fg='#f5deb3').pack(anchor=tk.W)
+        
+        self.lekmap_version_label = tk.Label(settings_frame, text="Lekmap: Checking...", 
+                                            anchor=tk.W, bg='#1a3d0f', fg='#f5deb3',
+                                            font=("Arial", 9))
+        self.lekmap_version_label.pack(fill=tk.X, pady=(1, 2))
+        
+        tk.Label(settings_frame, text="Select Version:", 
+                font=("Arial", 10), bg='#1a3d0f', fg='#f5deb3', anchor=tk.W).pack(fill=tk.X)
+        
+        self.lekmap_version_var = tk.StringVar()
+        self.lekmap_version_combo = ttk.Combobox(settings_frame, textvariable=self.lekmap_version_var,
+                                                state="readonly", width=45, font=("Arial", 9))
+        self.lekmap_version_combo.pack(fill=tk.X, pady=(2, 3))
+        
+        lekmap_btn_row = tk.Frame(settings_frame, bg='#1a3d0f')
+        lekmap_btn_row.pack(fill=tk.X, pady=(0, 2))
+        lekmap_install_frame, self.lekmap_install_btn = self.create_civ5_button(
+            lekmap_btn_row, "Install/Update", self.install_lekmap_update,
+            width=18, height=1, font_size=10, font_weight='bold'
+        )
+        lekmap_install_frame.pack(fill=tk.X)
+        self.lekmap_install_btn.config(state=tk.DISABLED)
+        
+        # Shared actions
+        tk.Frame(settings_frame, bg='#d2b48c', height=1).pack(fill=tk.X, pady=(6, 4))
+        
         button_container = tk.Frame(settings_frame, bg='#1a3d0f')
         button_container.pack(fill=tk.X, pady=(0, 2))
         
-        # Install/Update button (same size as Refresh)
-        install_frame, self.install_btn = self.create_civ5_button(
-            button_container, "Install/Update", self.install_update,
-            width=18, height=1, font_size=10, font_weight='bold'
-        )
-        install_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
-        
-        # Refresh Versions button
         refresh_frame, self.refresh_btn = self.create_civ5_button(
             button_container, "Refresh Versions", self.check_updates,
             width=18, height=1, font_size=10, font_weight='normal'
         )
-        refresh_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
+        refresh_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
         
-        # Update installer button (below main buttons, full width)
         update_installer_frame, self.update_installer_btn = self.create_civ5_button(
-            settings_frame, "Update Installer", self.update_installer,
-            width=40, height=1, font_size=10, font_weight='normal'
+            button_container, "Update Installer", self.update_installer,
+            width=18, height=1, font_size=10, font_weight='normal'
         )
-        update_installer_frame.pack(pady=(3, 0))
+        update_installer_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
         
         # Log frame - now gets more space
         log_outer, log_frame = self.create_civ5_frame(content, padx=6, pady=4)
@@ -613,7 +637,7 @@ class LekmodInstaller:
         self.check_updates()
     
     def check_installed_version(self):
-        """Check what version of Lekmod is currently installed"""
+        """Check what version of Lekmod / Lekmap is currently installed"""
         civ5_path = self.install_path_var.get()
         current_version = self.ui_manager.get_current_lekmod_version(civ5_path)
         if current_version:
@@ -622,6 +646,34 @@ class LekmodInstaller:
         else:
             self.version_label.config(text="Lekmod: Not installed")
             self.log("ℹ Lekmod not currently installed")
+
+        lekmap_version = self.ui_manager.get_current_lekmap_version()
+        if lekmap_version == "installed":
+            self.lekmap_version_label.config(text="Installed: Lekmap (version unknown)")
+            self.log("✓ Lekmap scripts found in Maps folder")
+        elif lekmap_version:
+            self.lekmap_version_label.config(text=f"Installed: Lekmap {lekmap_version}")
+            self.log(f"✓ Lekmap {lekmap_version} currently installed")
+        else:
+            self.lekmap_version_label.config(text="Lekmap: Not installed")
+            self.log("ℹ Lekmap not currently installed")
+
+    def _format_version_choices(self, versions):
+        display = []
+        for version, info in versions.items():
+            date = info.get('release_date', 'Unknown date')
+            size = info.get('size', 'Unknown size')
+            display.append(f"{version} - {date} ({size})")
+        return display
+
+    def _set_action_buttons(self, enabled):
+        state = tk.NORMAL if enabled else tk.DISABLED
+        self.install_btn.config(state=state)
+        self.refresh_btn.config(state=state)
+        lekmap_state = state
+        if enabled and not self.lekmap_version_var.get():
+            lekmap_state = tk.DISABLED
+        self.lekmap_install_btn.config(state=lekmap_state)
         
         
     def check_updates(self):
@@ -640,35 +692,53 @@ class LekmodInstaller:
             versions = self.updater.get_available_versions()
             
             if not versions:
-                self.log("⚠ No versions found")
+                self.log("⚠ No Lekmod versions found")
                 self.root.after(0, lambda: messagebox.showwarning(
                     "No Versions", 
-                    "Could not find any versions.\n"
+                    "Could not find any Lekmod versions.\n"
                     "Please check your internet connection\n"
                     "and GitHub/Google Drive configuration."
                 ))
-                return
-            
-            # Store versions data for later use
-            self.versions_data = versions
+            else:
+                self.versions_data = versions
+                version_display = self._format_version_choices(versions)
 
-            # Format version list with dates and sizes
-            version_display = []
-            for v in versions:
-                info = versions[v]
-                date = info.get('release_date', 'Unknown date')
-                size = info.get('size', 'Unknown size')
-                version_display.append(f"{v} - {date} ({size})")
-            
-            # Update combo box in main thread
-            def update_combo():
-                self.version_combo['values'] = version_display
-                if version_display:
-                    self.version_combo.current(0)
-            
-            self.root.after(0, update_combo)
-            
-            self.log(f"✓ Found {len(versions)} version(s): {', '.join(versions.keys())}")
+                def update_combo():
+                    self.version_combo['values'] = version_display
+                    if version_display:
+                        self.version_combo.current(0)
+                
+                self.root.after(0, update_combo)
+                self.log(f"✓ Found {len(versions)} Lekmod version(s): {', '.join(versions.keys())}")
+
+            lekmap_url = self.config.get('lekmap_version_check_url')
+            try:
+                lekmap_versions = self.updater.get_available_versions(
+                    url=lekmap_url,
+                    fallback_key='lekmap_versions',
+                    allow_empty=True
+                )
+            except Exception as lekmap_error:
+                self.log(f"⚠ Could not fetch Lekmap versions: {lekmap_error}")
+                lekmap_versions = {}
+
+            self.lekmap_versions_data = lekmap_versions
+            lekmap_display = self._format_version_choices(lekmap_versions)
+
+            def update_lekmap_combo():
+                self.lekmap_version_combo['values'] = lekmap_display
+                if lekmap_display:
+                    self.lekmap_version_combo.current(0)
+                    self.lekmap_install_btn.config(state=tk.NORMAL)
+                else:
+                    self.lekmap_version_var.set("")
+                    self.lekmap_install_btn.config(state=tk.DISABLED)
+
+            self.root.after(0, update_lekmap_combo)
+            if lekmap_versions:
+                self.log(f"✓ Found {len(lekmap_versions)} Lekmap version(s): {', '.join(lekmap_versions.keys())}")
+            else:
+                self.log("ℹ No Lekmap releases listed yet")
             
         except Exception as e:
             self.log(f"✗ Error checking updates: {e}")
@@ -710,8 +780,7 @@ class LekmodInstaller:
         self.log(f"Starting installation of Lekmod {selected_version}...")
         self.log(f"UI Mode: {ui_type}")
         self.log("=" * 50)
-        self.install_btn.config(state=tk.DISABLED)
-        self.refresh_btn.config(state=tk.DISABLED)
+        self._set_action_buttons(False)
         
         # Show indeterminate progress for now
         self.show_indeterminate_progress()
@@ -775,7 +844,7 @@ class LekmodInstaller:
             
             # 3. Configure UI files
             self.log(f"⚙️ Configuring for {ui_type}...")
-            self.ui_manager.configure_ui_files(extract_path, ui_type, self.log)
+            self.ui_manager.configure_ui_files(extract_path, ui_type, self.log, civ5_path=civ5_path)
             
             # 4. Install to Civ 5
             self.log(f"📂 Installing to Civilization V as LEKMOD_{version}...")
@@ -807,8 +876,85 @@ class LekmodInstaller:
                                f"Please check the log for details.")
         finally:
             self.hide_progress()
-            self.install_btn.config(state=tk.NORMAL)
-            self.refresh_btn.config(state=tk.NORMAL)
+            self._set_action_buttons(True)
+            self.check_installed_version()
+
+    def install_lekmap_update(self):
+        """Install or update Lekmap map scripts"""
+        selected_version_display = self.lekmap_version_var.get()
+        if not selected_version_display:
+            messagebox.showwarning("No Version",
+                                  "Please select a Lekmap version to install")
+            return
+
+        selected_version = selected_version_display.split(' - ')[0]
+        maps_dir = self.ui_manager.find_civ5_maps_folder()
+
+        confirm = messagebox.askyesno(
+            "Confirm Installation",
+            f"Install Lekmap {selected_version}\n\n"
+            f"Map scripts will be copied to:\n{maps_dir}\n\n"
+            f"Existing Lekmap files with the same names will be replaced.\n"
+            f"Continue?"
+        )
+        if not confirm:
+            return
+
+        self.log(f"Starting installation of Lekmap {selected_version}...")
+        self.log("=" * 50)
+        self._set_action_buttons(False)
+        self.show_indeterminate_progress()
+        threading.Thread(target=self._install_lekmap_thread,
+                        args=(selected_version,),
+                        daemon=True).start()
+
+    def _install_lekmap_thread(self, version):
+        try:
+            all_versions = self.lekmap_versions_data or self.updater.get_available_versions(
+                url=self.config.get('lekmap_version_check_url'),
+                fallback_key='lekmap_versions',
+                allow_empty=True
+            )
+            if version not in all_versions:
+                raise Exception(f"Version {version} not found in available Lekmap versions!")
+
+            version_info = all_versions[version]
+            self.log(f"📥 Downloading Lekmap {version} from Google Drive...")
+            download_path = self.downloader.download_version_with_info(
+                version, version_info, self.log, self.set_progress, filename_prefix="LEKMAP"
+            )
+
+            self.show_indeterminate_progress()
+            self.log("📦 Extracting files...")
+            extract_path = self.ui_manager.extract_mod(download_path, self.log, extract_name="lekmap_temp")
+
+            self.log("📂 Installing map scripts...")
+            maps_dir = self.ui_manager.install_lekmap(extract_path, version, self.log)
+
+            self.log("🧹 Cleaning up temporary files...")
+            import shutil
+            try:
+                os.remove(download_path)
+                shutil.rmtree(extract_path)
+            except Exception:
+                pass
+
+            self.log("=" * 50)
+            self.log("✅ Lekmap installation complete!")
+            self.log("=" * 50)
+            messagebox.showinfo("Success",
+                               f"Lekmap {version} installed successfully!\n\n"
+                               f"Location: {maps_dir}")
+        except Exception as e:
+            self.log("=" * 50)
+            self.log(f"❌ Lekmap installation failed: {e}")
+            self.log("=" * 50)
+            messagebox.showerror("Installation Failed",
+                               f"Lekmap installation failed:\n\n{str(e)}\n\n"
+                               f"Please check the log for details.")
+        finally:
+            self.hide_progress()
+            self._set_action_buttons(True)
             self.check_installed_version()
 
     def _create_text_header(self, header):
@@ -823,8 +969,18 @@ class LekmodInstaller:
                            bg=self.canvas_bg, fg="#d2b48c")
         subtitle.pack()
     
-    def _do_resize(self, width, height):
-        """Perform the actual resize operation"""
+    def _fit_window_to_content(self):
+        """Grow the default window so the Lekmap section and log are visible."""
+        try:
+            self.root.update_idletasks()
+            content_w = self.main_frame.winfo_reqwidth()
+            content_h = self.main_frame.winfo_reqheight()
+            width = max(content_w + 24, 640)
+            height = max(content_h + 28, 880)
+            self.root.geometry(f"{width}x{height}")
+            self.root.minsize(600, min(height, 820))
+        except Exception as e:
+            print(f"Error fitting window: {e}")
         self.update_background()
         self._center_content()
     
@@ -835,10 +991,9 @@ class LekmodInstaller:
             canvas_height = self.canvas.winfo_height()
             
             if canvas_width > 1 and canvas_height > 1:
-                # Center the window
+                # Top-center so extra sections are not clipped
                 x = canvas_width // 2
-                y = canvas_height // 2
-                self.canvas.coords(self.canvas_window_id, x, y)
+                self.canvas.coords(self.canvas_window_id, x, 10)
         except Exception as e:
             print(f"Error centering content: {e}")
     

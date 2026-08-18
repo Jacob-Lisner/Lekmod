@@ -9,23 +9,37 @@ class UpdateChecker:
     def __init__(self, config):
         self.config = config
         self.version_url = config.get('version_check_url')
+
+    @staticmethod
+    def catalog_releases(raw):
+        """Keep real release entries; skip comments and incomplete rows."""
+        if not isinstance(raw, dict):
+            return {}
+        releases = {}
+        for key, info in raw.items():
+            if not key or str(key).startswith('_'):
+                continue
+            if isinstance(info, dict) and info.get('file_id'):
+                releases[key] = info
+        return releases
         
-    def get_available_versions(self):
+    def get_available_versions(self, url=None, fallback_key='versions', allow_empty=False):
         """Get list of available versions (fresh from GitHub each time)"""
         versions = {}
+        version_url = url if url is not None else self.version_url
         
         # Try to fetch from online JSON first
-        if self.version_url:
+        if version_url:
             try:
                 # Add cache-busting parameter to avoid GitHub caching
                 import time
                 cache_bust = f"?t={int(time.time())}"
-                url_with_cache_bust = self.version_url + cache_bust
+                url_with_cache_bust = version_url + cache_bust
                 
                 response = requests.get(url_with_cache_bust, timeout=10)
                 if response.status_code == 200:
-                    online_versions = response.json()
-                    if online_versions:
+                    online_versions = self.catalog_releases(response.json())
+                    if online_versions or allow_empty:
                         return online_versions
                 else:
                     print(f"GitHub returned status code: {response.status_code}")
@@ -34,9 +48,12 @@ class UpdateChecker:
                 # Don't return here - try fallback
         
         # Fallback to local config
-        if 'versions' in self.config:
-            versions.update(self.config['versions'])
+        if fallback_key in self.config:
+            versions.update(self.catalog_releases(self.config.get(fallback_key) or {}))
         
+        if allow_empty:
+            return versions
+
         # If still empty, that's an error
         if not versions:
             raise Exception("No versions available from GitHub or local config")
