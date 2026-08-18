@@ -12038,7 +12038,8 @@ void CvPlayer::ChangeWorldWonderYieldChanges(YieldTypes eYield, int iChange)
 		int iLoop;
 		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 		{
-			pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iChange);
+			int totalChange = iChange * pLoopCity->getNumWorldWonders();
+			pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, totalChange);
 		}
 	}
 }

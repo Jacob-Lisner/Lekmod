@@ -137099,7 +137099,7 @@
 			<SpecificCivRequired>true</SpecificCivRequired>
 			<CivilizationType>CIVILIZATION_BUGANDA</CivilizationType>
 			<BuildableOnResources>true</BuildableOnResources>
-			<RequiresFlatlands>true</RequiresFlatland>
+			<RequiresFlatlands>true</RequiresFlatlands>
 			<RemovesResource>true</RemovesResource>
 			<Permanent>true</Permanent>
 			<NoTwoAdjacent>true</NoTwoAdjacent>
@@ -183264,7 +183264,6 @@
 			<PortraitIndex>25</PortraitIndex>
 			<IconAtlas>POLICY_ATLAS</IconAtlas>
 			<IconAtlasAchieved>POLICY_A_ATLAS</IconAtlasAchieved>
-			<ExtraTourismPerGreatWork>2</ExtraTourismPerGreatWork>
 		</Row>
 		<Row>
 			<ID>65</ID>
@@ -187312,6 +187311,11 @@
 		<Row> 
 			<PolicyType>POLICY_CREATIVE_EXPRESSION</PolicyType> 
 			<YieldType>YIELD_CULTURE</YieldType> 
+			<Yield>2</Yield> 
+		</Row>
+		<Row> 
+			<PolicyType>POLICY_CREATIVE_EXPRESSION</PolicyType> 
+			<YieldType>YIELD_TOURISM</YieldType> 
 			<Yield>2</Yield> 
 		</Row>
 		<!-- Flourishing of the Arts -->

@@ -4472,6 +4472,7 @@ int CvCityBuildings::GetThemingBonuses() const
 int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eIndex) const
 {
 	int iTotalYield = 0;
+	int thisWork = 0;
 #if defined(LEK_YIELD_TOURISM)
 	int iMod = 100 + (YIELD_TOURISM == eIndex ? GetGreatWorksTourismModifier() : 0);
 #endif
@@ -4483,11 +4484,12 @@ int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eIndex) const
 		const CvGreatWork* pWork = &culture->m_CurrentGreatWorks[(*it).iGreatWorkIndex];
 		if (pWork)
 		{
-			iTotalYield += pWork->m_viYield[eIndex];
+			thisWork = pWork->m_viYield[eIndex];
 #if defined(LEK_YIELD_TOURISM)
-			iTotalYield *= iMod;
-			iTotalYield /= 100;
+			thisWork *= iMod;
+			thisWork /= 100;
 #endif
+			iTotalYield += thisWork;
 		}
 	}
 	return iTotalYield;
@@ -4554,14 +4556,16 @@ void CvCityBuildings::rebuildGreatWorkYields(GreatWorkClass eClass)
 			CvGreatWork* work = &culture->m_CurrentGreatWorks[(*it).iGreatWorkIndex];
 			if (work->m_eClassType != eClass)
 				continue;
-
-			int iCityID, iSlot, workYield;
-			BuildingTypes eBuilding;
-			playerCulture->GetGreatWorkLocation((*it).iGreatWorkIndex, iCityID, eBuilding, iSlot);
-			CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
-
 			if (work)
 			{
+				int iCityID, iSlot, workYield;
+				BuildingTypes eBuilding;
+				if (!playerCulture->GetGreatWorkLocation((*it).iGreatWorkIndex, iCityID, eBuilding, iSlot))
+					continue;
+				CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+				if (!pkBuildingInfo)
+					continue;
+			
 				for (int yield = 0; yield < NUM_YIELD_TYPES; yield++)
 				{
 					YieldTypes eYield = static_cast<YieldTypes>(yield);
@@ -4592,13 +4596,16 @@ void CvCityBuildings::calculateHappinessFromGreatWorks()
 	{
 		for (std::vector<BuildingGreatWork>::const_iterator it = m_aBuildingGreatWork.begin(); it != m_aBuildingGreatWork.end(); ++it)
 		{
-			int iCityID, iSlot;
-			BuildingTypes eBuilding;
-			playerCulture->GetGreatWorkLocation((*it).iGreatWorkIndex, iCityID, eBuilding, iSlot);
-			CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
 			CvGreatWork* pWork = &culture->m_CurrentGreatWorks[(*it).iGreatWorkIndex];
 			if (pWork)
 			{
+				int iCityID, iSlot;
+				BuildingTypes eBuilding;
+				if (!playerCulture->GetGreatWorkLocation((*it).iGreatWorkIndex, iCityID, eBuilding, iSlot))
+					continue;
+				CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+				if (!pkBuildingInfo)
+					continue;
 				int buildingHappiness = pkBuildingInfo->GetGreatWorkHappiness();
 				iTotalHappiness += buildingHappiness;
 			}
@@ -5027,6 +5034,8 @@ void CvCityBuildings::ChangeCityGreatWorkClassYieldChanges(GreatWorkClass eClass
 	CvAssertMsg(eClass < GC.getNumGreatWorkClassInfos(), "eClass expected to be < GC.getNumGreatWorkClassInfos()");
 	CvAssertMsg(eYield >= 0, "eYield expected to be >= 0");
 	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eYield expected to be < NUM_YIELD_TYPES");
+	if (iChange == 0)
+		return;
 	if (NO_GREAT_WORK_CLASS != eClass)
 	{
 		m_aaiCityGreatWorkClassYieldChange[eClass][eYield] += iChange;

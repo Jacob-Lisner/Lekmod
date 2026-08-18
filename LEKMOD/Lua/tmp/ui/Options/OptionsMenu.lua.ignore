@@ -2101,21 +2101,41 @@ end
 
 function GetHotkey( Cat, Id, bBackup )
     local res = {}
-    local name = string.format("'action_%d_%d'", Cat, Id);
-    for query in HotkeyManagerData.Query(string.format('SELECT * FROM backup WHERE Name = %s', name)) do
-        res.HotKey = query.HotKey;
-        res.HotKeyPriority = query.HotKeyPriority;
-        res.CtrlDown = query.CtrlDown;
-        res.AltDown = query.AltDown;
-        res.ShiftDown = query.ShiftDown;
-        res.HotKeyAlt = query.HotKeyAlt;
-        res.HotKeyPriorityAlt = query.HotKeyPriorityAlt;
-        res.CtrlDownAlt = query.CtrlDownAlt;
-        res.AltDownAlt = query.AltDownAlt;
-        res.ShiftDownAlt = query.ShiftDownAlt;
+    local actionType = GetActionType(Cat, Id);
+
+    local backupFound = false;
+    if actionType ~= nil and actionType ~= '' then
+        local q = string.format("SELECT * FROM backup WHERE ActionSubType = %d AND ActionType = '%s'", Cat, actionType:gsub("'", "''"));
+        for query in HotkeyManagerData.Query(q) do
+            res.HotKey = query.HotKey;
+            res.HotKeyPriority = query.HotKeyPriority;
+            res.CtrlDown = query.CtrlDown;
+            res.AltDown = query.AltDown;
+            res.ShiftDown = query.ShiftDown;
+            res.HotKeyAlt = query.HotKeyAlt;
+            res.HotKeyPriorityAlt = query.HotKeyPriorityAlt;
+            res.CtrlDownAlt = query.CtrlDownAlt;
+            res.AltDownAlt = query.AltDownAlt;
+            res.ShiftDownAlt = query.ShiftDownAlt;
+            backupFound = true;
+        end
+    end
+    if not backupFound then
+        local name = string.format("'action_%d_%d'", Cat, Id);
+        for query in HotkeyManagerData.Query(string.format('SELECT * FROM backup WHERE Name = %s', name)) do
+            res.HotKey = query.HotKey;
+            res.HotKeyPriority = query.HotKeyPriority;
+            res.CtrlDown = query.CtrlDown;
+            res.AltDown = query.AltDown;
+            res.ShiftDown = query.ShiftDown;
+            res.HotKeyAlt = query.HotKeyAlt;
+            res.HotKeyPriorityAlt = query.HotKeyPriorityAlt;
+            res.CtrlDownAlt = query.CtrlDownAlt;
+            res.AltDownAlt = query.AltDownAlt;
+            res.ShiftDownAlt = query.ShiftDownAlt;
+        end
     end
     if bBackup ~= true then
-        local actionType = GetActionType(Cat, Id);
         local storeName = HotkeyStoreName(Cat, actionType);
         if storeName ~= nil then
             local quoted = string.format("'%s'", storeName:gsub("'", "''"));
@@ -2367,6 +2387,7 @@ function BackupActions()
         CtrlDownAlt = { 'boolean', 0 },
         AltDownAlt = { 'boolean', 0 },
         ShiftDownAlt = { 'boolean', 0 },
+        ActionType = { 'text', '' },
     }
     for col, info in next, newColumns do
         local defaultStr = '';
@@ -2377,11 +2398,13 @@ function BackupActions()
         end
     end
 
+    -- Keyed by (ActionSubType, ActionType) so a reset-to-default lookup survives
+    -- Builds table ID reshuffles; Name/ActionIndex are kept only as a legacy fallback.
     local Categories = {[0] = 'InterfaceModes', 'Commands', 'Builds', 'UnitPromotions', 'Specialists', 'Controls', 'Automates', 'Missions', };
     for Cat,category in next,Categories do
         for row in DB.Query(string.format("SELECT * FROM %s", category)) do
             local DBstr = 'action_' .. Cat .. '_' .. row.ID;
-            local q = string.format("REPLACE INTO backup (Name, ActionSubType, ActionIndex, HotKey, CtrlDown, AltDown, ShiftDown) VALUES ('%s', %d, %d, '%s', %d, %d, %d)", DBstr, Cat, row.ID, row.HotKey or '', row.CtrlDown and 1 or 0, row.AltDown and 1 or 0, row.ShiftDown and 1 or 0)
+            local q = string.format("REPLACE INTO backup (Name, ActionSubType, ActionIndex, HotKey, CtrlDown, AltDown, ShiftDown, ActionType) VALUES ('%s', %d, %d, '%s', %d, %d, %d, '%s')", DBstr, Cat, row.ID, row.HotKey or '', row.CtrlDown and 1 or 0, row.AltDown and 1 or 0, row.ShiftDown and 1 or 0, tostring(row.Type or ''):gsub("'", "''"))
             for action in HotkeyManagerData.Query(q) do
             end
         end
