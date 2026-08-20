@@ -396,6 +396,7 @@ protected:
 	static int lGetBaseYieldRateFromPolicies(lua_State* L);
 	static int lChangeBaseYieldRateFromPolicies(lua_State* L);
 	static int lGetBaseYieldRateFromThemedBuildings(lua_State* L);
+	static int lGetBaseYieldRateFromLandmarks(lua_State* L);
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	static int lGetBaseYieldRateFromGarrison(lua_State* L);

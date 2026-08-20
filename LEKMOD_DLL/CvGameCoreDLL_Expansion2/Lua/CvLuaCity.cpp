@@ -391,6 +391,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetBaseYieldRateFromPolicies);
 	Method(ChangeBaseYieldRateFromPolicies);
 	Method(GetBaseYieldRateFromThemedBuildings);
+	Method(GetBaseYieldRateFromLandmarks);
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
 	Method(GetBaseYieldRateFromGarrison);
@@ -3122,6 +3123,16 @@ int CvLuaCity::lChangeBaseYieldRateFromPolicies(lua_State* L)
 int CvLuaCity::lGetBaseYieldRateFromThemedBuildings(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::GetBaseYieldRateFromThemedBuildings);
+}
+//------------------------------------------------------------------------------
+int CvLuaCity::lGetBaseYieldRateFromLandmarks(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	const YieldTypes eIndex = (YieldTypes)lua_tointeger(L, 2);
+	const int iResult = pkCity->GetCityBuildings()->GetYieldFromLandmarks(eIndex);
+
+	lua_pushinteger(L, iResult);
+	return 1;
 }
 #endif
 #if defined(LEKMOD_GARRISON_YIELD_EFFECTS)
