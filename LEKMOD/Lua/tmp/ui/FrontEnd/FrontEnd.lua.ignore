@@ -3,6 +3,10 @@
 -- FrontEnd
 -------------------------------------------------
 
+-- Flipped to true by ui_check.bat / the installer. include() cannot see extra
+-- files dumped in Lua/UI, so this flag lives in the FrontEnd script itself.
+local LEKMOD_UI_CHECK_DONE = false
+
 local function MarkLekmodUiCheckDone()
 	pcall(function()
 		local userData = Modding.OpenUserData("LekmodUiCheck", 1);
@@ -11,11 +15,25 @@ local function MarkLekmodUiCheckDone()
 end
 
 local function IsUiCheckConfigured()
+	if LEKMOD_UI_CHECK_DONE then
+		return true;
+	end
+	local previous = LekmodUiConfigured;
 	LekmodUiConfigured = nil;
 	pcall(function()
 		include("LekmodUiConfigured");
 	end);
-	return LekmodUiConfigured == true;
+	local ok = LekmodUiConfigured == true;
+	LekmodUiConfigured = previous;
+	if ok then
+		return true;
+	end
+	local userOk = false;
+	pcall(function()
+		local userData = Modding.OpenUserData("LekmodUiCheck", 1);
+		userOk = userData.GetValue("done") == 1;
+	end);
+	return userOk;
 end
 
 function ShowHideHandler( bIsHide, bIsInit )

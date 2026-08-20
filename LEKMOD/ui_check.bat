@@ -245,6 +245,9 @@ IF EXIST "%patchfolder%\LegalScreen.xml.bak" (
   del "%patchfolder%\LegalScreen.xml.bak"
 )
 echo LekmodUiConfigured = true> "%patchfolder%\Lua\UI\LekmodUiConfigured.lua"
+echo LekmodUiConfigured = true> "%patchfolder%\Lua\Utilities\LekmodUiConfigured.lua"
+set "LEKMOD_FRONTEND=%patchfolder%\Lua\UI\FrontEnd.lua"
+powershell -NoProfile -Command "$p=$env:LEKMOD_FRONTEND; if([IO.File]::Exists($p)){ $c=[IO.File]::ReadAllText($p); $n=$c.Replace('local LEKMOD_UI_CHECK_DONE = false','local LEKMOD_UI_CHECK_DONE = true'); if($n -ne $c){ [IO.File]::WriteAllText($p,$n) } }"
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\Improvements\SocialPolicyPopup.lua" (
   copy /y "%patchfolder%\Lua\tmp\ui\Popups\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul

@@ -2,6 +2,7 @@
 UI Manager - Handles UI detection and file configuration
 """
 import os
+import re
 import shutil
 import zipfile
 from pathlib import Path
@@ -164,13 +165,14 @@ class UIManager:
         exact = None
         versioned = []
         for dirpath, dirnames, _files in os.walk(root_path):
+            dirnames[:] = [d for d in dirnames if d.upper() != "LEKMOD_DLL"]
             for dir_name in list(dirnames):
                 upper = dir_name.upper()
-                if upper == "LEKMOD_DLL":
-                    continue
                 if not upper.startswith("LEKMOD"):
                     continue
                 full = os.path.join(dirpath, dir_name)
+                if not os.path.isdir(os.path.join(full, "Lua", "tmp")):
+                    continue
                 if upper == "LEKMOD":
                     exact = full
                 else:
@@ -210,6 +212,38 @@ class UIManager:
         dest_name = dest_name or os.path.basename(tmp_rel)
         shutil.copy2(source, os.path.join(ui_dest, dest_name))
         return True
+
+    def _write_ui_check_stamp(self, lekmod_path, ui_dest=None, log_callback=None):
+        """Write the ui_check stamp next to FrontEnd.lua, matching ui_check.bat."""
+        if ui_dest is None:
+            ui_dest = os.path.join(lekmod_path, "Lua", "UI")
+        os.makedirs(ui_dest, exist_ok=True)
+        utilities = os.path.join(lekmod_path, "Lua", "Utilities")
+        os.makedirs(utilities, exist_ok=True)
+        # Same bytes as: echo LekmodUiConfigured = true> file
+        payload = b"LekmodUiConfigured = true\r\n"
+        written = []
+        for folder in (ui_dest, utilities):
+            path = os.path.join(folder, "LekmodUiConfigured.lua")
+            with open(path, "wb") as handle:
+                handle.write(payload)
+            written.append(path)
+
+        frontend = os.path.join(ui_dest, "FrontEnd.lua")
+        if os.path.isfile(frontend):
+            with open(frontend, "rb") as handle:
+                raw = handle.read()
+            old = b"local LEKMOD_UI_CHECK_DONE = false"
+            new = b"local LEKMOD_UI_CHECK_DONE = true"
+            if old in raw:
+                with open(frontend, "wb") as handle:
+                    handle.write(raw.replace(old, new, 1))
+                written.append(frontend + " (flag)")
+
+        if log_callback:
+            for path in written:
+                log_callback(f"✓ UI check stamp: {path}")
+        return written
 
     def _eui_has_file(self, eui_folder, rel_path):
         return bool(eui_folder) and os.path.isfile(
@@ -546,9 +580,7 @@ class UIManager:
                     handle.write(data)
                 restored.append(name)
 
-        stamp_path = os.path.join(ui_dest, "LekmodUiConfigured.lua")
-        with open(stamp_path, "w", encoding="utf-8") as handle:
-            handle.write("LekmodUiConfigured = true\n")
+        self._write_ui_check_stamp(lekmod_path, ui_dest, log_callback)
         copied.append("LekmodUiConfigured.lua")
 
         log_callback(f"✓ Configured {len(copied)} UI files in Lua/UI")
@@ -611,6 +643,10 @@ class UIManager:
         log_callback(f"Copying files to {dlc_dest}...")
         shutil.copytree(lekmod_source, dlc_dest)
         log_callback(f"✓ Files copied successfully!")
+
+        # Stamp the installed DLC copy. Configure runs on the extract folder;
+        # Civ5 only loads Assets/DLC/LEKMOD_*.
+        self._write_ui_check_stamp(dlc_dest, log_callback=log_callback)
         
         # Delete ui_check.bat as it's only needed for manual installation
         ui_check_path = os.path.join(dlc_dest, "ui_check.bat")
@@ -621,74 +657,285 @@ class UIManager:
             except Exception as e:
                 log_callback(f"⚠ Could not remove ui_check.bat: {e}")
 
-    def find_civ5_maps_folder(self):
-        """Civ5 custom map scripts live in Documents/My Games/.../Maps."""
-        home = Path.home()
-        candidates = [
-            home / "Documents" / "My Games" / "Sid Meier's Civilization 5" / "Maps",
-            home / "OneDrive" / "Documents" / "My Games" / "Sid Meier's Civilization 5" / "Maps",
-        ]
-        for path in candidates:
-            civ5_user = path.parent
-            if civ5_user.is_dir() or path.is_dir():
-                return str(path)
-        return str(candidates[0])
+    # Distinctive Lekmap v6 names (manual zip, GitHub folder, or installer copy).
+    _LEKMAP_V6_NAMES = {
+        "lekmappangaeafractalv6.lua",
+        "lekmappangaeafractalv6.0.lua",
+        "lekmap_bonus.lua",
+        "lekmap_citystates.lua",
+        "lekmap_constants.lua",
+        "lekmap_featuregenerator.lua",
+        "lekmap_fjords.lua",
+        "lekmap_fractalworld.lua",
+        "lekmap_hexutil.lua",
+        "lekmap_impact.lua",
+        "lekmap_islands.lua",
+        "lekmap_landmass.lua",
+        "lekmap_luxuries.lua",
+        "lekmap_mapgenerator.lua",
+        "lekmap_naturalwonders.lua",
+        "lekmap_options.lua",
+        "lekmap_regions.lua",
+        "lekmap_resourcedefs.lua",
+        "lekmap_resources.lua",
+        "lekmap_spawns.lua",
+        "lekmap_strategics.lua",
+        "lekmap_tectonicislands.lua",
+        "lekmap_terraingenerator.lua",
+        "lekmap_utilities.lua",
+    }
+    _LEKMAP_V6_MAIN_NAMES = {
+        "lekmappangaeafractalv6.lua",
+        "lekmappangaeafractalv6.0.lua",
+    }
+    _LEKMAP_PANGAEA_VERSION_RE = re.compile(
+        r"^lekmappangaeafractalv(\d+(?:\.\d+)*)\.lua$",
+        re.IGNORECASE,
+    )
+    _LEKMAP_FOLDER_VERSION_RE = re.compile(
+        r"^lekmap[\s_]+v?(\d+(?:\.\d+)*)$",
+        re.IGNORECASE,
+    )
+    _MAPS_SKIP_DIRS = {"__macosx", ".git", ".svn", "lekmod_dll"}
+    _LEKMAP_STAMP_NAMES = ("Lekmap VERSION.txt", "Lekmap_VERSION.txt")
 
-    def get_current_lekmap_version(self):
-        """Read installer-written version stamp, or detect existing Lekmap scripts."""
-        maps_dir = self.find_civ5_maps_folder()
-        version_file = os.path.join(maps_dir, "Lekmap_VERSION.txt")
-        if os.path.isfile(version_file):
-            try:
-                with open(version_file, "r", encoding="utf-8") as handle:
-                    line = handle.readline().strip()
-                    if line:
-                        return line
-            except Exception:
-                pass
+    def _normalize_lekmap_version_label(self, raw):
+        """Catalog/UI name is 'Lekmap v6.0' (space, no underscore)."""
+        if not raw:
+            return None
+        text = " ".join(str(raw).strip().replace("_", " ").split())
+        if text.lower() == "installed":
+            return "installed"
+        if text.lower().startswith("lekmap"):
+            text = text[6:].strip()
+        if not text:
+            return "installed"
+        if not text.lower().startswith("v"):
+            text = "v" + text
+        if text.lower() == "v6":
+            text = "v6.0"
+        return f"Lekmap {text}"
 
-        if os.path.isdir(maps_dir):
-            try:
-                for name in os.listdir(maps_dir):
-                    lower = name.lower()
-                    if lower.startswith("lekmap") and lower.endswith(".lua"):
-                        return "installed"
-            except Exception:
-                pass
+    def find_civ5_maps_folder(self, civ5_path=None):
+        """Civ5 map scripts live in Assets/Maps under the game install."""
+        civ5_path = civ5_path or self.civ5_path
+        if not civ5_path:
+            return None
+        return os.path.join(civ5_path, "Assets", "Maps")
+
+    def _iter_maps_files(self, maps_dir, max_depth=3):
+        """Walk Assets/Maps, including a nested 'Lekmap v6.0' folder."""
+        maps_dir = os.path.abspath(maps_dir)
+        for root, dirs, files in os.walk(maps_dir):
+            rel = os.path.relpath(root, maps_dir)
+            depth = 0 if rel == "." else rel.count(os.sep) + 1
+            dirs[:] = [
+                d for d in dirs
+                if d.lower() not in self._MAPS_SKIP_DIRS and not d.startswith(".")
+            ]
+            if depth >= max_depth:
+                dirs[:] = []
+            for name in files:
+                yield root, name
+
+    def _collect_lekmap_lua_names(self, maps_dir):
+        names = set()
+        try:
+            for _root, name in self._iter_maps_files(maps_dir):
+                if name.lower().endswith(".lua") and name.lower().startswith("lekmap"):
+                    names.add(name.lower())
+        except Exception:
+            pass
+        return names
+
+    def _infer_lekmap_version_from_names(self, lua_names):
+        """Match known Lekmap filenames already sitting in Assets/Maps."""
+        if not lua_names:
+            return None
+        if lua_names & self._LEKMAP_V6_MAIN_NAMES:
+            return self._normalize_lekmap_version_label("v6.0")
+        if len(lua_names & self._LEKMAP_V6_NAMES) >= 3:
+            return self._normalize_lekmap_version_label("v6.0")
+        detected = []
+        for name in lua_names:
+            match = self._LEKMAP_PANGAEA_VERSION_RE.match(name)
+            if match:
+                detected.append(match.group(1))
+        if detected:
+            detected.sort(key=lambda part: [int(x) for x in part.split(".")], reverse=True)
+            return self._normalize_lekmap_version_label(detected[0])
+        return "installed"
+
+    def _infer_lekmap_version_from_folders(self, maps_dir):
+        """A manual drop may be a folder named 'Lekmap v6.0'."""
+        try:
+            for name in os.listdir(maps_dir):
+                full = os.path.join(maps_dir, name)
+                if not os.path.isdir(full):
+                    continue
+                match = self._LEKMAP_FOLDER_VERSION_RE.match(name.strip())
+                if match:
+                    return self._normalize_lekmap_version_label(match.group(1))
+        except Exception:
+            pass
         return None
 
-    def install_lekmap(self, extract_path, version, log_callback):
-        """Copy map scripts from an extracted zip into the Civ5 Maps folder."""
-        maps_dir = self.find_civ5_maps_folder()
+    def _find_lekmap_folder(self, root_path):
+        """Find the Lekmap content folder inside an extracted zip."""
+        skip = self._MAPS_SKIP_DIRS
+
+        def is_lekmap_content(path):
+            try:
+                names = os.listdir(path)
+            except Exception:
+                return False
+            for name in names:
+                lower = name.lower()
+                if lower.endswith(".lua") and (lower.startswith("lekmap") or lower.startswith("hb")):
+                    return True
+            return False
+
+        named = []
+        for dirpath, dirnames, _files in os.walk(root_path):
+            dirnames[:] = [
+                d for d in dirnames
+                if d.lower() not in skip and not d.startswith(".")
+            ]
+            for dir_name in list(dirnames):
+                if not dir_name.lower().startswith("lekmap"):
+                    continue
+                full = os.path.join(dirpath, dir_name)
+                if is_lekmap_content(full) or self._LEKMAP_FOLDER_VERSION_RE.match(dir_name.strip()):
+                    named.append(full)
+            if named:
+                break
+
+        if named:
+            named.sort(key=lambda path: (
+                0 if self._LEKMAP_FOLDER_VERSION_RE.match(os.path.basename(path).strip()) else 1,
+                path,
+            ))
+            return named[0]
+
+        if is_lekmap_content(root_path):
+            return root_path
+
+        try:
+            children = [
+                name for name in os.listdir(root_path)
+                if os.path.isdir(os.path.join(root_path, name))
+                and name.lower() not in skip
+                and not name.startswith(".")
+            ]
+            if len(children) == 1:
+                candidate = os.path.join(root_path, children[0])
+                if is_lekmap_content(candidate):
+                    return candidate
+        except Exception:
+            pass
+        return None
+
+    def _lekmap_dest_folder(self, maps_dir, version):
+        folder_name = self._normalize_lekmap_version_label(version) or "Lekmap"
+        return os.path.join(maps_dir, folder_name), folder_name
+
+    def _read_lekmap_stamp(self, maps_dir):
+        candidates = [maps_dir]
+        try:
+            for name in os.listdir(maps_dir):
+                full = os.path.join(maps_dir, name)
+                if os.path.isdir(full) and name.lower().startswith("lekmap"):
+                    candidates.append(full)
+        except Exception:
+            pass
+
+        for folder in candidates:
+            for stamp_name in self._LEKMAP_STAMP_NAMES:
+                version_file = os.path.join(folder, stamp_name)
+                if not os.path.isfile(version_file):
+                    continue
+                try:
+                    with open(version_file, "r", encoding="utf-8") as handle:
+                        line = handle.readline().strip()
+                        if line:
+                            return self._normalize_lekmap_version_label(line)
+                except Exception:
+                    pass
+        return None
+
+    def get_current_lekmap_version(self, civ5_path=None):
+        """Detect Lekmap in Assets/Maps from stamp, folder name, or lua names."""
+        maps_dir = self.find_civ5_maps_folder(civ5_path)
+        if not maps_dir or not os.path.isdir(maps_dir):
+            return None
+
+        stamped = self._read_lekmap_stamp(maps_dir)
+        if stamped:
+            return stamped
+
+        from_folder = self._infer_lekmap_version_from_folders(maps_dir)
+        if from_folder:
+            return from_folder
+
+        lua_names = self._collect_lekmap_lua_names(maps_dir)
+        return self._infer_lekmap_version_from_names(lua_names)
+
+    def install_lekmap(self, extract_path, version, log_callback, civ5_path=None):
+        """Copy the whole Lekmap folder into Assets/Maps, like Lekmod into DLC."""
+        maps_dir = self.find_civ5_maps_folder(civ5_path)
+        if not maps_dir:
+            raise Exception("Civilization V path is not set; cannot find Assets/Maps.")
         os.makedirs(maps_dir, exist_ok=True)
-        log_callback(f"Installing map files to {maps_dir}...")
 
-        skip_dirs = {"__macosx", ".git", ".svn", "lekmod_dll"}
-        copied = 0
-        seen = {}
-        for root, dirs, files in os.walk(extract_path):
-            dirs[:] = [d for d in dirs if d.lower() not in skip_dirs and not d.startswith(".")]
-            for name in files:
-                ext = os.path.splitext(name)[1].lower()
-                if ext not in (".lua", ".xml"):
-                    continue
-                if name.lower() in ("lekmap_version.txt",):
-                    continue
-                source = os.path.join(root, name)
-                dest = os.path.join(maps_dir, name)
-                if name in seen:
-                    log_callback(f"⚠ Duplicate {name}; using later copy")
-                shutil.copy2(source, dest)
-                seen[name] = source
-                copied += 1
+        source = self._find_lekmap_folder(extract_path)
+        if not source or not os.path.isdir(source):
+            raise Exception("Lekmap folder not found in downloaded archive!")
 
-        if copied == 0:
-            raise Exception("No .lua / .xml map files found in the Lekmap archive.")
+        dest, folder_name = self._lekmap_dest_folder(maps_dir, version)
+        log_callback(f"Found map folder: {os.path.basename(source)}")
+        log_callback(f"Copying folder to {dest}...")
 
-        version_path = os.path.join(maps_dir, "Lekmap_VERSION.txt")
+        if os.path.isdir(dest):
+            shutil.rmtree(dest)
+        elif os.path.exists(dest):
+            os.remove(dest)
+
+        skip_names = set(self._MAPS_SKIP_DIRS)
+        skip_names.update(("lekmap version.txt", "lekmap_version.txt"))
+
+        def ignore(_directory, contents):
+            ignored = []
+            for name in contents:
+                lower = name.lower()
+                if lower in skip_names or name.startswith("."):
+                    ignored.append(name)
+            return ignored
+
+        shutil.copytree(source, dest, ignore=ignore)
+
+        version_label = self._normalize_lekmap_version_label(version) or str(version).strip()
+        version_path = os.path.join(dest, "Lekmap VERSION.txt")
         with open(version_path, "w", encoding="utf-8") as handle:
-            handle.write(str(version).strip() + "\n")
+            handle.write(version_label + "\n")
 
-        log_callback(f"✓ Copied {copied} map file(s)")
-        return maps_dir
+        # Previous installer dumps flattened lua into Maps root; remove those leftovers.
+        try:
+            inner_files = {
+                name.lower()
+                for name in os.listdir(dest)
+                if os.path.isfile(os.path.join(dest, name))
+            }
+            for name in os.listdir(maps_dir):
+                full = os.path.join(maps_dir, name)
+                if not os.path.isfile(full):
+                    continue
+                lower = name.lower()
+                if lower in inner_files or lower in skip_names:
+                    os.remove(full)
+                    log_callback(f"✓ Removed leftover {name} from Maps root")
+        except Exception as err:
+            log_callback(f"⚠ Could not clean leftover map files: {err}")
+
+        log_callback(f"✓ Installed folder {folder_name}")
+        return dest
 

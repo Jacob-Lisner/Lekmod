@@ -647,13 +647,13 @@ class LekmodInstaller:
             self.version_label.config(text="Lekmod: Not installed")
             self.log("ℹ Lekmod not currently installed")
 
-        lekmap_version = self.ui_manager.get_current_lekmap_version()
+        lekmap_version = self.ui_manager.get_current_lekmap_version(civ5_path)
         if lekmap_version == "installed":
             self.lekmap_version_label.config(text="Installed: Lekmap (version unknown)")
-            self.log("✓ Lekmap scripts found in Maps folder")
+            self.log("✓ Lekmap scripts found in Assets/Maps")
         elif lekmap_version:
-            self.lekmap_version_label.config(text=f"Installed: Lekmap {lekmap_version}")
-            self.log(f"✓ Lekmap {lekmap_version} currently installed")
+            self.lekmap_version_label.config(text=f"Installed: {lekmap_version}")
+            self.log(f"✓ {lekmap_version} currently installed")
         else:
             self.lekmap_version_label.config(text="Lekmap: Not installed")
             self.log("ℹ Lekmap not currently installed")
@@ -888,19 +888,25 @@ class LekmodInstaller:
             return
 
         selected_version = selected_version_display.split(' - ')[0]
-        maps_dir = self.ui_manager.find_civ5_maps_folder()
+        civ5_path = self.install_path_var.get()
+        maps_dir = self.ui_manager.find_civ5_maps_folder(civ5_path)
+        if not maps_dir:
+            messagebox.showerror("Invalid Path",
+                                 "Please verify the Civilization V installation path first.")
+            return
 
+        dest, _folder_name = self.ui_manager._lekmap_dest_folder(maps_dir, selected_version)
         confirm = messagebox.askyesno(
             "Confirm Installation",
-            f"Install Lekmap {selected_version}\n\n"
-            f"Map scripts will be copied to:\n{maps_dir}\n\n"
-            f"Existing Lekmap files with the same names will be replaced.\n"
+            f"Install {selected_version}\n\n"
+            f"The map folder will be copied to:\n{dest}\n\n"
+            f"An existing folder with that name will be replaced.\n"
             f"Continue?"
         )
         if not confirm:
             return
 
-        self.log(f"Starting installation of Lekmap {selected_version}...")
+        self.log(f"Starting installation of {selected_version}...")
         self.log("=" * 50)
         self._set_action_buttons(False)
         self.show_indeterminate_progress()
@@ -916,10 +922,14 @@ class LekmodInstaller:
                 allow_empty=True
             )
             if version not in all_versions:
-                raise Exception(f"Version {version} not found in available Lekmap versions!")
+                alt = version[6:].strip() if version.lower().startswith("lekmap") else f"Lekmap {version}"
+                if alt in all_versions:
+                    version = alt
+                else:
+                    raise Exception(f"Version {version} not found in available Lekmap versions!")
 
             version_info = all_versions[version]
-            self.log(f"📥 Downloading Lekmap {version} from Google Drive...")
+            self.log(f"📥 Downloading {version} from Google Drive...")
             download_path = self.downloader.download_version_with_info(
                 version, version_info, self.log, self.set_progress, filename_prefix="LEKMAP"
             )
@@ -929,7 +939,10 @@ class LekmodInstaller:
             extract_path = self.ui_manager.extract_mod(download_path, self.log, extract_name="lekmap_temp")
 
             self.log("📂 Installing map scripts...")
-            maps_dir = self.ui_manager.install_lekmap(extract_path, version, self.log)
+            civ5_path = self.install_path_var.get()
+            maps_dir = self.ui_manager.install_lekmap(
+                extract_path, version, self.log, civ5_path=civ5_path
+            )
 
             self.log("🧹 Cleaning up temporary files...")
             import shutil
@@ -943,7 +956,7 @@ class LekmodInstaller:
             self.log("✅ Lekmap installation complete!")
             self.log("=" * 50)
             messagebox.showinfo("Success",
-                               f"Lekmap {version} installed successfully!\n\n"
+                               f"{version} installed successfully!\n\n"
                                f"Location: {maps_dir}")
         except Exception as e:
             self.log("=" * 50)

@@ -45,13 +45,16 @@ function LekmodVersion.GetLocal()
 	return LekmodVersion.Normalize(raw) or raw
 end
 
--- Stamp file written by ui_check.bat / the installer into Lua/UI/LekmodUiConfigured.lua.
+-- Stamp file written by ui_check.bat / the installer (Lua/Utilities, not Lua/UI).
 function LekmodVersion.IsUiCheckConfigured()
+	local previous = LekmodUiConfigured
 	LekmodUiConfigured = nil
 	pcall(function()
 		include("LekmodUiConfigured")
 	end)
-	return LekmodUiConfigured == true
+	local ok = LekmodUiConfigured == true
+	LekmodUiConfigured = previous
+	return ok
 end
 
 -- Visible as this player's own chat so vanilla hosts still see it.
