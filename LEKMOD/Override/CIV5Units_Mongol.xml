@@ -31,7 +31,9 @@
 		</Replace>
 		<!-- END VERSION -->
 		<!-- Start v35 -->
-
+		<Row Tag="TXT_KEY_CITY_TRADE_YIELD">
+			<Text>{1_Yield} {2_IconString} from [ICON_INTERNATIONAL_TRADE] Routes with this city.</Text>
+		</Row>
 		<Row Tag="TXT_KEY_FEATURE_SHALLOWS">
 			<Text>Shallows</Text>
 		</Row>
@@ -585,6 +587,75 @@
 				O great Mansa Musa, Lion of Mali and lord of the golden lands, your people look to you beneath the burning sun of the Sahel. From the banks of the Niger to the sands of the Sahara, merchants speak your name with awe, for the caravans of gold, salt, ivory, and learning flow through your empire like lifeblood through the veins of the world.[NEWLINE][NEWLINE]You inherit a realm already rich in earth and trade, yet it is by wisdom, faith, and command that riches become greatness. Let the cities of Mali rise as beacons to scholars, merchants, and pilgrims. Let Timbuktu’s libraries fill with knowledge, and let your generosity carry the fame of Mali beyond desert, sea, and empire. [NEWLINE][NEWLINE]O Mansa, will you gather the wealth of the world beneath your banner? Will your gold build monuments, feed wisdom, and humble distant kings? Can you forge an empire whose splendor will be remembered long after the caravans have vanished into the sand? Can you build a civilization that will stand the test of time?
 			</Text>
 		</Row>
+		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA_NAME">			
+			<Text>Mansa Musa</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA_SUBTITLE">			
+			<Text>Mansa of Mali</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA_LIVED">			
+			<Text>1280-1337</Text>
+		</Row>
+		<!-- Mali Spies -->
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_0">
+			<Text>
+				Moussa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_1">
+			<Text>
+				Mohamed
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_2">
+			<Text>
+				Hawa
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_3">
+			<Text>
+				Kadiatou
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_4">
+			<Text>
+				Oumar
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_5">
+			<Text>
+				Souleymane
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_6">
+			<Text>
+				Issa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_7">
+			<Text>
+				Salimata
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_8">
+			<Text>
+				Bakary
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_MALI_9">
+			<Text>
+				Yacouba
+			</Text>
+		</Row>
 		<!-- MALI Cities -->
 		<Row Tag="TXT_KEY_CITY_NAME_MALI_CAPITAL">
 			<Text>
@@ -776,6 +847,69 @@
 			</Text>
 		</Row>
 		<!-- Buganda Civ -->
+		<!-- Buganda Spies -->
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_0">
+			<Text>
+				Kizito
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_1">
+			<Text>
+				Namazzi
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_2">
+			<Text>
+				Nabukalu
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_3">
+			<Text>
+				Nakato
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_4">
+			<Text>
+				Musoke
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_5">
+			<Text>
+				Kiggundu
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_6">
+			<Text>
+				Kasimba
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_7">
+			<Text>
+				Bitata
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_8">
+			<Text>
+				Abwooli
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
+		<Row Tag="TXT_KEY_SPY_NAME_BUGANDA_9">
+			<Text>
+				Amina
+			</Text>
+			<Gender>
+				feminine
+			</Gender>
+		</Row>
 		<!-- Buganda Cities -->
 		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_CAPITAL">
 			<Text>
@@ -912,6 +1046,15 @@
 			<Text>
 				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Muteesa_I_of_Buganda [ENDCOLOR][NEWLINE][NEWLINE]Muteesa I Mukaabya Walugembe Kayiira (c. 1837-9 October 1884) was the 30th Kabaka of the Kingdom of Buganda, from 1856 until 1884. In Ugandan historiography, Muteesa left a mixed legacy, with some regarding him as the most important of the kings of Buganda because of his vision and diplomatic skills, while others are more critical and believe he welcomed foreign influence that ultimately undermined Buganda's sovereignty.
 			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_BUGANDA_PEDIA_NAME">			
+			<Text>Kabaka Muteesa I</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_BUGANDA_PEDIA_SUBTITLE">			
+			<Text>Kabaka of Buganda</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_BUGANDA_PEDIA_LIVED">			
+			<Text>1856-1884</Text>
 		</Row>
 		<!-- Buganda Unit -->
 		<Row Tag="TXT_KEY_UNIT_BUGANDA_EXPEDITIONARY_FORCE_DESC">

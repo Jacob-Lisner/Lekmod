@@ -130,7 +130,7 @@ end
 
 function DoesMinorCivPersonalityBlockGifts(pMinorPlayer)
 	local row = GetMinorCivPersonalityRow(pMinorPlayer);
-	return IsPersonalityFlagEnabled(row, "NoGifts") or IsPersonalityFlagEnabled(row, "BlocksGoldGifts");
+	return IsPersonalityFlagEnabled(row, "NoGifts");
 end
 
 function DoesMinorCivPersonalityBlockPledgeToProtect(pMinorPlayer)
