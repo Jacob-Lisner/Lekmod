@@ -54,9 +54,9 @@ IF NOT EXIST "%euifolder%\CityView\ProductionPopup.lua" (
   copy /y "%patchfolder%\Lua\tmp\ui\CityView\ProductionPopup.xml.ignore" "%patchfolder%\Lua\UI\ProductionPopup.xml" > nul
 )
 REM --------------------------------------------------------------------------------------------------
-IF  EXIST "%euifolder%\Core\CityStateStatusHelper.lua" (
+IF EXIST "%euifolder%\Core\CityStateStatusHelper.lua" (
   copy /y "%patchfolder%\Lua\tmp\eui\Core\CityStateStatusHelper.lua.ignore" "%patchfolder%\Lua\UI\CityStateStatusHelper.lua" > nul
-) || (
+) ELSE (
 copy /y "%patchfolder%\Lua\tmp\ui\Core\CityStateStatusHelper.lua.ignore" "%patchfolder%\Lua\UI\CityStateStatusHelper.lua" > nul
 )
 IF EXIST "%euifolder%\Core\EUI_tooltip_library.lua" (
