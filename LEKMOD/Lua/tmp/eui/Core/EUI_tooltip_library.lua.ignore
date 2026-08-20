@@ -1749,7 +1749,8 @@ local function GetYieldTooltip( city, yieldID, baseYield, totalYield, yieldIconS
 	-- Base Yield Rate from Great Works & Themes, 34.8
 	tips:insertLocalizedBulletIfNonZero( "TXT_KEY_YIELD_FROM_GREAT_WORKS", city:GetBaseYieldRateFromGreatWorks( yieldID ), yieldIconString )
 	tips:insertLocalizedBulletIfNonZero( "TXT_KEY_YIELD_FROM_THEMED_BUILDINGS", city:GetBaseYieldRateFromThemedBuildings( yieldID ), yieldIconString )
-
+	-- Landmark Yield
+	tips:insertLocalizedBulletIfNonZero( "TXT_KEY_YIELD_FROM_LANDMARKS", city:GetBaseYieldRateFromLandmarks(yieldID), yieldIconString)
 	-- Base Yield from Religion
 	if gk_mode then
 		tips:insertLocalizedBulletIfNonZero( "TXT_KEY_YIELD_FROM_RELIGION", city:GetBaseYieldRateFromReligion( yieldID ), yieldIconString )

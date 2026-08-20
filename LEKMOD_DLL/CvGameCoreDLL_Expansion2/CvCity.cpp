@@ -12746,6 +12746,7 @@ int CvCity::getBaseYieldRate(YieldTypes eIndex) const
 	iValue += GetBaseYieldRateFromPolicies(eIndex);
 	iValue += GetBaseYieldRateFromThemedBuildings(eIndex);
 #endif
+	iValue += m_pCityBuildings->GetYieldFromLandmarks(eIndex);
 
 	return iValue;
 }

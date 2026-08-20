@@ -743,6 +743,11 @@ function GetYieldTooltip(pCity, iYieldType, iBase, iTotal, strIconString, strMod
 		strYieldBreakdown = strYieldBreakdown .. "[ICON_BULLET]" .. Locale.ConvertTextKey("TXT_KEY_YIELD_FROM_THEMED_BUILDINGS", iYieldFromThemedBuildings, strIconString);
 		strYieldBreakdown = strYieldBreakdown .. "[NEWLINE]";
 	end
+	local iYieldFromLandmarks = pCity:GetBaseYieldRateFromLandmarks(iYieldType);
+	if (iYieldFromLandmarks ~= 0) then
+		strYieldBreakdown = strYieldBreakdown .. "[ICON_BULLET]" .. Locale.ConvertTextKey("TXT_KEY_YIELD_FROM_LANDMARKS", iYieldFromLandmarks, strIconString)
+		strYieldBreakdown = strYieldBreakdown .. "[NEWLINE]";
+	end
 	-- End 34.8
 	if (iYieldType == YieldTypes.YIELD_FOOD) then
 		local iYieldFromTrade = ( pCity:GetYieldRateTimes100(YieldTypes.YIELD_FOOD, false) - pCity:GetYieldRateTimes100(YieldTypes.YIELD_FOOD, true) ) / 100;

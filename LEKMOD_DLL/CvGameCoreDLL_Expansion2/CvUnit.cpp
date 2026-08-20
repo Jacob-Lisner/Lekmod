@@ -12035,9 +12035,9 @@ int CvUnit::baseMoves(DomainTypes eIntoDomain /* = NO_DOMAIN */) const
 	{
 		return GC.getEMBARKED_UNIT_MOVEMENT() + getExtraNavalMoves() + thisTeam.getEmbarkedExtraMoves() + thisTeam.getExtraMoves(eDomain) + pTraits->GetExtraEmbarkMoves() + pPolicies->GetNumericModifier(POLICYMOD_EMBARKED_EXTRA_MOVES);
 	}
-	int iMoves = m_pUnitInfo->GetMoves() + getExtraMoves() + thisTeam.getExtraMoves(eDomain) + m_iExtraNavalMoves;
+	int iMoves = m_pUnitInfo->GetMoves() + getExtraMoves() + thisTeam.getExtraMoves(eDomain);
 	// Naval Moves
-	if(eDomain == DOMAIN_SEA)
+	if(isEmbarked())
 	{
 		iMoves += getExtraNavalMoves();
 		// Work boats also get extra moves, and they don't have a combat class to receive a promotion from
