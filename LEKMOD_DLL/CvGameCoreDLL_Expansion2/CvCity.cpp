@@ -1324,7 +1324,7 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_aiBaseYieldRank.resize(NUM_YIELD_TYPES);
 	m_aiYieldRank.resize(NUM_YIELD_TYPES);
 #if defined(LEKMOD_LANDMARKS_TOURISM_SOURCE_CULTURE_FIX)
-	m_viWonderYieldCache.resize(GC.getNumBuildingInfos());
+	m_viWonderYieldCache.resize(NUM_YIELD_TYPES);
 #endif
 	for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
@@ -2964,12 +2964,15 @@ int CvCity::getWonderYields(YieldTypes eYield) const
 }
 void CvCity::buildWonderYieldCache()
 {
-	std::vector<int> cache = getWonderYieldCache();
-	if (cache.size() != NUM_YIELD_TYPES)
+	if (m_viWonderYieldCache.size() != NUM_YIELD_TYPES)
 	{
-		cache.resize(NUM_YIELD_TYPES);
+		m_viWonderYieldCache.resize(NUM_YIELD_TYPES);
 	}
-	std::fill(cache.begin(), cache.end(), 0);
+
+	for (int iYieldLoop = 0; iYieldLoop < NUM_YIELD_TYPES; iYieldLoop++)
+	{
+		m_viWonderYieldCache.setAt(iYieldLoop, 0);
+	}
 	CvPlayer& kPlayer = GET_PLAYER(getOwner());
 	for (int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
 	{
@@ -2990,7 +2993,7 @@ void CvCity::buildWonderYieldCache()
 
 		int iNumBuilding = GetCityBuildings()->GetNumBuilding(eBuilding);
 		if (iNumBuilding <= 0)
-		{
+			continue;
 			for (int iYieldLoop = 0; iYieldLoop < NUM_YIELD_TYPES; iYieldLoop++)
 			{
 				const YieldTypes eYield = static_cast<YieldTypes>(iYieldLoop);
@@ -3080,10 +3083,9 @@ void CvCity::buildWonderYieldCache()
 #endif
 				if (iYieldChange != 0)
 				{
-					cache[eYield] += (iYieldChange * iNumBuilding);
+					m_viWonderYieldCache.setAt(eYield, m_viWonderYieldCache[eYield] + (iYieldChange * iNumBuilding));
 				}
 			}
-		}
 	}
 }
 #endif
@@ -17773,7 +17775,9 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 			}
 
 			kPlayer.ChangeFaith(-iFaithCost);
-
+#if defined(LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT)
+			ChangeNumThingsPurchasedThisTurn(1);
+#endif
 			if(GC.getLogging())
 			{
 				CvString strLogMsg;
