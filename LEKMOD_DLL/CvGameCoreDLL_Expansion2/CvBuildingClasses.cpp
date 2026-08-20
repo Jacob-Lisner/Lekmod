@@ -4681,7 +4681,7 @@ int CvCityBuildings::GetYieldFromLandmarks(YieldTypes eYield) const
 	int iPercent = GetLandmarksTourismPercent();
 	if (iPercent > 0)
 	{
-		iRtnValue += m_pCity->GetCityCulture()->GetCultureFromWonders();
+		iRtnValue += m_pCity->getWonderYields(YIELD_CULTURE);
 		iRtnValue += m_pCity->GetCityCulture()->GetCultureFromImprovements();
 		iRtnValue += m_pCity->GetCityCulture()->GetCultureFromNaturalWonders();
 		iRtnValue *= iPercent;
