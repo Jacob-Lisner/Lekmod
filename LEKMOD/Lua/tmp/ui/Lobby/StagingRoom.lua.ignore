@@ -1750,7 +1750,8 @@ function ShowHideHandler( bIsHide, bIsInit )
 		UIManager:SetUICursor( 0 );
 		RequestLobbyChatHistory();
 		SendUiCheckNotLaunchedIfNeeded();
-		if( Matchmaking.IsHost() and not PreGame.IsHotSeatGame() ) then
+		-- Ban-ready sync tick runs inside Draft_SyncBanScroll / OnStagingUpdate.
+		if( not PreGame.IsHotSeatGame() ) then
 			EnsureStagingUpdate();
 		end
 	end

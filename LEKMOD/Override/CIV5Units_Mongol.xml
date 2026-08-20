@@ -137847,7 +137847,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_MALAGASY"> 
 			<Text>
-				[ICON_PEACE] Faith cost of purchasing [COLOR_POSITIVE_TEXT]Religious Units[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Buildings[ENDCOLOR] is reduced by 25%. [ICON_BUILD_HOLY_SITE] Holy Sites yield +1 [ICON_CULTURE] Culture and +1 [ICON_PEACE] Faith, which increases by +1 [ICON_CULTURE] Culture and +1 [ICON_PEACE] Faith for every adjacent [ICON_BUILD_HOLY_SITE] Holy Site.
+				[ICON_PEACE] Faith cost of purchasing [COLOR_POSITIVE_TEXT]Buildings[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Religious Units[ENDCOLOR] is reduced by 25%. [ICON_BUILD_HOLY_SITE] Holy Sites yield +1 [ICON_CULTURE] Culture and +1 [ICON_PEACE] Faith, which increases by +1 [ICON_CULTURE] Culture and +1 [ICON_PEACE] Faith for every adjacent [ICON_BUILD_HOLY_SITE] Holy Site.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_MALAGASY_SHORT"> 

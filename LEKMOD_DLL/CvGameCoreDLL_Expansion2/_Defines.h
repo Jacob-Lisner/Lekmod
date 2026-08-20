@@ -952,8 +952,11 @@
 #define LEKMOD_BUILDING_GP_EXPEND_YIELD
 // Units or Buildings with a faith cost no longer need a religion to be purchased unless unlocked by a belief
 #define LEKMOD_FAITH_PURCHASE_NO_RELIGION
-// Policy/trait FaithCostModifier (Mandate of Heaven, etc.) only discounts faith-only religious
-// buildings (FaithCost>0 + UnlockedByBelief + Cost==-1), not Work Ethic factories / NW faith buys
+// Policy FaithCostModifier (Mandate of Heaven) only discounts faith-only religious
+// buildings (FaithCost>0 + UnlockedByBelief + Cost==-1), not Work Ethic factories /
+// NW faith buys. Trait FaithCostModifier (Madagascar) still discounts any building
+// faith purchase; both only discount religious units (missionary/inquisitor), not
+// regular units or GP faith buys.
 #define LEKMOD_FAITH_COST_MOD_RELIGIOUS_ONLY
 // New ancient ruin rewards that can be specified in xml
 #define LEKMOD_NEW_ANCIENT_RUIN_REWARDS

@@ -54,6 +54,9 @@ g_BanIconControls = g_BanIconControls or {};   -- [stackControl] = { BanIconInst
 g_DraftIconIMs = g_DraftIconIMs or {};         -- [stackControl] = InstanceManager
 g_PendingBan = g_PendingBan or nil;            -- { playerID, slotIndex }
 g_SkipStagingFullRefresh = g_SkipStagingFullRefresh or false; -- set when opening Civilopedia
+-- Once true, Draft_Init must not re-load PreGame over live chat-synced ban-ready.
+g_DraftLiveSession = g_DraftLiveSession or false;
+g_DraftReadySyncClock = g_DraftReadySyncClock or 0;
 
 local function IsHumanSlot(playerID)
 	if playerID == nil or playerID < 0 then
@@ -257,21 +260,25 @@ function Draft_PersistToPreGame()
 	Draft_OptSet(DRAFT_OPT_RULES, Draft_PackRules());
 
 	local maxP = GameDefines.MAX_MAJOR_CIVS;
-	local readyMask = 0;
-	for pid = 0, maxP - 1 do
-		if g_DraftBanReady[pid] == true then
-			readyMask = readyMask + Draft_Pow2(pid);
+	-- Only the host writes ready/host-ctrl masks. Client SetGameOption can overwrite
+	-- the lobby with a partial mask and desync green-up / Create Draft on the host.
+	if Matchmaking.IsHost() then
+		local readyMask = 0;
+		for pid = 0, maxP - 1 do
+			if g_DraftBanReady[pid] == true then
+				readyMask = readyMask + Draft_Pow2(pid);
+			end
 		end
-	end
-	Draft_OptSet(DRAFT_OPT_READY, readyMask);
+		Draft_OptSet(DRAFT_OPT_READY, readyMask);
 
-	local hostCtrlMask = 0;
-	for pid = 0, maxP - 1 do
-		if g_DraftBanHostControl[pid] == true then
-			hostCtrlMask = hostCtrlMask + Draft_Pow2(pid);
+		local hostCtrlMask = 0;
+		for pid = 0, maxP - 1 do
+			if g_DraftBanHostControl[pid] == true then
+				hostCtrlMask = hostCtrlMask + Draft_Pow2(pid);
+			end
 		end
+		Draft_OptSet(DRAFT_OPT_HOSTCTRL, hostCtrlMask);
 	end
-	Draft_OptSet(DRAFT_OPT_HOSTCTRL, hostCtrlMask);
 
 	for pid = 0, maxP - 1 do
 		local bans = g_DraftBans[pid] or {};
@@ -487,6 +494,74 @@ local function SendDraftChat(body)
 	Network.SendChat(DRAFT_PREFIX .. body);
 end
 
+local function Draft_PackReadyMask()
+	local readyMask = 0;
+	local maxP = GameDefines.MAX_MAJOR_CIVS;
+	for pid = 0, maxP - 1 do
+		if g_DraftBanReady[pid] == true then
+			readyMask = readyMask + Draft_Pow2(pid);
+		end
+	end
+	return readyMask;
+end
+
+local function Draft_ApplyReadyMask(mask, preserveLocalOptimistic)
+	mask = tonumber(mask) or 0;
+	local localID = Matchmaking.GetLocalID();
+	local keepLocal = preserveLocalOptimistic
+		and not Matchmaking.IsHost()
+		and localID ~= nil
+		and g_DraftBanReady[localID] == true;
+	g_DraftBanReady = {};
+	local maxP = GameDefines.MAX_MAJOR_CIVS;
+	for pid = 0, maxP - 1 do
+		if math.floor(mask / Draft_Pow2(pid)) % 2 == 1 then
+			g_DraftBanReady[pid] = true;
+		end
+	end
+	-- Client may still be ready locally while a lost packet left the host mask stale.
+	if keepLocal then
+		g_DraftBanReady[localID] = true;
+	end
+end
+
+-- Host echo so every client converges on the same green-up / Create Draft gate.
+function Draft_BroadcastReadyMask()
+	if not Matchmaking.IsHost() or PreGame.IsHotSeatGame() or Draft_IsHistoryOnly() then
+		return;
+	end
+	SendDraftChat("READYMASK|" .. tostring(Draft_PackReadyMask()));
+end
+
+local function Draft_ReannounceLocalBanReady()
+	if PreGame.IsHotSeatGame() or Draft_IsHistoryOnly() or g_DraftLocked then
+		return;
+	end
+	local localID = Matchmaking.GetLocalID();
+	if localID == nil or localID < 0 then
+		return;
+	end
+	if g_DraftBanReady[localID] == true then
+		SendDraftChat("BANREADY|" .. tostring(localID) .. "|1");
+	end
+end
+
+-- Periodic recovery for lossy Network.SendChat (host missing green-ups).
+function Draft_OnReadySyncTick()
+	if PreGame.IsHotSeatGame() or Draft_IsHistoryOnly() then
+		return;
+	end
+	local now = os.clock();
+	if (now - (g_DraftReadySyncClock or 0)) < 2.0 then
+		return;
+	end
+	g_DraftReadySyncClock = now;
+	Draft_ReannounceLocalBanReady();
+	if Matchmaking.IsHost() then
+		Draft_BroadcastReadyMask();
+	end
+end
+
 local function AnnounceGame(msg)
 	if LekmodVersion ~= nil and LekmodVersion.EncodeGameChat ~= nil then
 		Network.SendChat(LekmodVersion.EncodeGameChat(msg));
@@ -522,6 +597,8 @@ function Draft_ResetState(clearPersist)
 	g_PreviousDraftSnapshot = nil;
 	g_PendingBan = nil;
 	g_HScrollOffset = {};
+	g_DraftLiveSession = false;
+	g_DraftReadySyncClock = 0;
 	ResetAllIconInstanceManagers();
 	Draft_HideBanPicker();
 	if clearPersist then
@@ -555,6 +632,7 @@ function Draft_OnPlayerKicked(playerID)
 	if g_DraftLocked then
 		SendDraftChat("DRAFT|" .. tostring(playerID) .. "|");
 	end
+	Draft_BroadcastReadyMask();
 	Draft_RefreshBanUI();
 	Draft_RefreshDraftIconsAll();
 	Draft_UpdateActionButtons();
@@ -1626,6 +1704,7 @@ function Draft_SyncBanScroll()
 			Controls.BanSlotStack:SetOffsetX(618);
 		end);
 	end
+	Draft_OnReadySyncTick();
 end
 
 function Draft_RefreshDraftIconsAll()
@@ -1990,7 +2069,13 @@ function Draft_OnLocalBanReady(bChecked)
 		g_PendingBan = nil;
 		Draft_HideBanPicker();
 	end
-	SendDraftChat("BANREADY|" .. tostring(localID) .. "|" .. (bChecked and "1" or "0"));
+	-- Send twice: lobby chat can drop a single #LDRAFT# packet under load.
+	local readyBody = "BANREADY|" .. tostring(localID) .. "|" .. (bChecked and "1" or "0");
+	SendDraftChat(readyBody);
+	SendDraftChat(readyBody);
+	if Matchmaking.IsHost() then
+		Draft_BroadcastReadyMask();
+	end
 	Draft_RefreshBanUI();
 	Draft_PersistToPreGame();
 end
@@ -2123,6 +2208,7 @@ function Draft_OnRestorePreviousDraft()
 			SendDraftChat("BANREADY|" .. tostring(pid) .. "|1");
 		end
 	end
+	Draft_BroadcastReadyMask();
 	AnnounceGame("Previous draft restored.");
 	Draft_RefreshBanUI();
 	Draft_RefreshDraftIconsAll();
@@ -2264,9 +2350,28 @@ function Draft_HandleProtocol(fromPlayer, text)
 		local pid, flag = string.match(rest, "^(%d+)|(%d+)$");
 		pid = tonumber(pid);
 		if pid ~= nil then
-			g_DraftBanReady[pid] = (tonumber(flag) == 1);
-			Draft_RefreshBanUI();
-			Draft_PersistToPreGame();
+			local hostID = Matchmaking.GetHostID();
+			-- Own ready announce, or host correcting (kick / restore / echo).
+			if fromPlayer == pid or fromPlayer == hostID then
+				g_DraftBanReady[pid] = (tonumber(flag) == 1);
+				Draft_RefreshBanUI();
+				Draft_PersistToPreGame();
+				if Matchmaking.IsHost() then
+					Draft_BroadcastReadyMask();
+				end
+			end
+		end
+		return true;
+	elseif op == "READYMASK" then
+		-- Host-authoritative ready bits (green-up + Create Draft gate).
+		if fromPlayer == Matchmaking.GetHostID() then
+			local mask = tonumber(rest);
+			if mask ~= nil then
+				Draft_ApplyReadyMask(mask, true);
+				Draft_RefreshBanUI();
+				Draft_UpdateActionButtons();
+				Draft_PersistToPreGame();
+			end
 		end
 		return true;
 	elseif op == "BANCTRL" then
@@ -2895,15 +3000,20 @@ function Draft_Init()
 		Draft_MarkGameLaunched();
 	end
 	-- Restore bans/rules/pools from a loaded lobby/game save (PreGame options).
-	if Draft_RestoreFromPreGame() then
-		if g_DraftLocked then
-			g_DraftParticipantKey = GetDraftParticipantKey();
-			g_DraftParticipantCount = GetDraftParticipantCount();
-			-- Treat restored draft as restorable if host clears it later.
-			if g_PreviousDraftSnapshot == nil then
-				Draft_SavePreviousSnapshot();
+	-- Skip on repeat Draft_Init in the same lobby visit — that wipe was erasing
+	-- chat-synced ban-ready and blocking Create Draft on the host.
+	if not g_DraftLiveSession then
+		if Draft_RestoreFromPreGame() then
+			if g_DraftLocked then
+				g_DraftParticipantKey = GetDraftParticipantKey();
+				g_DraftParticipantCount = GetDraftParticipantCount();
+				-- Treat restored draft as restorable if host clears it later.
+				if g_PreviousDraftSnapshot == nil then
+					Draft_SavePreviousSnapshot();
+				end
 			end
 		end
+		g_DraftLiveSession = true;
 	end
 	Draft_CreateBanSlots();
 	Draft_PopulateRulesUI();
@@ -3001,6 +3111,10 @@ function Draft_Init()
 		if g_DraftLocked then
 			Draft_BroadcastPools();
 		end
+		Draft_BroadcastReadyMask();
+	else
+		-- After lobby UI rebuild, remind the host of our ready state.
+		Draft_ReannounceLocalBanReady();
 	end
 	Draft_PersistToPreGame();
 	Draft_RefreshBanUI();
