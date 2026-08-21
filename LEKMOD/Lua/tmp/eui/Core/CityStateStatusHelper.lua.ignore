@@ -607,7 +607,7 @@ local function QuestString(majorPlayerID, minorPlayer, questID, questData1)
 		return L( "TXT_KEY_CITY_STATE_QUEST_FIND_NATURAL_WONDER_FORMAL" )
 	elseif gk_mode then
 		if questID == MinorCivQuestTypes.MINOR_CIV_QUEST_GIVE_GOLD then
-			return L( "TXT_KEY_CITY_STATE_QUEST_GIVE_GOLD_FORMAL", Players[questData1]:GetCivilizationShortDescriptionKey() or "Unknown" )
+			return L( "TXT_KEY_CITY_STATE_QUEST_GIVE_GOLD_FORMAL")
 		elseif questID == MinorCivQuestTypes.MINOR_CIV_QUEST_PLEDGE_TO_PROTECT then
 			return L( "TXT_KEY_CITY_STATE_QUEST_PLEDGE_TO_PROTECT_FORMAL", Players[questData1]:GetCivilizationShortDescriptionKey() )
 		elseif questID == MinorCivQuestTypes.MINOR_CIV_QUEST_CONTEST_CULTURE then

@@ -2139,6 +2139,11 @@
 			<UnitCombatType>UNITCOMBAT_NAVALMELEE</UnitCombatType>
 			<BuildType>BUILD_PONTOON_BRIDGE</BuildType>
 		</Row>
+		<Row>
+			<TraitType>TRAIT_BRUNEI</TraitType>
+			<UnitCombatType>UNITCOMBAT_NAVALMELEE</UnitCombatType>
+			<BuildType>BUILD_AYER</BuildType>
+		</Row>
 	</Trait_UnitCombatBuilds>
 
 	<Table name="Trait_FreeResourceCities">

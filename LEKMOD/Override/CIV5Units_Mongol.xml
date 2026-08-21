@@ -31,6 +31,11 @@
 		</Replace>
 		<!-- END VERSION -->
 		<!-- Start v35 -->
+		<Row Tag="TXT_KEY_YIELD_FROM_LANDMARKS"> 
+			<Text>
+				{1_Num} {2_IconString} from Landmarks.
+			</Text>
+		</Row>
 		<Row Tag="TXT_KEY_CITY_TRADE_YIELD">
 			<Text>{1_Yield} {2_IconString} from [ICON_INTERNATIONAL_TRADE] Routes with this city.</Text>
 		</Row>
@@ -145315,7 +145320,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Row Tag="TXT_KEY_YIELD_FROM_THEMED_BUILDINGS"> 
 			<Text>
-				{1_Num} {2_IconString} from Themeing [ICON_GREAT_WORK] Great Works
+				{1_Num} {2_IconString} from Theming [ICON_GREAT_WORK] Great Works
 			</Text>
 		</Row>
 		<Row Tag="TXT_KEY_YIELD_FROM_GARRISON"> 

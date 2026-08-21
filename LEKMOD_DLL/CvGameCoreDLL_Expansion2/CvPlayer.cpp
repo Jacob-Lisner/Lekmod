@@ -27668,13 +27668,6 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					{
 						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
 					}
-#if defined(LEKMOD_EXPERIMENTAL_CHANGES)// World Wonder Yield Change
-					iYieldChange = pPolicy->GetWorldWonderYieldChange(eYield);
-					if (iYieldChange != 0 && ::isWorldWonderClass(*pkBuildingClassInfo))
-					{
-						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
-					}
-#endif
 				}
 #endif
 			}
