@@ -22,7 +22,7 @@ include("MultilayeredFractal");
 function GetMapScriptInfo()
 	local world_age, temperature, rainfall, sea_level, resources = GetCoreMapOptions()
 	return {
-		Name = "Lekmap v6.1",
+		Name = "Lekmap v6.2",
 		Description = "A map script made for Lekmod based of HB's Mapscript v8.1. Pangaea - Fractal with Beta options by Jacobian",
 		IsAdvancedMap = false,
 		IconIndex = 0,
@@ -1520,8 +1520,8 @@ function PangaeaFractalWorld:GeneratePlotTypes(args)
 			local iWaterShallow = self.continentsFrac:GetHeight(water_percent-28);
 
 			if beta_tectonic_mounts == 2 then
-				iMountain100 = self.mountainsFrac:GetHeight(93);
-				iMountain99 = self.mountainsFrac:GetHeight(77);
+				iMountain100 = self.mountainsFrac:GetHeight(94);
+				iMountain99 = self.mountainsFrac:GetHeight(84);
 				-- iMountain97 = self.mountainsFrac:GetHeight(82);
 				iMountain95 = self.mountainsFrac:GetHeight(68);
 				iShallow = self.mountainsFrac:GetHeight(54);
