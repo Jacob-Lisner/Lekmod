@@ -22,7 +22,7 @@ include("MultilayeredFractal");
 function GetMapScriptInfo()
 	local world_age, temperature, rainfall, sea_level, resources = GetCoreMapOptions()
 	return {
-		Name = "Lekmap v6.3",
+		Name = "Lekmap v6.4",
 		Description = "A map script made for Lekmod based of HB's Mapscript v8.1. Pangaea - Fractal with Beta options by Jacobian",
 		IsAdvancedMap = false,
 		IconIndex = 0,
@@ -7578,10 +7578,12 @@ function AssignStartingPlots:PlaceResourcesAndCityStates()
 
 
 		local spawn_validity = true
+
+		--
 		if beta_spawn_validation == 2 then
 			for player_index, pPlot in ipairs(player_plots) do
 				local needs_coast = player_coastal_bias[player_index]
-				if pPlot:IsCoastalLand(50) ~= needs_coast then
+				if pPlot:IsCoastalLand(50) ~= needs_coast and beta_mixed_bias == 1 then
 					spawn_validity = false
 				end
 				p_i = xy_to_i(pPlot:GetX(), pPlot:GetY(), iW, iH)
